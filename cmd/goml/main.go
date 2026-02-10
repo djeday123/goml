@@ -32,7 +32,7 @@ func main() {
 	ctx := context.Background()
 	seedKnowledgeBase(ctx, p)
 	
-	fmt.Println("System initialized. Type 'help' for commands, 'exit' to quit.\n")
+	fmt.Println("System initialized. Type 'help' for commands, 'exit' to quit.")
 	
 	// Interactive loop
 	scanner := bufio.NewScanner(os.Stdin)
@@ -63,13 +63,13 @@ func main() {
 				fmt.Printf("Error getting summary: %v\n", err)
 				continue
 			}
-			fmt.Println("\n" + summary + "\n")
+			fmt.Println("\n" + summary)
 			continue
 		}
 		
 		if input == "reset" {
 			p.ResetConversation()
-			fmt.Println("Conversation reset.\n")
+			fmt.Println("Conversation reset.")
 			continue
 		}
 		
@@ -132,7 +132,7 @@ func seedKnowledgeBase(ctx context.Context, p *pipeline.Pipeline) {
 		}
 	}
 	
-	fmt.Println("Knowledge base seeded with example documents.\n")
+	fmt.Println("Knowledge base seeded with example documents.")
 }
 
 func printHelp() {
