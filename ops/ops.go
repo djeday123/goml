@@ -3,8 +3,8 @@ package ops
 import (
 	"fmt"
 
-	"github.com/vugar/goml/backend"
-	"github.com/vugar/goml/tensor"
+	"github.com/djeday123/goml/backend"
+	"github.com/djeday123/goml/tensor"
 )
 
 // ---- Autograd function implementations ----
@@ -14,7 +14,7 @@ type addGradFn struct {
 }
 
 func (f *addGradFn) Name() string             { return "AddBackward" }
-func (f *addGradFn) Inputs() []*tensor.Tensor  { return []*tensor.Tensor{f.a, f.b} }
+func (f *addGradFn) Inputs() []*tensor.Tensor { return []*tensor.Tensor{f.a, f.b} }
 func (f *addGradFn) Backward(grad *tensor.Tensor) []*tensor.Tensor {
 	// d(a+b)/da = 1, d(a+b)/db = 1
 	// TODO: handle broadcasting reduction
@@ -26,7 +26,7 @@ type mulGradFn struct {
 }
 
 func (f *mulGradFn) Name() string             { return "MulBackward" }
-func (f *mulGradFn) Inputs() []*tensor.Tensor  { return []*tensor.Tensor{f.a, f.b} }
+func (f *mulGradFn) Inputs() []*tensor.Tensor { return []*tensor.Tensor{f.a, f.b} }
 func (f *mulGradFn) Backward(grad *tensor.Tensor) []*tensor.Tensor {
 	// d(a*b)/da = b, d(a*b)/db = a
 	gradA, _ := Mul(grad, f.b)
@@ -39,7 +39,7 @@ type matmulGradFn struct {
 }
 
 func (f *matmulGradFn) Name() string             { return "MatMulBackward" }
-func (f *matmulGradFn) Inputs() []*tensor.Tensor  { return []*tensor.Tensor{f.a, f.b} }
+func (f *matmulGradFn) Inputs() []*tensor.Tensor { return []*tensor.Tensor{f.a, f.b} }
 func (f *matmulGradFn) Backward(grad *tensor.Tensor) []*tensor.Tensor {
 	// d(A@B)/dA = grad @ B^T
 	// d(A@B)/dB = A^T @ grad
@@ -55,7 +55,7 @@ type reluGradFn struct {
 }
 
 func (f *reluGradFn) Name() string             { return "ReluBackward" }
-func (f *reluGradFn) Inputs() []*tensor.Tensor  { return []*tensor.Tensor{f.input} }
+func (f *reluGradFn) Inputs() []*tensor.Tensor { return []*tensor.Tensor{f.input} }
 func (f *reluGradFn) Backward(grad *tensor.Tensor) []*tensor.Tensor {
 	// d(relu)/dx = 1 if x > 0 else 0
 	// Approximated: relu'(x) = x > 0, so grad * (input > 0)

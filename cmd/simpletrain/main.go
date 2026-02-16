@@ -7,12 +7,12 @@ import (
 	"os"
 	"time"
 
-	_ "github.com/vugar/goml/backend/cpu"
-	"github.com/vugar/goml/backend"
-	"github.com/vugar/goml/nn"
-	"github.com/vugar/goml/ops"
-	"github.com/vugar/goml/tensor"
-	"github.com/vugar/goml/tokenizer"
+	"github.com/djeday123/goml/backend"
+	_ "github.com/djeday123/goml/backend/cpu"
+	"github.com/djeday123/goml/nn"
+	"github.com/djeday123/goml/ops"
+	"github.com/djeday123/goml/tensor"
+	"github.com/djeday123/goml/tokenizer"
 )
 
 // SimpleLM: Embedding → LayerNorm → Linear (no attention, no transformer)
@@ -62,67 +62,67 @@ func (m *SimpleLM) ForwardAndBackward(inputs, targets *tensor.Tensor) (float64, 
 	dim := m.Config.Dim
 
 	// ---- Forward ----
-	
+
 	// 1. Embedding: [1, seqLen] → [seqLen, dim]
 	tokens1D, _ := tensor.FromSlice(inputs.ToInt64Slice(), tensor.Shape{seqLen})
 	emb, _ := m.Embed.Forward(tokens1D)
-	
+
 	// Reshape to [1, seqLen, dim] for 3D ops
 	embData := emb.ToFloat32Slice()
 	emb3D, _ := tensor.FromSlice(embData, tensor.Shape{1, seqLen, dim})
-	
+
 	// 2. LayerNorm
 	normed, _ := m.Norm.Forward(emb3D)
-	
+
 	// 3. Hidden linear: [1, seqLen, dim] → [1, seqLen, hiddenDim]
 	// Flatten to [seqLen, dim] for linear
 	normedFlat, _ := tensor.FromSlice(normed.ToFloat32Slice(), tensor.Shape{seqLen, dim})
 	hiddenOut, _ := m.Hidden.Forward(normedFlat)
-	
+
 	// 4. GELU activation
 	hiddenAct := geluFwd(hiddenOut)
-	
+
 	// 5. Output: [seqLen, hiddenDim] → [seqLen, vocabSize]
 	logitsFlat, _ := m.Output.Forward(hiddenAct)
-	
+
 	// Reshape to [1, seqLen, vocabSize]
-	logits, _ := tensor.FromSlice(logitsFlat.ToFloat32Slice(), 
+	logits, _ := tensor.FromSlice(logitsFlat.ToFloat32Slice(),
 		tensor.Shape{1, seqLen, m.Config.VocabSize})
-	
+
 	// 6. Cross-entropy loss
 	loss, _ := ops.CrossEntropyLoss(logits, targets)
 	lossVal := float64(loss.ToFloat32Slice()[0])
-	
+
 	// ---- Backward ----
-	
+
 	// dLogits: [1, seqLen, vocabSize]
 	dLogits, _ := ops.CrossEntropyBackward(logits, targets)
-	
+
 	// Flatten to [seqLen, vocabSize]
 	dLogitsFlat, _ := tensor.FromSlice(dLogits.ToFloat32Slice(),
 		tensor.Shape{seqLen, m.Config.VocabSize})
-	
+
 	// Backward through Output: dHiddenAct [seqLen, hiddenDim]
 	dHiddenAct, _ := m.Output.Backward(hiddenAct, dLogitsFlat)
-	
+
 	// Backward through GELU
 	dHidden := geluBwd(hiddenOut, dHiddenAct)
-	
+
 	// Backward through Hidden linear: dNormedFlat [seqLen, dim]
 	dNormedFlat, _ := m.Hidden.Backward(normedFlat, dHidden)
-	
+
 	// Reshape back to [1, seqLen, dim] for LayerNorm backward
 	dNormed3D, _ := tensor.FromSlice(dNormedFlat.ToFloat32Slice(),
 		tensor.Shape{1, seqLen, dim})
-	
+
 	// Backward through LayerNorm → gives gradient w.r.t embedding output
 	dEmb3D, _ := m.Norm.Backward(emb3D, dNormed3D)
-	
+
 	// Backward through Embedding
 	dEmb2D, _ := tensor.FromSlice(dEmb3D.ToFloat32Slice(),
 		tensor.Shape{seqLen, dim})
 	m.Embed.Backward(tokens1D, dEmb2D)
-	
+
 	return lossVal, nil
 }
 
@@ -156,7 +156,7 @@ func geluBwd(x, dout *tensor.Tensor) *tensor.Tensor {
 }
 
 func main() {
-	fmt.Println("=== GoML — SimpleLM Training ===\n")
+	fmt.Println("=== GoML — SimpleLM Training ===")
 
 	data, err := os.ReadFile("data/shakespeare.txt")
 	if err != nil {
@@ -228,13 +228,17 @@ func main() {
 			// Need fresh forward without backward
 			inp2, _ := tensor.FromSlice([]int64{72, 101, 108, 108}, tensor.Shape{1, 4})
 			tgt2, _ := tensor.FromSlice([]int64{101, 108, 108, 111}, tensor.Shape{1, 4})
-			for _, pp := range params { pp.SetGrad(nil) }
+			for _, pp := range params {
+				pp.SetGrad(nil)
+			}
 			lPlus, _ := model.ForwardAndBackward(inp2, tgt2)
 
 			pData[0] = orig - float32(epsilon)
 			inp3, _ := tensor.FromSlice([]int64{72, 101, 108, 108}, tensor.Shape{1, 4})
 			tgt3, _ := tensor.FromSlice([]int64{101, 108, 108, 111}, tensor.Shape{1, 4})
-			for _, pp := range params { pp.SetGrad(nil) }
+			for _, pp := range params {
+				pp.SetGrad(nil)
+			}
 			lMinus, _ := model.ForwardAndBackward(inp3, tgt3)
 
 			pData[0] = orig
@@ -242,16 +246,22 @@ func main() {
 			numGrad := (lPlus - lMinus) / (2 * epsilon)
 
 			// Restore original grad
-			for _, pp := range params { pp.SetGrad(nil) }
+			for _, pp := range params {
+				pp.SetGrad(nil)
+			}
 			model.ForwardAndBackward(inp, tgt)
 
 			anaGrad := float64(gData[0])
 			relErr := math.Abs(numGrad-anaGrad) / (math.Abs(numGrad) + math.Abs(anaGrad) + 1e-8)
 
 			status := "✓"
-			if relErr > 0.01 { status = "✗" }
+			if relErr > 0.01 {
+				status = "✗"
+			}
 			fmt.Printf("  param %d: ana=%.6f num=%.6f rel_err=%.6f %s\n", pi, anaGrad, numGrad, relErr, status)
-			if pi >= 5 { break } // check first few
+			if pi >= 5 {
+				break
+			} // check first few
 		}
 	}
 
@@ -304,7 +314,9 @@ func main() {
 
 		for i, p := range params {
 			grad := p.Grad()
-			if grad == nil { continue }
+			if grad == nil {
+				continue
+			}
 			pData := p.ToFloat32Slice()
 			gData := grad.ToFloat32Slice()
 
@@ -360,17 +372,25 @@ func main() {
 
 			// Temperature sampling
 			temp := float32(0.8)
-			for k := range lastLogits { lastLogits[k] /= temp }
+			for k := range lastLogits {
+				lastLogits[k] /= temp
+			}
 
 			// Softmax
 			maxV := float32(-1e9)
-			for _, v := range lastLogits { if v > maxV { maxV = v } }
+			for _, v := range lastLogits {
+				if v > maxV {
+					maxV = v
+				}
+			}
 			sumExp := float32(0)
 			for k := range lastLogits {
 				lastLogits[k] = float32(math.Exp(float64(lastLogits[k] - maxV)))
 				sumExp += lastLogits[k]
 			}
-			for k := range lastLogits { lastLogits[k] /= sumExp }
+			for k := range lastLogits {
+				lastLogits[k] /= sumExp
+			}
 
 			// Sample
 			r := rand.Float32()
@@ -378,7 +398,10 @@ func main() {
 			next := int64(0)
 			for k, p := range lastLogits {
 				cum += p
-				if r < cum { next = int64(k); break }
+				if r < cum {
+					next = int64(k)
+					break
+				}
 			}
 			tokens = append(tokens, next)
 		}

@@ -1,6 +1,6 @@
 package tensor
 
-import "github.com/vugar/goml/core"
+import "github.com/djeday123/goml/core"
 
 // Re-export core types so tensor.Shape, tensor.DType etc. still work.
 type Shape = core.Shape
@@ -22,10 +22,10 @@ const (
 )
 
 var (
-	ContiguousStrides = core.ContiguousStrides
-	IsContiguous      = core.IsContiguous
-	BroadcastShapes   = core.BroadcastShapes
-	FlatIndex         = core.FlatIndex
-	Permute           = core.Permute
+	ContiguousStrides   = core.ContiguousStrides
+	IsContiguous        = core.IsContiguous
+	BroadcastShapes     = core.BroadcastShapes
+	FlatIndex           = core.FlatIndex
+	Permute             = core.Permute
 	BFloat16FromFloat32 = core.BFloat16FromFloat32
 )

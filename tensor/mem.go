@@ -27,11 +27,11 @@ func ptrSlice[T any](b []byte, n int) []T {
 }
 
 // SliceFromPtr interprets raw memory as a Go slice (for GPU backends).
-func SliceFromPtr[T any](ptr uintptr, n int) []T {
+func SliceFromPtr[T any](ptr unsafe.Pointer, n int) []T {
 	if n == 0 {
 		return nil
 	}
-	return unsafe.Slice((*T)(unsafe.Pointer(ptr)), n)
+	return unsafe.Slice((*T)(ptr), n)
 }
 
 // ToFloat32Slice returns the tensor data as []float32.

@@ -3,7 +3,7 @@ package optim
 import (
 	"math"
 
-	"github.com/vugar/goml/tensor"
+	"github.com/djeday123/goml/tensor"
 )
 
 // AdamW implements the AdamW optimizer (decoupled weight decay).

@@ -3,7 +3,7 @@ package cpu
 import (
 	"unsafe"
 
-	"github.com/vugar/goml/backend"
+	"github.com/djeday123/goml/backend"
 )
 
 // storage is a CPU memory buffer backed by a Go byte slice.
@@ -17,11 +17,11 @@ func newStorage(byteLen int) *storage {
 
 func (s *storage) Device() backend.Device { return backend.CPU0 }
 
-func (s *storage) Ptr() uintptr {
+func (s *storage) Ptr() unsafe.Pointer {
 	if len(s.data) == 0 {
-		return 0
+		return nil
 	}
-	return uintptr(unsafe.Pointer(&s.data[0]))
+	return unsafe.Pointer(&s.data[0])
 }
 
 func (s *storage) ByteLen() int { return len(s.data) }

@@ -6,11 +6,11 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/vugar/goml/nn"
-	"github.com/vugar/goml/ops"
-	"github.com/vugar/goml/optim"
-	"github.com/vugar/goml/tensor"
-	"github.com/vugar/goml/tokenizer"
+	"github.com/djeday123/goml/nn"
+	"github.com/djeday123/goml/ops"
+	"github.com/djeday123/goml/optim"
+	"github.com/djeday123/goml/tensor"
+	"github.com/djeday123/goml/tokenizer"
 )
 
 // TrainConfig holds training hyperparameters.

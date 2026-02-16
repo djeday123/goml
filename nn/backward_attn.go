@@ -3,7 +3,7 @@ package nn
 import (
 	"math"
 
-	"github.com/vugar/goml/tensor"
+	"github.com/djeday123/goml/tensor"
 )
 
 // ---- Attention Backward ----
@@ -249,13 +249,13 @@ func (mha *MultiHeadAttention) Backward(cache *AttentionCache, dout *tensor.Tens
 
 // BlockCache stores intermediates for transformer block backward.
 type BlockCache struct {
-	X          *tensor.Tensor // input to block
-	Normed1    *tensor.Tensor // after first layernorm
-	AttnOut    *tensor.Tensor // after attention (before residual)
-	PostAttn   *tensor.Tensor // after first residual
-	Normed2    *tensor.Tensor // after second layernorm
-	FFNOut     *tensor.Tensor // after FFN (before residual)
-	AttnCache  *AttentionCache
+	X         *tensor.Tensor // input to block
+	Normed1   *tensor.Tensor // after first layernorm
+	AttnOut   *tensor.Tensor // after attention (before residual)
+	PostAttn  *tensor.Tensor // after first residual
+	Normed2   *tensor.Tensor // after second layernorm
+	FFNOut    *tensor.Tensor // after FFN (before residual)
+	AttnCache *AttentionCache
 }
 
 // ForwardWithCache runs transformer block and saves intermediates.

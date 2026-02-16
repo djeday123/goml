@@ -3,7 +3,7 @@ package tensor
 import (
 	"fmt"
 
-	"github.com/vugar/goml/backend"
+	"github.com/djeday123/goml/backend"
 )
 
 // Tensor is the core n-dimensional array.
@@ -146,14 +146,14 @@ func Arange(start, step float64, n int, dtype DType, device backend.Device) (*Te
 
 // ---- Accessors ----
 
-func (t *Tensor) Shape() Shape          { return t.shape }
-func (t *Tensor) Strides() Strides      { return t.strides }
-func (t *Tensor) DType() DType          { return t.dtype }
-func (t *Tensor) NDim() int             { return len(t.shape) }
-func (t *Tensor) NumElements() int      { return t.shape.NumElements() }
-func (t *Tensor) Device() backend.Device { return t.storage.Device() }
+func (t *Tensor) Shape() Shape             { return t.shape }
+func (t *Tensor) Strides() Strides         { return t.strides }
+func (t *Tensor) DType() DType             { return t.dtype }
+func (t *Tensor) NDim() int                { return len(t.shape) }
+func (t *Tensor) NumElements() int         { return t.shape.NumElements() }
+func (t *Tensor) Device() backend.Device   { return t.storage.Device() }
 func (t *Tensor) Storage() backend.Storage { return t.storage }
-func (t *Tensor) IsLeaf() bool          { return t.isLeaf }
+func (t *Tensor) IsLeaf() bool             { return t.isLeaf }
 
 func (t *Tensor) IsContiguous() bool {
 	return IsContiguous(t.shape, t.strides, t.dtype.Size())
@@ -172,7 +172,7 @@ func (t *Tensor) Contiguous() (*Tensor, error) {
 
 	// Allocate new contiguous storage
 	newData := make([]float32, n)
-	
+
 	shape := t.shape
 	strides := t.strides
 	ndim := len(shape)

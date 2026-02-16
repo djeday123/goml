@@ -7,17 +7,17 @@ import (
 	"os"
 	"time"
 
-	_ "github.com/vugar/goml/backend/cpu"
-	"github.com/vugar/goml/backend"
-	"github.com/vugar/goml/nn"
-	"github.com/vugar/goml/ops"
-	"github.com/vugar/goml/optim"
-	"github.com/vugar/goml/tensor"
-	"github.com/vugar/goml/tokenizer"
+	"github.com/djeday123/goml/backend"
+	_ "github.com/djeday123/goml/backend/cpu"
+	"github.com/djeday123/goml/nn"
+	"github.com/djeday123/goml/ops"
+	"github.com/djeday123/goml/optim"
+	"github.com/djeday123/goml/tensor"
+	"github.com/djeday123/goml/tokenizer"
 )
 
 func main() {
-	fmt.Println("=== GoML — LLM Training from Scratch ===\n")
+	fmt.Println("=== GoML — LLM Training from Scratch ===")
 
 	// Load data
 	data, err := os.ReadFile("data/shakespeare.txt")
@@ -28,18 +28,18 @@ func main() {
 
 	tok := tokenizer.NewByteTokenizer()
 	allTokens := tok.Encode(string(data))
-	
+
 	// 90/10 split
 	splitIdx := int(float64(len(allTokens)) * 0.9)
 	trainTokens := allTokens[:splitIdx]
 	evalTokens := allTokens[splitIdx:]
-	
+
 	fmt.Printf("Data: %d tokens (train: %d, eval: %d)\n", len(allTokens), len(trainTokens), len(evalTokens))
 
 	// Model
 	cfg := nn.TinyConfig()
 	cfg.MaxSeqLen = 64
-	
+
 	model, _ := nn.NewLLM(cfg, backend.CPU0)
 	totalParams := model.CountParameters()
 	fmt.Printf("Model: %d params (%.2f K)\n", totalParams, float64(totalParams)/1e3)

@@ -1,8 +1,8 @@
 package autograd
 
 import (
-	"github.com/vugar/goml/backend"
-	"github.com/vugar/goml/tensor"
+	"github.com/djeday123/goml/backend"
+	"github.com/djeday123/goml/tensor"
 )
 
 // AddTensors adds two tensors element-wise for gradient accumulation.

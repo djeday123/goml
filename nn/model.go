@@ -3,8 +3,8 @@ package nn
 import (
 	"fmt"
 
-	"github.com/vugar/goml/backend"
-	"github.com/vugar/goml/tensor"
+	"github.com/djeday123/goml/backend"
+	"github.com/djeday123/goml/tensor"
 )
 
 // ModelConfig defines the architecture hyperparameters.
@@ -13,8 +13,8 @@ type ModelConfig struct {
 	Dim          int     // model dimension (embedding size)
 	NumLayers    int     // number of transformer blocks
 	NumHeads     int     // number of attention heads
-	FFNHiddenDim int    // FFN intermediate size
-	UseSwiGLU    bool   // use SwiGLU activation in FFN
+	FFNHiddenDim int     // FFN intermediate size
+	UseSwiGLU    bool    // use SwiGLU activation in FFN
 	MaxSeqLen    int     // maximum sequence length
 	NormEps      float64 // layer norm epsilon
 }
@@ -36,7 +36,7 @@ func SmallConfig() ModelConfig {
 // TinyConfig returns config for a ~3M parameter model (for quick testing).
 func TinyConfig() ModelConfig {
 	return ModelConfig{
-		VocabSize:    256,  // byte-level
+		VocabSize:    256, // byte-level
 		Dim:          64,
 		NumLayers:    2,
 		NumHeads:     4,
@@ -49,11 +49,11 @@ func TinyConfig() ModelConfig {
 
 // LLM is the complete language model.
 type LLM struct {
-	Config    ModelConfig
+	Config   ModelConfig
 	TokEmbed *Embedding          // token embedding
-	Layers   []*TransformerBlock  // transformer layers
-	Norm     *LayerNorm           // final layer norm
-	Output   *Linear              // lm_head: dim → vocab
+	Layers   []*TransformerBlock // transformer layers
+	Norm     *LayerNorm          // final layer norm
+	Output   *Linear             // lm_head: dim → vocab
 }
 
 // NewLLM creates a language model from config.
@@ -83,7 +83,7 @@ func NewLLM(cfg ModelConfig, device backend.Device) (*LLM, error) {
 	}
 
 	return &LLM{
-		Config:    cfg,
+		Config:   cfg,
 		TokEmbed: tokEmbed,
 		Layers:   layers,
 		Norm:     norm,

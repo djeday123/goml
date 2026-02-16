@@ -3,8 +3,8 @@ package nn
 import (
 	"math/rand"
 
-	"github.com/vugar/goml/backend"
-	"github.com/vugar/goml/tensor"
+	"github.com/djeday123/goml/backend"
+	"github.com/djeday123/goml/tensor"
 )
 
 // Embedding is a lookup table for token embeddings.

@@ -3,9 +3,9 @@ package nn
 import (
 	"fmt"
 
-	"github.com/vugar/goml/backend"
-	"github.com/vugar/goml/ops"
-	"github.com/vugar/goml/tensor"
+	"github.com/djeday123/goml/backend"
+	"github.com/djeday123/goml/ops"
+	"github.com/djeday123/goml/tensor"
 )
 
 // MultiHeadAttention implements multi-head self-attention.

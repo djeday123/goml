@@ -1,18 +1,18 @@
 package nn
 
 import (
-	"github.com/vugar/goml/backend"
-	"github.com/vugar/goml/ops"
-	"github.com/vugar/goml/tensor"
+	"github.com/djeday123/goml/backend"
+	"github.com/djeday123/goml/ops"
+	"github.com/djeday123/goml/tensor"
 )
 
 // FeedForward implements the FFN block.
 // SwiGLU variant (LLaMA style): out = W2(SiLU(W1(x)) * W3(x))
 // Standard variant: out = W2(GELU(W1(x)))
 type FeedForward struct {
-	W1     *Linear // gate projection   [dim, hiddenDim]
-	W2     *Linear // down projection   [hiddenDim, dim]
-	W3     *Linear // up projection     [dim, hiddenDim] (SwiGLU only)
+	W1        *Linear // gate projection   [dim, hiddenDim]
+	W2        *Linear // down projection   [hiddenDim, dim]
+	W3        *Linear // up projection     [dim, hiddenDim] (SwiGLU only)
 	UseSwiGLU bool
 }
 

@@ -2,8 +2,9 @@ package backend
 
 import (
 	"fmt"
+	"unsafe"
 
-	"github.com/vugar/goml/core"
+	"github.com/djeday123/goml/core"
 )
 
 // DeviceType represents the compute device.
@@ -33,8 +34,8 @@ type Device struct {
 
 var CPU0 = Device{Type: CPU, Index: 0}
 
-func CUDADevice(index int) Device { return Device{Type: CUDA, Index: index} }
-func ROCmDevice(index int) Device { return Device{Type: ROCm, Index: index} }
+func CUDADevice(index int) Device  { return Device{Type: CUDA, Index: index} }
+func ROCmDevice(index int) Device  { return Device{Type: ROCm, Index: index} }
 func MetalDevice(index int) Device { return Device{Type: Metal, Index: index} }
 
 func (d Device) String() string {
@@ -51,7 +52,7 @@ type Storage interface {
 
 	// Ptr returns the raw pointer to the data.
 	// For CPU this is a Go pointer, for GPU it's a device pointer.
-	Ptr() uintptr
+	Ptr() unsafe.Pointer
 
 	// Bytes returns the underlying byte slice (CPU only, nil for GPU).
 	Bytes() []byte

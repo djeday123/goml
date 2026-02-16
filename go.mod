@@ -1,3 +1,5 @@
-module github.com/vugar/goml
+module github.com/djeday123/goml
 
 go 1.22.2
+
+require github.com/ebitengine/purego v0.9.1

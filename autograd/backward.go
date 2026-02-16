@@ -1,7 +1,7 @@
 package autograd
 
 import (
-	"github.com/vugar/goml/tensor"
+	"github.com/djeday123/goml/tensor"
 )
 
 // Backward computes gradients for all leaf tensors that require grad.

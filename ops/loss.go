@@ -3,8 +3,8 @@ package ops
 import (
 	"math"
 
-	"github.com/vugar/goml/backend"
-	"github.com/vugar/goml/tensor"
+	"github.com/djeday123/goml/backend"
+	"github.com/djeday123/goml/tensor"
 )
 
 // CrossEntropyLoss computes the cross-entropy loss between logits and targets.

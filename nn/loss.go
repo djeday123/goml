@@ -3,7 +3,7 @@ package nn
 import (
 	"math"
 
-	"github.com/vugar/goml/tensor"
+	"github.com/djeday123/goml/tensor"
 )
 
 // CrossEntropyLoss computes cross-entropy loss for language modeling.

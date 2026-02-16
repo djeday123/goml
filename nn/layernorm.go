@@ -1,9 +1,9 @@
 package nn
 
 import (
-	"github.com/vugar/goml/backend"
-	"github.com/vugar/goml/ops"
-	"github.com/vugar/goml/tensor"
+	"github.com/djeday123/goml/backend"
+	"github.com/djeday123/goml/ops"
+	"github.com/djeday123/goml/tensor"
 )
 
 // LayerNorm implements layer normalization.

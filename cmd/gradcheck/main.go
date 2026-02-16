@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"math"
 
-	_ "github.com/vugar/goml/backend/cpu"
-	"github.com/vugar/goml/backend"
-	"github.com/vugar/goml/nn"
-	"github.com/vugar/goml/ops"
-	"github.com/vugar/goml/tensor"
+	"github.com/djeday123/goml/backend"
+	_ "github.com/djeday123/goml/backend/cpu"
+	"github.com/djeday123/goml/nn"
+	"github.com/djeday123/goml/ops"
+	"github.com/djeday123/goml/tensor"
 )
 
 func main() {
@@ -44,12 +44,12 @@ func main() {
 
 	// Test 2: Compute analytical gradients
 	dLogits, _ := ops.CrossEntropyBackward(logits, targets)
-	
+
 	// Zero all grads
 	for _, p := range model.Parameters() {
 		p.SetGrad(nil)
 	}
-	
+
 	err = model.Backward(cache, dLogits)
 	if err != nil {
 		panic(fmt.Sprintf("Backward error: %v", err))
@@ -58,9 +58,9 @@ func main() {
 	// Test 3: Numerical gradient check on a few parameters
 	fmt.Println("\n--- Numerical Gradient Check ---")
 	eps := float64(1e-4)
-	
+
 	params := model.Parameters()
-	paramsToCheck := []struct{
+	paramsToCheck := []struct {
 		name string
 		idx  int
 	}{
@@ -81,41 +81,41 @@ func main() {
 			fmt.Printf("%-25s: NO GRADIENT!\n", pc.name)
 			continue
 		}
-		
+
 		pData := p.ToFloat32Slice()
 		gData := grad.ToFloat32Slice()
-		
+
 		// Check first 3 elements
 		maxErr := float64(0)
 		for j := 0; j < 3 && j < len(pData); j++ {
 			original := pData[j]
-			
+
 			// f(x + eps)
 			pData[j] = original + float32(eps)
 			logitsPlus, _ := model.Forward(inputs)
 			lossPlus, _ := ops.CrossEntropyLoss(logitsPlus, targets)
-			
+
 			// f(x - eps)
 			pData[j] = original - float32(eps)
 			logitsMinus, _ := model.Forward(inputs)
 			lossMinus, _ := ops.CrossEntropyLoss(logitsMinus, targets)
-			
+
 			// Restore
 			pData[j] = original
-			
+
 			numGrad := (float64(lossPlus.ToFloat32Slice()[0]) - float64(lossMinus.ToFloat32Slice()[0])) / (2 * eps)
 			anaGrad := float64(gData[j])
-			
-			relErr := math.Abs(numGrad - anaGrad) / (math.Abs(numGrad) + math.Abs(anaGrad) + 1e-8)
+
+			relErr := math.Abs(numGrad-anaGrad) / (math.Abs(numGrad) + math.Abs(anaGrad) + 1e-8)
 			if relErr > maxErr {
 				maxErr = relErr
 			}
-			
+
 			if j == 0 {
 				fmt.Printf("%-25s: ana=%.6f num=%.6f rel_err=%.6f", pc.name, anaGrad, numGrad, relErr)
 			}
 		}
-		
+
 		status := "✓"
 		if maxErr > 0.01 {
 			status = "✗ BAD"
@@ -128,7 +128,7 @@ func main() {
 	// Test 4: Try a single gradient step and see if loss decreases
 	fmt.Println("\n--- Single Step Test ---")
 	fmt.Printf("Loss before: %.6f\n", lossVal)
-	
+
 	lr := float32(0.01)
 	for _, p := range model.Parameters() {
 		if p.Grad() == nil {
@@ -140,12 +140,12 @@ func main() {
 			pData[i] -= lr * gData[i]
 		}
 	}
-	
+
 	logits2, _ := model.Forward(inputs)
 	loss2, _ := ops.CrossEntropyLoss(logits2, targets)
 	lossVal2 := loss2.ToFloat32Slice()[0]
 	fmt.Printf("Loss after:  %.6f\n", lossVal2)
-	
+
 	if lossVal2 < lossVal {
 		fmt.Println("✓ Loss decreased! Gradients are correct direction.")
 	} else {

@@ -5,8 +5,8 @@ import (
 	"math"
 	"unsafe"
 
-	"github.com/vugar/goml/backend"
-	"github.com/vugar/goml/core"
+	"github.com/djeday123/goml/backend"
+	"github.com/djeday123/goml/core"
 )
 
 // Backend implements backend.Backend for CPU.
@@ -16,7 +16,7 @@ func init() {
 	backend.Register(&Backend{})
 }
 
-func (b *Backend) Name() string              { return "cpu" }
+func (b *Backend) Name() string                   { return "cpu" }
 func (b *Backend) DeviceType() backend.DeviceType { return backend.CPU }
 
 // ---- Memory ----
@@ -543,12 +543,12 @@ func asBytes(s backend.Storage, n int) []byte {
 	if b != nil {
 		return b[:n]
 	}
-	return unsafe.Slice((*byte)(unsafe.Pointer(s.Ptr())), n)
+	return unsafe.Slice((*byte)(s.Ptr()), n)
 }
 
 func f32Slice(s backend.Storage, n int) []float32 {
 	b := s.Bytes()
-	if b != nil && len(b) > 0 {
+	if len(b) > 0 {
 		return unsafe.Slice((*float32)(unsafe.Pointer(&b[0])), n)
 	}
 	return unsafe.Slice((*float32)(unsafe.Pointer(s.Ptr())), n)
@@ -556,7 +556,7 @@ func f32Slice(s backend.Storage, n int) []float32 {
 
 func f64Slice(s backend.Storage, n int) []float64 {
 	b := s.Bytes()
-	if b != nil && len(b) > 0 {
+	if len(b) > 0 {
 		return unsafe.Slice((*float64)(unsafe.Pointer(&b[0])), n)
 	}
 	return unsafe.Slice((*float64)(unsafe.Pointer(s.Ptr())), n)
@@ -564,7 +564,7 @@ func f64Slice(s backend.Storage, n int) []float64 {
 
 func i32Slice(s backend.Storage, n int) []int32 {
 	b := s.Bytes()
-	if b != nil && len(b) > 0 {
+	if len(b) > 0 {
 		return unsafe.Slice((*int32)(unsafe.Pointer(&b[0])), n)
 	}
 	return unsafe.Slice((*int32)(unsafe.Pointer(s.Ptr())), n)
@@ -572,7 +572,7 @@ func i32Slice(s backend.Storage, n int) []int32 {
 
 func i64Slice(s backend.Storage, n int) []int64 {
 	b := s.Bytes()
-	if b != nil && len(b) > 0 {
+	if len(b) > 0 {
 		return unsafe.Slice((*int64)(unsafe.Pointer(&b[0])), n)
 	}
 	return unsafe.Slice((*int64)(unsafe.Pointer(s.Ptr())), n)

@@ -1,15 +1,16 @@
 package nn
 
 import (
-	"github.com/vugar/goml/backend"
-	"github.com/vugar/goml/ops"
-	"github.com/vugar/goml/tensor"
+	"github.com/djeday123/goml/backend"
+	"github.com/djeday123/goml/ops"
+	"github.com/djeday123/goml/tensor"
 )
 
 // TransformerBlock is one layer of the transformer.
 // Pre-norm architecture (LLaMA style):
-//   x = x + Attention(LayerNorm(x))
-//   x = x + FFN(LayerNorm(x))
+//
+//	x = x + Attention(LayerNorm(x))
+//	x = x + FFN(LayerNorm(x))
 type TransformerBlock struct {
 	AttnNorm *LayerNorm
 	Attn     *MultiHeadAttention
