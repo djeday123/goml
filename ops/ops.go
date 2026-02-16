@@ -1,6 +1,8 @@
 package ops
 
 import (
+	"fmt"
+
 	"github.com/vugar/goml/backend"
 	"github.com/vugar/goml/tensor"
 )
@@ -150,6 +152,21 @@ func MatMul(a, b *tensor.Tensor) (*tensor.Tensor, error) {
 		return nil, err
 	}
 
+	// Ensure contiguous layout before sending to backend
+	origA, origB := a, b
+	if !a.IsContiguous() {
+		a, err = a.Contiguous()
+		if err != nil {
+			return nil, fmt.Errorf("matmul: contiguous A: %w", err)
+		}
+	}
+	if !b.IsContiguous() {
+		b, err = b.Contiguous()
+		if err != nil {
+			return nil, fmt.Errorf("matmul: contiguous B: %w", err)
+		}
+	}
+
 	shapeA := a.Shape()
 	shapeB := b.Shape()
 	ndimA := len(shapeA)
@@ -174,9 +191,9 @@ func MatMul(a, b *tensor.Tensor) (*tensor.Tensor, error) {
 	}
 
 	out := tensor.NewTensor(store, outShape, a.DType())
-	if needsGrad(a, b) {
+	if needsGrad(origA, origB) {
 		out.SetRequiresGrad(true)
-		out.SetGradFn(&matmulGradFn{a: a, b: b})
+		out.SetGradFn(&matmulGradFn{a: origA, b: origB})
 	}
 	return out, nil
 }

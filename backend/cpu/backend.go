@@ -337,7 +337,7 @@ func (b *Backend) Embedding(dst, weight, indices backend.Storage, vocabSize, emb
 	}
 
 	wData := f32Slice(weight, vocabSize*embedDim)
-	iData := unsafe.Slice((*int64)(unsafe.Pointer(indices.Ptr())), seqLen)
+	iData := i64Slice(indices, seqLen)
 	oData := f32Slice(dst, seqLen*embedDim)
 
 	for s := 0; s < seqLen; s++ {
@@ -516,7 +516,7 @@ func (b *Backend) Arange(dst backend.Storage, start, step float64, n int, dtype 
 
 func (b *Backend) Where(dst, cond, a, bStore backend.Storage, shape core.Shape, dtype core.DType) error {
 	n := shape.NumElements()
-	condData := unsafe.Slice((*byte)(unsafe.Pointer(cond.Ptr())), n)
+	condData := cond.Bytes()[:n]
 
 	switch dtype {
 	case core.Float32:
@@ -539,22 +539,42 @@ func (b *Backend) Where(dst, cond, a, bStore backend.Storage, shape core.Shape, 
 // ---- Helpers ----
 
 func asBytes(s backend.Storage, n int) []byte {
+	b := s.Bytes()
+	if b != nil {
+		return b[:n]
+	}
 	return unsafe.Slice((*byte)(unsafe.Pointer(s.Ptr())), n)
 }
 
 func f32Slice(s backend.Storage, n int) []float32 {
+	b := s.Bytes()
+	if b != nil && len(b) > 0 {
+		return unsafe.Slice((*float32)(unsafe.Pointer(&b[0])), n)
+	}
 	return unsafe.Slice((*float32)(unsafe.Pointer(s.Ptr())), n)
 }
 
 func f64Slice(s backend.Storage, n int) []float64 {
+	b := s.Bytes()
+	if b != nil && len(b) > 0 {
+		return unsafe.Slice((*float64)(unsafe.Pointer(&b[0])), n)
+	}
 	return unsafe.Slice((*float64)(unsafe.Pointer(s.Ptr())), n)
 }
 
 func i32Slice(s backend.Storage, n int) []int32 {
+	b := s.Bytes()
+	if b != nil && len(b) > 0 {
+		return unsafe.Slice((*int32)(unsafe.Pointer(&b[0])), n)
+	}
 	return unsafe.Slice((*int32)(unsafe.Pointer(s.Ptr())), n)
 }
 
 func i64Slice(s backend.Storage, n int) []int64 {
+	b := s.Bytes()
+	if b != nil && len(b) > 0 {
+		return unsafe.Slice((*int64)(unsafe.Pointer(&b[0])), n)
+	}
 	return unsafe.Slice((*int64)(unsafe.Pointer(s.Ptr())), n)
 }
 

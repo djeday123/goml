@@ -53,6 +53,9 @@ type Storage interface {
 	// For CPU this is a Go pointer, for GPU it's a device pointer.
 	Ptr() uintptr
 
+	// Bytes returns the underlying byte slice (CPU only, nil for GPU).
+	Bytes() []byte
+
 	// ByteLen returns the total size in bytes.
 	ByteLen() int
 

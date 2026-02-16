@@ -26,6 +26,8 @@ func (s *storage) Ptr() uintptr {
 
 func (s *storage) ByteLen() int { return len(s.data) }
 
+func (s *storage) Bytes() []byte { return s.data }
+
 func (s *storage) Free() {
 	s.data = nil
 }

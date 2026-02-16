@@ -74,7 +74,7 @@ func FromSlice[T float32 | float64 | int32 | int64](data []T, shape Shape) (*Ten
 	}
 
 	// Copy data into storage
-	copySliceToPtr(data, store.Ptr(), byteLen)
+	copySliceToStorage(data, store.Bytes())
 
 	return NewTensor(store, shape, dtype), nil
 }
@@ -157,6 +157,53 @@ func (t *Tensor) IsLeaf() bool          { return t.isLeaf }
 
 func (t *Tensor) IsContiguous() bool {
 	return IsContiguous(t.shape, t.strides, t.dtype.Size())
+}
+
+// Contiguous returns a contiguous copy of the tensor.
+// If already contiguous, returns the same tensor (no copy).
+func (t *Tensor) Contiguous() (*Tensor, error) {
+	if t.IsContiguous() {
+		return t, nil
+	}
+
+	n := t.NumElements()
+	elemSize := int(t.dtype.Size())
+	byteLen := n * elemSize
+
+	// Allocate new contiguous storage
+	newData := make([]float32, n)
+	
+	shape := t.shape
+	strides := t.strides
+	ndim := len(shape)
+	indices := make([]int, ndim)
+	srcSlice := SliceFromPtr[float32](t.storage.Ptr(), n*2) // oversized for safety
+
+	for i := 0; i < n; i++ {
+		// Compute source offset from strides (in bytes → elements)
+		srcOffset := 0
+		for d := 0; d < ndim; d++ {
+			srcOffset += indices[d] * (strides[d] / elemSize)
+		}
+		newData[i] = srcSlice[srcOffset]
+
+		// Increment indices
+		for d := ndim - 1; d >= 0; d-- {
+			indices[d]++
+			if indices[d] < shape[d] {
+				break
+			}
+			indices[d] = 0
+		}
+	}
+
+	result, err := FromSlice(newData, shape)
+	if err != nil {
+		// fallback: alloc manually
+		_ = byteLen
+		return nil, err
+	}
+	return result, nil
 }
 
 func (t *Tensor) RequiresGrad() bool { return t.requiresGrad }
