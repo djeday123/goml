@@ -196,6 +196,7 @@ func initCuBLAS() error {
 			hasGemmEx = true
 			fmt.Println("[GoML] cublasGemmEx wrapper loaded -- FP16 mixed precision available")
 		}
+		initCuBLASLt()
 	})
 	return cublasErr
 }
@@ -402,33 +403,4 @@ func (h *CuBLASHandle) BatchedMatMulF16(dstPtr, aPtr, bPtr uintptr, batch, M, K,
 		CUDA_R_16F, CUDA_R_16F, CUDA_R_32F,
 		CUBLAS_COMPUTE_32F_FAST_TF32,
 		2, 2, 4)
-}
-
-// ================================================================
-// FP8 MatMul (requires wrapper + SM 8.9+ Ada/Hopper)
-// ================================================================
-
-// MatMulF8E4M3: FP8 E4M3 in, FP32 out, FP32 compute.
-// Best for forward pass -- higher mantissa precision (3 bits).
-// A: [M, K] FP8, B: [K, N] FP8, C: [M, N] FP32. Row-major.
-func (h *CuBLASHandle) MatMulF8E4M3(dstPtr, aPtr, bPtr uintptr, M, K, N int) error {
-	return h.MatMulMixed(dstPtr, aPtr, bPtr, M, K, N,
-		CUDA_R_8F_E4M3, CUDA_R_8F_E4M3, CUDA_R_32F,
-		CUBLAS_COMPUTE_32F)
-}
-
-// MatMulF8E5M2: FP8 E5M2 in, FP32 out, FP32 compute.
-// Best for backward pass -- wider dynamic range (5 exp bits).
-func (h *CuBLASHandle) MatMulF8E5M2(dstPtr, aPtr, bPtr uintptr, M, K, N int) error {
-	return h.MatMulMixed(dstPtr, aPtr, bPtr, M, K, N,
-		CUDA_R_8F_E5M2, CUDA_R_8F_E5M2, CUDA_R_32F,
-		CUBLAS_COMPUTE_32F)
-}
-
-// BatchedMatMulF8E4M3: batched FP8 E4M3 convenience.
-func (h *CuBLASHandle) BatchedMatMulF8E4M3(dstPtr, aPtr, bPtr uintptr, batch, M, K, N int) error {
-	return h.BatchedMatMulMixed(dstPtr, aPtr, bPtr, batch, M, K, N,
-		CUDA_R_8F_E4M3, CUDA_R_8F_E4M3, CUDA_R_32F,
-		CUBLAS_COMPUTE_32F,
-		1, 1, 4) // FP8=1 byte, FP32=4 bytes
 }

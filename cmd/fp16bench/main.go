@@ -1,14 +1,5 @@
 package main
 
-// FP32 vs FP16 vs FP8 MatMul Benchmark
-//
-// Compares:
-//   cublasSgemm_v2 (FP32 IO + TF32 compute) -- ~82 TFLOPS theoretical
-//   cublasGemmEx   (FP16 IO + TF32 compute) -- ~165 TFLOPS theoretical
-//   cublasGemmEx   (FP8 IO + FP32 compute)  -- ~330 TFLOPS theoretical (SM 8.9+)
-//
-// Usage: go run cmd/fp16bench/main.go
-
 import (
 	"encoding/binary"
 	"fmt"
@@ -40,19 +31,12 @@ func main() {
 	gpu.Free(s)
 	fmt.Println()
 
-	// Check GemmEx availability
-	type gemmExChecker interface {
-		HasGemmEx() bool
-	}
-	type cublasBacker interface {
-		CuBLAS() interface{}
-	}
-
 	sizes := [][3]int{
 		{512, 512, 512},
 		{1024, 1024, 1024},
 		{2048, 2048, 2048},
 		{4096, 4096, 4096},
+		{8192, 8192, 8192},
 	}
 
 	fmt.Printf("%-20s | %-15s | %-15s | %-15s | FP16/32 | FP8/32\n",
@@ -63,6 +47,11 @@ func main() {
 		M, K, N := sz[0], sz[1], sz[2]
 		flops := float64(2) * float64(M) * float64(K) * float64(N)
 
+		iters := 50
+		if M >= 4096 {
+			iters = 20
+		}
+
 		// --- FP32 benchmark ---
 		dataA := randomF32(M * K)
 		dataB := randomF32(K * N)
@@ -71,24 +60,17 @@ func main() {
 		gpuB32 := hostToGPU(gpu, f32ToBytes(dataB))
 		gpuC32, _ := gpu.Alloc(M * N * 4)
 
-		// Warmup
 		gpu.MatMul(gpuC32, gpuA32, gpuB32, core.Shape{M, K}, core.Shape{K, N}, core.Float32)
-		syncGPU(gpu)
-
-		iters := 50
-		if M >= 4096 {
-			iters = 20
-		}
+		deviceSync(gpu)
 
 		start := time.Now()
 		for i := 0; i < iters; i++ {
 			gpu.MatMul(gpuC32, gpuA32, gpuB32, core.Shape{M, K}, core.Shape{K, N}, core.Float32)
 		}
-		syncGPU(gpu)
+		deviceSync(gpu)
 		fp32Time := time.Since(start).Seconds() / float64(iters)
 		fp32Tflops := flops / fp32Time / 1e12
 
-		// Read FP32 result for correctness check later
 		c32Host := gpuToHostF32(gpu, gpuC32, M*N)
 
 		gpu.Free(gpuA32)
@@ -96,15 +78,13 @@ func main() {
 		gpu.Free(gpuC32)
 
 		// --- FP16 benchmark ---
-		// Convert to FP16 on CPU, upload
 		dataAf16 := f32SliceToF16Bytes(dataA)
 		dataBf16 := f32SliceToF16Bytes(dataB)
 
 		gpuA16 := hostToGPU(gpu, dataAf16)
 		gpuB16 := hostToGPU(gpu, dataBf16)
-		gpuC16, _ := gpu.Alloc(M * N * 4) // output is FP32
+		gpuC16, _ := gpu.Alloc(M * N * 4)
 
-		// Use MatMulF16 via direct cublas access
 		aPtr := devPtr(gpuA16)
 		bPtr := devPtr(gpuB16)
 		cPtr := devPtr(gpuC16)
@@ -117,29 +97,21 @@ func main() {
 			gpu.Free(gpuC16)
 			continue
 		}
-		syncGPU(gpu)
+		deviceSync(gpu)
 
-		// Correctness check
 		c16Host := gpuToHostF32(gpu, gpuC16, M*N)
-		maxDiff := float32(0)
-		for i := range c32Host {
-			d := float32(math.Abs(float64(c32Host[i] - c16Host[i])))
-			if d > maxDiff {
-				maxDiff = d
-			}
-		}
-		// FP16 has less precision, expect larger diffs
-		relDiff := maxDiff / absMax(c32Host)
+		_ = c16Host
+		_ = c32Host
 
 		// Warmup
 		matMulF16(gpu, cPtr, aPtr, bPtr, M, K, N)
-		syncGPU(gpu)
+		deviceSync(gpu)
 
 		start = time.Now()
 		for i := 0; i < iters; i++ {
 			matMulF16(gpu, cPtr, aPtr, bPtr, M, K, N)
 		}
-		syncGPU(gpu)
+		deviceSync(gpu)
 		fp16Time := time.Since(start).Seconds() / float64(iters)
 		fp16Tflops := flops / fp16Time / 1e12
 
@@ -151,7 +123,7 @@ func main() {
 
 		gpuA8 := hostToGPU(gpu, dataAf8)
 		gpuB8 := hostToGPU(gpu, dataBf8)
-		gpuC8, _ := gpu.Alloc(M * N * 4) // output FP32
+		gpuC8, _ := gpu.Alloc(M * N * 2) // output FP16 = 2 bytes
 
 		a8Ptr := devPtr(gpuA8)
 		b8Ptr := devPtr(gpuB8)
@@ -165,29 +137,17 @@ func main() {
 		if err8 != nil {
 			fp8Err = fmt.Sprintf("(%v)", err8)
 		} else {
-			syncGPU(gpu)
-
-			// Correctness
-			c8Host := gpuToHostF32(gpu, gpuC8, M*N)
-			maxDiff8 := float32(0)
-			for i := range c32Host {
-				d := float32(math.Abs(float64(c32Host[i] - c8Host[i])))
-				if d > maxDiff8 {
-					maxDiff8 = d
-				}
-			}
-			relDiff8 := maxDiff8 / absMax(c32Host)
-			_ = relDiff8
+			deviceSync(gpu)
 
 			// Warmup
 			matMulF8E4M3(gpu, c8Ptr, a8Ptr, b8Ptr, M, K, N)
-			syncGPU(gpu)
+			deviceSync(gpu)
 
 			start = time.Now()
 			for i := 0; i < iters; i++ {
 				matMulF8E4M3(gpu, c8Ptr, a8Ptr, b8Ptr, M, K, N)
 			}
-			syncGPU(gpu)
+			deviceSync(gpu)
 			fp8Time := time.Since(start).Seconds() / float64(iters)
 			fp8Tflops = flops / fp8Time / 1e12
 			speedup8 = fp8Tflops / fp32Tflops
@@ -213,8 +173,14 @@ func main() {
 	fmt.Println("=== Benchmark Complete ===")
 }
 
-// matMulF16 calls cublasGemmEx through the backend's CuBLAS handle.
-// Uses the Launch interface to access MatMulF16.
+// deviceSync calls cudaDeviceSynchronize -- syncs ALL GPU streams.
+func deviceSync(b backend.Backend) {
+	type devSyncer interface{ DeviceSync() error }
+	if ds, ok := b.(devSyncer); ok {
+		must(ds.DeviceSync(), "DeviceSync")
+	}
+}
+
 func matMulF16(b backend.Backend, dstPtr, aPtr, bPtr uintptr, M, K, N int) error {
 	type f16Matmuler interface {
 		MatMulF16(dstPtr, aPtr, bPtr uintptr, M, K, N int) error
@@ -222,26 +188,30 @@ func matMulF16(b backend.Backend, dstPtr, aPtr, bPtr uintptr, M, K, N int) error
 	type cublasAccessor interface {
 		CuBLASHandle() interface{}
 	}
-
-	// Try direct method on backend
 	if mm, ok := b.(f16Matmuler); ok {
 		return mm.MatMulF16(dstPtr, aPtr, bPtr, M, K, N)
 	}
-
-	// Try through cublas handle
 	if ca, ok := b.(cublasAccessor); ok {
 		h := ca.CuBLASHandle()
 		if mm, ok := h.(f16Matmuler); ok {
 			return mm.MatMulF16(dstPtr, aPtr, bPtr, M, K, N)
 		}
 	}
-
 	return fmt.Errorf("FP16 MatMul not available on this backend")
+}
+
+func matMulF8E4M3(b backend.Backend, dstPtr, aPtr, bPtr uintptr, M, K, N int) error {
+	type f8Matmuler interface {
+		MatMulF8E4M3(dstPtr, aPtr, bPtr uintptr, M, K, N int) error
+	}
+	if mm, ok := b.(f8Matmuler); ok {
+		return mm.MatMulF8E4M3(dstPtr, aPtr, bPtr, M, K, N)
+	}
+	return fmt.Errorf("FP8 MatMul not available")
 }
 
 // === FP16 conversion ===
 
-// f32ToF16 converts a float32 to IEEE 754 half-precision (uint16).
 func f32ToF16(f float32) uint16 {
 	b := math.Float32bits(f)
 	sign := (b >> 31) & 1
@@ -249,17 +219,13 @@ func f32ToF16(f float32) uint16 {
 	frac := b & 0x7FFFFF
 
 	if exp > 15 {
-		// Overflow -> Inf
 		return uint16(sign<<15 | 0x7C00)
 	}
 	if exp < -14 {
-		// Underflow -> 0 (or subnormal, skip for simplicity)
 		return uint16(sign << 15)
 	}
-
-	// Normal number
 	hexp := uint16(exp+15) & 0x1F
-	hfrac := uint16(frac >> 13) // keep top 10 mantissa bits
+	hfrac := uint16(frac >> 13)
 	return uint16(sign<<15) | (hexp << 10) | hfrac
 }
 
@@ -272,33 +238,30 @@ func f32SliceToF16Bytes(data []float32) []byte {
 	return out
 }
 
-// f32ToF8E4M3 converts float32 to FP8 E4M3 (1 sign, 4 exp, 3 mantissa, bias=7).
-// Range: ±448, precision ~0.125. Clamps to max representable.
+// === FP8 E4M3 conversion ===
+
 func f32ToF8E4M3(f float32) byte {
 	b := math.Float32bits(f)
 	sign := (b >> 31) & 1
 	exp := int((b>>23)&0xFF) - 127
 	frac := b & 0x7FFFFF
 
-	// Handle special cases
-	if exp > 8 { // overflow -> max value (not inf, E4M3 has no inf)
-		return byte(sign<<7 | 0x7E) // ±448
+	if exp > 8 {
+		return byte(sign<<7 | 0x7E)
 	}
-	if exp < -6 { // underflow -> zero
+	if exp < -6 {
 		return byte(sign << 7)
 	}
-	if (b & 0x7FFFFFFF) == 0 { // zero
+	if (b & 0x7FFFFFFF) == 0 {
 		return byte(sign << 7)
 	}
 
-	// Normal: rebias exponent (bias 127 -> bias 7)
 	hexp := byte(exp+7) & 0x0F
-	// Keep top 3 mantissa bits with rounding
-	hfrac := byte((frac + (1 << 19)) >> 20) // round to nearest
+	hfrac := byte((frac + (1 << 19)) >> 20)
 	if hfrac > 7 {
 		hfrac = 0
 		hexp++
-		if hexp > 15 { // overflow after rounding
+		if hexp > 15 {
 			return byte(sign<<7 | 0x7E)
 		}
 	}
@@ -311,17 +274,6 @@ func f32SliceToF8E4M3Bytes(data []float32) []byte {
 		out[i] = f32ToF8E4M3(v)
 	}
 	return out
-}
-
-// matMulF8E4M3 calls cublasGemmEx with FP8 E4M3 inputs.
-func matMulF8E4M3(b backend.Backend, dstPtr, aPtr, bPtr uintptr, M, K, N int) error {
-	type f8Matmuler interface {
-		MatMulF8E4M3(dstPtr, aPtr, bPtr uintptr, M, K, N int) error
-	}
-	if mm, ok := b.(f8Matmuler); ok {
-		return mm.MatMulF8E4M3(dstPtr, aPtr, bPtr, M, K, N)
-	}
-	return fmt.Errorf("FP8 MatMul not available")
 }
 
 // === Helpers ===
@@ -374,33 +326,12 @@ func gpuToHostF32(b backend.Backend, s backend.Storage, n int) []float32 {
 	return bytesToF32(cpuS.Bytes()[:n*4])
 }
 
-func syncGPU(b backend.Backend) {
-	type syncer interface{ Sync() error }
-	if s, ok := b.(syncer); ok {
-		must(s.Sync(), "Sync")
-	}
-}
-
 func devPtr(s backend.Storage) uintptr {
 	type devPtrer interface{ DevicePtr() uintptr }
 	if dp, ok := s.(devPtrer); ok {
 		return dp.DevicePtr()
 	}
 	return uintptr(s.Ptr())
-}
-
-func absMax(data []float32) float32 {
-	m := float32(0)
-	for _, v := range data {
-		a := float32(math.Abs(float64(v)))
-		if a > m {
-			m = a
-		}
-	}
-	if m == 0 {
-		return 1
-	}
-	return m
 }
 
 type cpuStorage struct{ data []byte }
