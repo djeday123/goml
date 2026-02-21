@@ -1,0 +1,377 @@
+╔══════════════════════════════════════════════════════╗
+║  TMA (Tensor Memory Accelerator) Probe — RTX 4090  ║
+║  Ищем скрытый DMA-движок в AD102 silicon           ║
+╚══════════════════════════════════════════════════════╝
+
+GPU: 0000:02:00.0 (0x2684) BAR0=16MB
+
+BOOT_0 = 0x192000A1 → AD102 (sm_89)
+
+
+  === Full Discovery Table Decode ===
+
+  #    Raw          TypeID   IP Block                       Description
+  ─────────────────────────────────────────────────────────────────
+    0  0x80000040  0x10/0   GSP                            GPU System Processor
+    1  0xC040000C  (addr)   ref→PMU                      
+    3  0x8D00000E  0x03/0   CE                             Copy Engine (DMA)
+       (CE — Copy Engine, может содержать TMA-like функции)
+    4  0xC0087001  (addr)   ref→GR                       
+    6  0x8E01000C  0x03/0   CE                             Copy Engine (DMA)
+       (CE — Copy Engine, может содержать TMA-like функции)
+    7  0xC01CC013  (addr)   ref→NVLINK                   
+    9  0x8E02000D  0x03/0   CE                             Copy Engine (DMA)
+       (CE — Copy Engine, может содержать TMA-like функции)
+   10  0xC01D0006  (addr)   ref→MSPDEC                   
+   12  0x90000019  0x06/0   MSPDEC                         Media SPU Decoder
+   13  0xC083000F  (addr)   ref→NVDEC                    
+   15  0x9300000F  0x03/0   CE                             Copy Engine (DMA)
+       (CE — Copy Engine, может содержать TMA-like функции)
+   16  0xC0104002  (addr)   ref→SEC                      
+   17  0x00C00001  (addr)   ref→GR                       
+   18  0x93010010  0x04/0   DISPLAY                        Display Controller
+   19  0xC0104003  (addr)   ref→CE                       
+   20  0x00C00002  (addr)   ref→SEC                      
+   21  0x93020011  0x04/0   DISPLAY                        Display Controller
+   22  0xC0104005  (addr)   ref→HDACODEC                 
+   24  0x93030012  0x04/0   DISPLAY                        Display Controller
+   25  0xC010400A  (addr)   ref→PERFMON                  
+   27  0x93040013  0x04/0   DISPLAY                        Display Controller
+   28  0xC010400B  (addr)   ref→BUS                      
+   30  0x9600000A  0x02/0   SEC                            Security Engine
+   31  0xC0844011  (addr)   ref→FBHUB                    
+   33  0x94000002  0x00/0   (UNKNOWN)                      
+   35  0x97000004  0x01/0   GR                             Graphics Engine
+
+  === IP Type Summary ===
+
+  Type 0x00: count=1  UNKNOWN
+  Type 0x01: count=1  GR — Graphics Engine
+  Type 0x02: count=1  SEC — Security Engine
+  Type 0x03: count=4  CE — Copy Engine (DMA)
+  Type 0x04: count=4  DISPLAY — Display Controller
+  Type 0x06: count=1  MSPDEC — Media SPU Decoder
+  Type 0x10: count=1  GSP — GPU System Processor
+
+  === SM Capability Registers ===
+  Ищем скрытые capabilities в SM (Streaming Multiprocessor)
+
+    [0x409800] GR_PRI_FE_STATUS                    = 0x00000001
+    [0x409804] GR_PRI_FE_CAPS                      = 0x00000001
+    [0x409A00] GR_PRI_SKED_STATUS                  = 0x00000078
+    [0x409A04] GR_PRI_SKED_CAPS                    = 0x0205DB00
+    [0x419A00] GPCS_TPCS_SM_STATUS                 = 0x00010000
+    [0x419A04] GPCS_TPCS_SM_ARCH                   = 0x00000005
+           SM_ARCH: major=0 minor=0 (sm_00)
+           Cap bits: 0x0005
+           0000 0000 0000 0101 
+    [0x419A08] GPCS_TPCS_SM_ARCH2                  = 0x00000221
+    [0x419A0C] GPCS_TPCS_SM_ARCH3                  = 0x00100000
+    [0x419A1C] GPCS_TPCS_SM_CAPS4                  = 0x0010C800
+    [0x419A20] GPCS_TPCS_SM_EXTENDED1              = 0x1C03DABF
+    [0x419A30] GPCS_TPCS_SM_BULK_CAPS?             = 0x00000011
+    [0x419C00] GPCS_TPCS_MPC_STATUS                = 0x00000092
+    [0x419C04] GPCS_TPCS_MPC_CAPS                  = 0x000006F0
+    [0x41BE04] GPCS_PPCS_CAPS                      = 0x00000002
+    [0x418900] GPCS_ZCULL_STATUS                   = 0x80000000
+
+  === TMA MMIO Scan ===
+  Сканируем регистры которые на Hopper содержат TMA логику
+
+  SM/TPC/GPC Level:
+    [0x500000] GPC0 base                           = 0x8700029F  ← LIVE
+    [0x500004] GPC0 +4                             = 0x08000000  ← LIVE
+    [0x500200] GPC0 status                         = 0xBADF1100  (PRI_TIMEOUT(power-gated))
+    [0x504000] GPC0.TPC0 base                      = 0xBADF5040  (PRI_ERROR(denied))
+    [0x504004] GPC0.TPC0 +4                        = 0x00000000  (UNMAPPED)
+    [0x504200] GPC0.TPC0 status                    = 0x00010000  ← LIVE
+    [0x504400] GPC0.TPC0.SM0 base                  = 0x00000092  ← LIVE
+    [0x504404] GPC0.TPC0.SM0 +4                    = 0x000006F0  ← LIVE
+    [0x504410] GPC0.TPC0.SM0 caps                  = 0x00000000  (UNMAPPED)
+    [0x504500] GPC0.TPC0.SM0 +0x100                = 0x00000000  (UNMAPPED)
+    [0x504600] GPC0.TPC0.SM0 extended_caps?        = 0x00203600  ← LIVE
+    [0x504700] GPC0.TPC0.SM0 dma_caps?             = 0x00000000  (UNMAPPED)
+    [0x504800] GPC0.TPC0.SM0 tma_region?           = 0xBADF5040  (PRI_ERROR(denied))
+
+  Copy Engine (CE) Extended:
+    [0x104100] CE0 extended?                       = 0x0000000F  ← LIVE
+    [0x104200] CE0 tma_config?                     = 0x00004044  ← LIVE
+
+  FBPA / FBHUB (Framebuffer bulk transfer path):
+    [0x100010] FBHUB caps                          = 0x00F0F0FF  ← LIVE
+    [0x9A0000] FBPA0 base                          = 0x00000043  ← LIVE
+    [0x9A0200] FBPA0 extended?                     = 0x069F8803  ← LIVE
+
+  CTA / Warp Scheduler (instruction decode path):
+    [0x419000] GR_PRI_CTA base?                    = 0x90260784  ← LIVE
+    [0x419004] GR_PRI_CTA +4                       = 0x0205D100  ← LIVE
+    [0x418000] GR_PRI_GPCS base                    = 0x8700029F  ← LIVE
+    [0x418004] GR_PRI_GPCS +4                      = 0x08000000  ← LIVE
+
+  === Full GPU Engine Map (0x000000 - 0x1000000) ===
+  Сканируем всё BAR0, классифицируем каждый 4KB блок
+
+  Addr     Status    Description
+  ──────────────────────────────────────────────
+  0x000000  LIVE       L= 3 T= 9 E= 3  PMC (Master Control)
+  0x010000  PWR-GATED  L= 0 T=16 E= 0  
+  0x020000  LIVE       L= 1 T=14 E= 1  PTIMER
+  0x030000  PWR-GATED  L= 0 T=16 E= 0  
+  0x040000  LIVE       L= 2 T= 7 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x050000  PWR-GATED  L= 0 T=16 E= 0  
+  0x060000  PWR-GATED  L= 0 T=16 E= 0  PCOPY/CE
+  0x070000  PWR-GATED  L= 0 T=15 E= 0  
+  0x080000  LIVE       L= 5 T=10 E= 1    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x090000  PWR-GATED  L= 0 T=16 E= 0  
+  0x0C0000  PWR-GATED  L= 0 T=16 E= 0  
+  0x0D0000  PWR-GATED  L= 0 T=16 E= 0  
+  0x0E0000  PWR-GATED  L= 0 T=16 E= 0  
+  0x0F0000  PWR-GATED  L= 0 T=16 E= 0  
+  0x100000  LIVE       L= 4 T= 5 E= 5  FBHUB/FBPA
+  0x110000  LIVE       L= 2 T= 8 E= 4  LTC
+  0x120000  LIVE       L= 3 T= 4 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x130000  LIVE       L= 1 T=11 E= 3    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x140000  LIVE       L= 8 T= 0 E= 8  FB/MEM
+  0x150000  LIVE       L= 4 T= 8 E= 4  FB/MEM
+  0x160000  PWR-GATED  L= 0 T=16 E= 0  
+  0x170000  LIVE       L= 1 T=14 E= 1  PMU/FECS
+  0x180000  LIVE       L= 3 T= 4 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x190000  LIVE       L= 4 T= 4 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x1A0000  LIVE       L= 3 T= 4 E= 3    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x1B0000  PWR-GATED  L= 0 T=16 E= 0  
+  0x1C0000  LIVE       L= 1 T=12 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x1D0000  LIVE       L= 1 T= 4 E= 8    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x1E0000  PWR-GATED  L= 0 T=13 E= 3  
+  0x1F0000  LIVE       L= 3 T= 1 E= 7    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x200000  LIVE       L= 3 T= 8 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x210000  LIVE       L= 2 T=12 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x220000  PWR-GATED  L= 0 T=16 E= 0  
+  0x230000  PWR-GATED  L= 0 T=16 E= 0  
+  0x240000  LIVE       L= 5 T=10 E= 1    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x250000  LIVE       L= 1 T=15 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x260000  PWR-GATED  L= 0 T=14 E= 0  
+  0x270000  LIVE       L= 1 T=11 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x280000  PWR-GATED  L= 0 T=16 E= 0  
+  0x290000  PWR-GATED  L= 0 T=16 E= 0  
+  0x2A0000  PWR-GATED  L= 0 T=16 E= 0  
+  0x2B0000  PWR-GATED  L= 0 T=16 E= 0  
+  0x2C0000  PWR-GATED  L= 0 T=16 E= 0  
+  0x2D0000  PWR-GATED  L= 0 T=16 E= 0  
+  0x2E0000  PWR-GATED  L= 0 T=16 E= 0  
+  0x2F0000  PWR-GATED  L= 0 T=16 E= 0  
+  0x300000  LIVE       L= 8 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x310000  LIVE       L=16 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x320000  LIVE       L=16 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x330000  LIVE       L=16 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x340000  LIVE       L=15 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x350000  LIVE       L=16 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x360000  LIVE       L=16 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x370000  LIVE       L=15 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x380000  LIVE       L=10 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x390000  LIVE       L= 4 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x3D0000  LIVE       L= 6 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x3E0000  LIVE       L= 8 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x3F0000  LIVE       L= 7 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x400000  LIVE       L= 5 T= 8 E= 2  GR (Graphics)
+  0x410000  LIVE       L= 2 T= 9 E= 3  GR (Graphics)
+  0x420000  PWR-GATED  L= 0 T=16 E= 0  GR (Graphics)
+  0x430000  PWR-GATED  L= 0 T=16 E= 0  GR (Graphics)
+  0x440000  PWR-GATED  L= 0 T=16 E= 0  GR (Graphics)
+  0x450000  PWR-GATED  L= 0 T=16 E= 0  GR (Graphics)
+  0x460000  PWR-GATED  L= 0 T=16 E= 0  GR (Graphics)
+  0x470000  PWR-GATED  L= 0 T=16 E= 0  GR (Graphics)
+  0x480000  PWR-GATED  L= 0 T=16 E= 0  GR (Graphics)
+  0x490000  PWR-GATED  L= 0 T=16 E= 0  GR (Graphics)
+  0x4A0000  PWR-GATED  L= 0 T=16 E= 0  GR (Graphics)
+  0x4B0000  PWR-GATED  L= 0 T=16 E= 0  GR (Graphics)
+  0x4C0000  PWR-GATED  L= 0 T=16 E= 0  GR (Graphics)
+  0x4D0000  PWR-GATED  L= 0 T=16 E= 0  GR (Graphics)
+  0x4E0000  PWR-GATED  L= 0 T=16 E= 0  GR (Graphics)
+  0x4F0000  PWR-GATED  L= 0 T=16 E= 0  GR (Graphics)
+  0x500000  LIVE       L= 4 T= 2 E= 6  GPC (Graphics Processing Cluster)
+  0x510000  LIVE       L= 4 T= 2 E= 6  GPC (Graphics Processing Cluster)
+  0x520000  LIVE       L= 4 T= 2 E= 6  GPC (Graphics Processing Cluster)
+  0x530000  LIVE       L= 4 T= 2 E= 6  GPC (Graphics Processing Cluster)
+  0x540000  LIVE       L= 4 T= 2 E= 6  GPC (Graphics Processing Cluster)
+  0x550000  LIVE       L= 2 T= 2 E=10  GPC (Graphics Processing Cluster)
+  0x560000  PWR-GATED  L= 0 T=16 E= 0  GPC (Graphics Processing Cluster)
+  0x570000  PWR-GATED  L= 0 T=16 E= 0  GPC (Graphics Processing Cluster)
+  0x580000  PWR-GATED  L= 0 T=16 E= 0  GPC (Graphics Processing Cluster)
+  0x590000  PWR-GATED  L= 0 T=16 E= 0  GPC (Graphics Processing Cluster)
+  0x5A0000  PWR-GATED  L= 0 T=16 E= 0  GPC (Graphics Processing Cluster)
+  0x5B0000  PWR-GATED  L= 0 T=16 E= 0  GPC (Graphics Processing Cluster)
+  0x5C0000  PWR-GATED  L= 0 T=16 E= 0  GPC (Graphics Processing Cluster)
+  0x5D0000  PWR-GATED  L= 0 T=16 E= 0  GPC (Graphics Processing Cluster)
+  0x5E0000  PWR-GATED  L= 0 T=16 E= 0  GPC (Graphics Processing Cluster)
+  0x5F0000  PWR-GATED  L= 0 T=16 E= 0  GPC (Graphics Processing Cluster)
+  0x600000  PWR-GATED  L= 0 T=15 E= 1  
+  0x610000  LIVE       L= 3 T= 0 E=11    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x620000  LIVE       L= 1 T= 0 E=12    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x630000  LIVE       L= 1 T= 0 E=12    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x640000  LIVE       L= 1 T= 0 E=15    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x650000  DENIED     L= 0 T= 0 E=16  
+  0x660000  DENIED     L= 0 T= 0 E=16  
+  0x670000  LIVE       L= 2 T= 0 E=13    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x680000  LIVE       L= 1 T= 0 E= 7    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x690000  LIVE       L= 2 T= 0 E= 8    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x6A0000  DENIED     L= 0 T= 0 E=16  
+  0x6B0000  DENIED     L= 0 T= 0 E= 8  
+  0x6C0000  DENIED     L= 0 T= 0 E=16  
+  0x6D0000  DENIED     L= 0 T= 0 E=16  
+  0x6E0000  DENIED     L= 0 T= 0 E=16  
+  0x6F0000  LIVE       L= 1 T= 0 E=15    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0x800000  PWR-GATED  L= 0 T=16 E= 0  PDISP (Display)
+  0x810000  PWR-GATED  L= 0 T=16 E= 0  PDISP (Display)
+  0x820000  LIVE       L= 2 T=10 E= 3  PDISP (Display)
+  0x830000  PWR-GATED  L= 0 T=16 E= 0  PDISP (Display)
+  0x840000  PWR-GATED  L= 0 T=10 E= 3  PDISP (Display)
+  0x850000  PWR-GATED  L= 0 T=16 E= 0  PDISP (Display)
+  0x860000  PWR-GATED  L= 0 T=16 E= 0  PDISP (Display)
+  0x870000  PWR-GATED  L= 0 T=16 E= 0  PDISP (Display)
+  0x880000  PWR-GATED  L= 0 T=16 E= 0  PDISP (Display)
+  0x890000  PWR-GATED  L= 0 T=16 E= 0  PDISP (Display)
+  0x8A0000  PWR-GATED  L= 0 T=16 E= 0  PDISP (Display)
+  0x8B0000  PWR-GATED  L= 0 T=16 E= 0  PDISP (Display)
+  0x8C0000  PWR-GATED  L= 0 T=16 E= 0  PDISP (Display)
+  0x8D0000  PWR-GATED  L= 0 T=16 E= 0  PDISP (Display)
+  0x8E0000  PWR-GATED  L= 0 T=16 E= 0  PDISP (Display)
+  0x8F0000  PWR-GATED  L= 0 T=16 E= 0  PDISP (Display)
+  0x900000  LIVE       L= 8 T= 0 E= 4  PVIC/NVENC/NVDEC
+  0x910000  LIVE       L= 4 T= 8 E= 2  PVIC/NVENC/NVDEC
+  0x920000  PWR-GATED  L= 0 T=16 E= 0  PVIC/NVENC/NVDEC
+  0x930000  PWR-GATED  L= 0 T=16 E= 0  PVIC/NVENC/NVDEC
+  0x940000  PWR-GATED  L= 0 T=16 E= 0  PVIC/NVENC/NVDEC
+  0x950000  PWR-GATED  L= 0 T=16 E= 0  PVIC/NVENC/NVDEC
+  0x960000  PWR-GATED  L= 0 T=16 E= 0  PVIC/NVENC/NVDEC
+  0x970000  PWR-GATED  L= 0 T=16 E= 0  PVIC/NVENC/NVDEC
+  0x980000  LIVE       L= 6 T= 4 E= 3  PVIC/NVENC/NVDEC
+  0x990000  PWR-GATED  L= 0 T=16 E= 0  PVIC/NVENC/NVDEC
+  0x9A0000  LIVE       L= 2 T=10 E= 2  PVIC/NVENC/NVDEC
+  0x9B0000  PWR-GATED  L= 0 T=16 E= 0  PVIC/NVENC/NVDEC
+  0x9C0000  PWR-GATED  L= 0 T=16 E= 0  PVIC/NVENC/NVDEC
+  0x9D0000  PWR-GATED  L= 0 T=16 E= 0  PVIC/NVENC/NVDEC
+  0x9E0000  PWR-GATED  L= 0 T=16 E= 0  PVIC/NVENC/NVDEC
+  0x9F0000  PWR-GATED  L= 0 T=16 E= 0  PVIC/NVENC/NVDEC
+  0xA00000  PWR-GATED  L= 0 T=16 E= 0  IOCTRL (NVLink)
+  0xA10000  PWR-GATED  L= 0 T=16 E= 0  IOCTRL (NVLink)
+  0xA20000  PWR-GATED  L= 0 T=16 E= 0  NVLIPT (NVLink)
+  0xA30000  PWR-GATED  L= 0 T=16 E= 0  NVLIPT (NVLink)
+  0xA40000  PWR-GATED  L= 0 T=16 E= 0  NVLIPT (NVLink)
+  0xA50000  PWR-GATED  L= 0 T=16 E= 0  NVLIPT (NVLink)
+  0xA60000  PWR-GATED  L= 0 T=16 E= 0  NVLIPT (NVLink)
+  0xA70000  PWR-GATED  L= 0 T=16 E= 0  NVLIPT (NVLink)
+  0xA80000  PWR-GATED  L= 0 T=16 E= 0  
+  0xA90000  PWR-GATED  L= 0 T=16 E= 0  
+  0xAA0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xAB0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xAC0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xAD0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xAE0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xAF0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xB00000  PWR-GATED  L= 0 T=16 E= 0  
+  0xB10000  PWR-GATED  L= 0 T=16 E= 0  
+  0xB20000  PWR-GATED  L= 0 T=16 E= 0  
+  0xB30000  PWR-GATED  L= 0 T=16 E= 0  
+  0xB40000  PWR-GATED  L= 0 T=16 E= 0  
+  0xB50000  PWR-GATED  L= 0 T=16 E= 0  
+  0xB60000  LIVE       L= 2 T= 0 E=12    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0xB70000  LIVE       L= 2 T= 0 E=12    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0xB80000  LIVE       L= 2 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0xB90000  LIVE       L= 1 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0xBB0000  LIVE       L= 1 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0xBC0000  LIVE       L= 3 T= 0 E=13    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0xBD0000  DENIED     L= 0 T= 0 E=14  
+  0xBE0000  DENIED     L= 0 T= 0 E=16  
+  0xBF0000  LIVE       L= 1 T= 0 E=10    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0xC00000  LIVE       L= 5 T=11 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0xC10000  PWR-GATED  L= 0 T=16 E= 0  
+  0xC20000  LIVE       L= 1 T= 0 E= 0    <<< UNKNOWN LIVE ENGINE — INVESTIGATE!
+  0xC40000  PWR-GATED  L= 0 T=14 E= 0  
+  0xC50000  PWR-GATED  L= 0 T=16 E= 0  
+  0xC60000  PWR-GATED  L= 0 T=16 E= 0  
+  0xC70000  PWR-GATED  L= 0 T=16 E= 0  
+  0xC80000  PWR-GATED  L= 0 T=16 E= 0  
+  0xC90000  PWR-GATED  L= 0 T=16 E= 0  
+  0xCA0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xCB0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xCC0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xCD0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xCE0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xCF0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xD00000  PWR-GATED  L= 0 T=16 E= 0  
+  0xD10000  PWR-GATED  L= 0 T=16 E= 0  
+  0xD20000  PWR-GATED  L= 0 T=16 E= 0  
+  0xD30000  PWR-GATED  L= 0 T=16 E= 0  
+  0xD40000  PWR-GATED  L= 0 T=16 E= 0  
+  0xD50000  PWR-GATED  L= 0 T=16 E= 0  
+  0xD60000  PWR-GATED  L= 0 T=16 E= 0  
+  0xD70000  PWR-GATED  L= 0 T=16 E= 0  
+  0xD80000  PWR-GATED  L= 0 T=16 E= 0  
+  0xD90000  PWR-GATED  L= 0 T=16 E= 0  
+  0xDA0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xDB0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xDC0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xDD0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xDE0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xDF0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xE00000  PWR-GATED  L= 0 T=16 E= 0  
+  0xE10000  PWR-GATED  L= 0 T=16 E= 0  
+  0xE20000  PWR-GATED  L= 0 T=16 E= 0  
+  0xE30000  PWR-GATED  L= 0 T=16 E= 0  
+  0xE40000  PWR-GATED  L= 0 T=16 E= 0  
+  0xE50000  PWR-GATED  L= 0 T=16 E= 0  
+  0xE60000  PWR-GATED  L= 0 T=16 E= 0  
+  0xE70000  PWR-GATED  L= 0 T=16 E= 0  
+  0xE80000  PWR-GATED  L= 0 T=16 E= 0  
+  0xE90000  PWR-GATED  L= 0 T=16 E= 0  
+  0xEA0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xEB0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xEC0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xED0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xEE0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xEF0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xF00000  PWR-GATED  L= 0 T=16 E= 0  
+  0xF10000  PWR-GATED  L= 0 T=16 E= 0  
+  0xF20000  PWR-GATED  L= 0 T=16 E= 0  
+  0xF30000  PWR-GATED  L= 0 T=16 E= 0  
+  0xF40000  PWR-GATED  L= 0 T=16 E= 0  
+  0xF50000  PWR-GATED  L= 0 T=16 E= 0  
+  0xF60000  PWR-GATED  L= 0 T=16 E= 0  
+  0xF70000  PWR-GATED  L= 0 T=16 E= 0  
+  0xF80000  PWR-GATED  L= 0 T=16 E= 0  
+  0xF90000  PWR-GATED  L= 0 T=16 E= 0  
+  0xFA0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xFB0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xFC0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xFD0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xFE0000  PWR-GATED  L= 0 T=16 E= 0  
+  0xFF0000  PWR-GATED  L= 0 T=16 E= 0  
+
+  === Upper MMIO TMA Scan (via PRAMIN) ===
+
+  [Post-NVLPHY region] 0x1400000-0x1500000: empty (unmapped)
+  [Extended PHY/DMA?] 0x1500000-0x1600000: empty (unmapped)
+  [Unknown 0x16x] 0x1600000-0x1700000: empty (unmapped)
+  [Unknown 0x18x] 0x1800000-0x1900000: empty (unmapped)
+  [Extended engine space 0x20x] 0x2000000-0x2100000: empty (unmapped)
+  [Extended engine space 0x22x] 0x2200000-0x2300000: empty (unmapped)
+
+╔══════════════════════════════════════════════════════════════╗
+║                    TMA ANALYSIS                            ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                            ║
+║  TMA на Hopper реализован как:                             ║
+║  1. SM instruction decoder (cp.async.bulk.tensor PTX)      ║
+║  2. CTA-level DMA unit (аппаратный prefetch)               ║
+║  3. Shared Memory controller extension                     ║
+║                                                            ║
+║  На Ada (sm_89) cp.async (без .bulk.tensor) ЕСТЬ —         ║
+║  это упрощённый async copy без тензорных дескрипторов.     ║
+║                                                            ║
+║  Что искать в результатах:                                 ║
+║  • Discovery table type 0x1F/0x30+ → отдельный TMA IP     ║
+║  • SM_ARCH capability bits → скрытая ISA extension         ║
+║  • CE extended registers → TMA как расширение Copy Engine  ║
+║  • Unknown LIVE regions → незадокументированные engines    ║
+║  • Upper MMIO live blocks → скрытые accelerators           ║
+╚══════════════════════════════════════════════════════════════╝

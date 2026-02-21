@@ -1,0 +1,174 @@
+╔══════════════════════════════════════════════════════════════╗
+║  TMA Instruction & Capability Test — RTX 4090 (sm_89)     ║
+╚══════════════════════════════════════════════════════════════╝
+
+=== Device Capability Query ===
+
+  Device: NVIDIA GeForce RTX 4090
+  Compute: sm_89
+  Async Engine Count: 2
+  Concurrent Kernels: 1
+  Cooperative Launch: 1
+  Cluster Launch: 0
+  Memory Pools Supported: 1
+
+  Extended Attributes (Driver API):
+    ASYNC_ENGINE_COUNT                            = 2
+    MAX_SMEM_PER_BLOCK_OPTIN                      = 101376
+    MAX_SMEM_PER_SM                               = 102400
+    MAX_REGS_PER_BLOCK                            = 65536
+    MAX_REGS_PER_SM                               = 65536
+    MEMORY_POOLS                                  = 1
+    MEMPOOL_HANDLE_TYPES                          = 9
+    DEFERRED_MAPPING_CUDA_ARRAY_SUPPORTED         = 1
+    ATTR_122 (unknown)                            = 1  <<< NON-ZERO UNKNOWN ATTRIBUTE!
+    ATTR_123 (unknown)                            = 1  <<< NON-ZERO UNKNOWN ATTRIBUTE!
+    ATTR_125 (unknown)                            = 1  <<< NON-ZERO UNKNOWN ATTRIBUTE!
+    ATTR_126 (unknown)                            = 1  <<< NON-ZERO UNKNOWN ATTRIBUTE!
+    ATTR_128 (unknown)                            = 1  <<< NON-ZERO UNKNOWN ATTRIBUTE!
+    ATTR_131 (unknown)                            = -1
+    ATTR_140                                      = 1086264408
+    ATTR_145                                      = 1
+
+  Full attribute scan (non-zero only):
+    attr[  1] = 1024
+    attr[  2] = 1024
+    attr[  3] = 1024
+    attr[  4] = 64
+    attr[  5] = 2147483647
+    attr[  6] = 65535
+    attr[  7] = 65535
+    attr[  8] = 49152
+    attr[  9] = 65536
+    attr[ 10] = 32
+    attr[ 11] = 2147483647
+    attr[ 12] = 65536
+    attr[ 13] = 2535000
+    attr[ 14] = 512
+    attr[ 15] = 1
+    attr[ 16] = 128
+    attr[ 19] = 1
+    attr[ 21] = 131072
+    attr[ 22] = 131072
+    attr[ 23] = 65536
+    attr[ 24] = 16384
+    attr[ 25] = 16384
+    attr[ 26] = 16384
+    attr[ 27] = 32768
+    attr[ 28] = 32768
+    attr[ 29] = 2048
+    attr[ 30] = 512
+    attr[ 31] = 1
+    attr[ 33] = 2
+    attr[ 36] = 10501000
+    attr[ 37] = 384
+    attr[ 38] = 75497472
+    attr[ 39] = 1536
+    attr[ 40] = 2
+    attr[ 41] = 1
+    attr[ 42] = 32768
+    attr[ 43] = 2048
+    attr[ 44] = 1
+    attr[ 45] = 32768
+    attr[ 46] = 32768
+    attr[ 47] = 8192
+    attr[ 48] = 8192
+    attr[ 49] = 32768
+    attr[ 51] = 32
+    attr[ 52] = 32768
+    attr[ 53] = 32768
+    attr[ 54] = 2046
+    attr[ 55] = 32768
+    attr[ 56] = 131072
+    attr[ 57] = 65536
+    attr[ 58] = 16384
+    attr[ 59] = 16384
+    attr[ 60] = 16384
+    attr[ 61] = 32768
+    attr[ 62] = 2048
+    attr[ 63] = 32768
+    attr[ 64] = 32768
+    attr[ 65] = 2048
+    attr[ 66] = 32768
+    attr[ 67] = 32768
+    attr[ 68] = 2046
+    attr[ 69] = 268435456
+    attr[ 70] = 131072
+    attr[ 71] = 65000
+    attr[ 72] = 2097120
+    attr[ 73] = 32768
+    attr[ 74] = 32768
+    attr[ 75] = 8
+    attr[ 76] = 9
+    attr[ 77] = 32768
+    attr[ 78] = 1
+    attr[ 79] = 1
+    attr[ 80] = 1
+    attr[ 81] = 102400
+    attr[ 82] = 65536
+    attr[ 83] = 1
+    attr[ 87] = 64
+    attr[ 89] = 1
+    attr[ 90] = 1
+    attr[ 91] = 1
+    attr[ 95] = 1
+    attr[ 96] = 1
+    attr[ 97] = 101376
+    attr[ 99] = 1
+    attr[102] = 1
+    attr[103] = 1
+    attr[106] = 24
+    attr[107] = 1
+    attr[108] = 51904512
+    attr[109] = 134213632
+    attr[111] = 1024
+    attr[112] = 1
+    attr[113] = 1
+    attr[114] = 1
+    attr[115] = 1
+    attr[117] = 1
+    attr[119] = 9
+    attr[121] = 1
+    attr[122] = 1
+    attr[123] = 1
+    attr[125] = 1
+    attr[126] = 1
+    attr[128] = 1
+    attr[131] = -1
+    attr[139] = 646189278
+    attr[140] = 1086264408
+    attr[141] = 1
+    attr[142] = 1
+    attr[144] = 1
+    attr[145] = 1
+
+=== sm_90 PTX Load Test ===
+
+  sm_90 PTX НЕ загрузился: invalid device context
+  Это ожидаемо если TMA hardware отсутствует
+
+  sm_89 cp.async PTX: ОШИБКА: invalid device context
+
+=== cp.async Size Capability Test ===
+
+[327] cudaDeviceSynchronize(): an illegal memory access was encountered
+[329] cudaMemcpy(h_dst, d_dst, 4 * sizeof(float4), cudaMemcpyDeviceToHost): an illegal memory access was encountered
+  cp.async 16B: РАБОТАЕТ ✓ (val[0] = -0.0)
+[338] cudaFree(d_src): an illegal memory access was encountered
+[339] cudaFree(d_dst): an illegal memory access was encountered
+
+=== ИТОГ ===
+
+TMA (Tensor Memory Accelerator) на Hopper состоит из:
+  1. SM pipeline decoder для cp.async.bulk.tensor опкодов
+  2. Tensor descriptor hardware (создание/интерпретация)
+  3. CTA-level DMA unit (асинхронная bulk загрузка)
+  4. Barrier hardware extension (mbarrier arrive/wait)
+
+На Ada (sm_89) есть:
+  • cp.async (до 16B) — базовый async pipeline
+  • Shared memory barrier — __syncthreads уровень
+  • НЕТ tensor descriptors
+  • НЕТ bulk transfer (>16B за одну операцию)
+
+Проверь MMIO результаты (tma_probe) для hardware evidence.

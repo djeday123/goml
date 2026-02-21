@@ -1,0 +1,83 @@
+===========================================================
+  SASS Opcode Probe v3 - Fresh context per test
+  RTX 4090 (sm_89)
+===========================================================
+
+Device: NVIDIA GeForce RTX 4090
+
+  --- baseline ---
+    COMPILE: OK
+    EXEC: SUCCESS! result=1
+
+  --- mbarrier.init ---
+    COMPILE: OK
+    EXEC: SUCCESS! result=2
+    *** HOPPER FEATURE WORKS ON ADA sm_89! ***
+
+  --- mbarrier.init+arrive ---
+    COMPILE: OK
+    EXEC: SUCCESS! result=3
+    *** HOPPER FEATURE WORKS ON ADA sm_89! ***
+
+  --- mbarrier full cycle (init+arrive+try_wait) ---
+    COMPILE: FAILED [218] a PTX JIT compilation failed
+    LOG: ptxas application ptx input, line 12; error   : Feature 'mbarrier.try_wait.parity' requires .target sm_90 or higher
+ptxas fatal   : Ptx assembly aborted due to errors
+
+  --- mbarrier.arrive.expect_tx (TMA tx count) ---
+    COMPILE: FAILED [218] a PTX JIT compilation failed
+    LOG: ptxas application ptx input, line 9; error   : Feature 'mbarrier.arrive.expect_tx' requires .target sm_90 or higher
+ptxas fatal   : Ptx assembly aborted due to errors
+
+  --- mbarrier.arrive.expect_tx + arrive ---
+    COMPILE: FAILED [218] a PTX JIT compilation failed
+    LOG: ptxas application ptx input, line 9; error   : Feature 'mbarrier.arrive.expect_tx' requires .target sm_90 or higher
+ptxas fatal   : Ptx assembly aborted due to errors
+
+  --- mbarrier.arrive.noComplete ---
+    COMPILE: OK
+    EXEC: SUCCESS! result=6
+    *** HOPPER FEATURE WORKS ON ADA sm_89! ***
+
+  --- cp.async + mbarrier.arrive ---
+    COMPILE: FAILED [218] a PTX JIT compilation failed
+    LOG: ptxas application ptx input, line 18; error   : Feature 'mbarrier.try_wait.parity' requires .target sm_90 or higher
+ptxas fatal   : Ptx assembly aborted due to errors
+
+  --- cp.async.bulk [sm_89] ---
+    COMPILE: FAILED [218] a PTX JIT compilation failed
+    LOG: ptxas application ptx input, line 12; error   : Feature 'cp.async.bulk' requires .target sm_90 or higher
+ptxas application ptx input, line 12; error   : State space incorrect for instruction 'cp.async
+
+  --- cp.async.bulk [sm_90] ---
+    COMPILE: FAILED [218] a PTX JIT compilation failed
+    LOG: ptxas application ptx input, line 12; error   : State space incorrect for instruction 'cp.async.bulk'
+ptxas fatal   : Ptx assembly aborted due to errors
+
+  --- cluster_ctaid [sm_89] ---
+    COMPILE: FAILED [218] a PTX JIT compilation failed
+    LOG: ptxas application ptx input, line 7; error   : Feature '%cluster_ctaid' requires .target sm_90 or higher
+ptxas application ptx input, line 8; error   : Feature '%cluster_nctaid' requires .target sm_90
+
+  --- cluster_ctaid [sm_90] ---
+    COMPILE: FAILED [218] a PTX JIT compilation failed
+    LOG: ptxas fatal   : SM version specified by .target is higher than default SM version assumed
+
+  --- setmaxnreg ---
+    COMPILE: FAILED [218] a PTX JIT compilation failed
+    LOG: ptxas application ptx input, line 7; error   : Instruction 'setmaxnreg.inc' not supported on .target 'sm_89'
+ptxas fatal   : Ptx assembly aborted due to errors
+
+  --- fence.proxy.tensormap ---
+    COMPILE: FAILED [218] a PTX JIT compilation failed
+    LOG: ptxas application ptx input, line 7; error   : Feature 'fence.proxy with unidirection proxy fence' requires PTX ISA .version 8.3 or later
+ptxas application ptx input, line 7; error   : Instruction 'fe
+
+  --- ld.shared::cluster (DSMEM) ---
+    COMPILE: FAILED [218] a PTX JIT compilation failed
+    LOG: ptxas application ptx input, line 11; error   : Feature '::cluster' requires .target sm_90 or higher
+ptxas fatal   : Ptx assembly aborted due to errors
+
+=== Driver API Cluster Attributes ===
+  CLUSTER_LAUNCH (attr 95) = 1
+  DEFERRED_MAPPING (attr 96) = 1

@@ -1,0 +1,285 @@
+╔══════════════════════════════════════════════════╗
+║  NVLink Probe v2 — Fixed BADF + PRAMIN window  ║
+╚══════════════════════════════════════════════════╝
+
+═══ GPU 0: 0000:02:00.0 (0x2684) BAR0=16MB ═══
+
+  BAR0 access: READ-WRITE (PRAMIN available)
+
+  BOOT_0 = 0x192000A1
+  BOOT_1 = 0x00000000
+  BOOT_2 = 0x00000000
+  Chip ID: 0x192  Revision: 0xA1
+  → Ada Lovelace (AD10x)
+  → Вероятно AD102 (RTX 4090 / L40 / RTX 6000 Ada)
+
+  === PMC Engine Enable Analysis ===
+
+  PMC_ENABLE = 0x50000000
+  Бинарно: 0101 0000 0000 0000 0000 0000 0000 0000 
+
+  PMC_DEVICE_ENABLE registers:
+
+  PBUS PCI Config Mirror:
+    PCI_NV_0 (ID)       = 0x0000000F (dev=0x0000 ven=0x000F)
+    PCI_NV_19 (Subsys)  = 0xBADF5040
+
+  PRAMIN Window state:
+    NV_PBUS_BAR0_WINDOW = 0x0005FF30
+    Current target base = 0xFF300000
+
+  === FUSE Analysis (v2 — с правильной BADF обработкой) ===
+
+  Fuse region 0x21000-0x22000 (1024 registers):
+    Real data:     93 (9.1%)
+    PRI_TIMEOUT:    0 (0.0%) ← engine power-gated
+    PRI_ERROR:    864 (84.4%) ← access denied/invalid
+    Zero:          47
+    All-ones:      20
+
+  NVLink fuse region 0x21C00-0x21C40:
+    Все регистры возвращают PRI ошибки (0 timeout, 16 error)
+    >>> НЕВОЗМОЖНО прочитать NVLink fuses — блок не отвечает <<<
+    Это означает: fuse controller для NVLink региона ЗАБЛОКИРОВАН
+    NVIDIA может блокировать чтение fuses через PRI routing
+
+  Реальные fuse данные (не-BADF, не-0, не-FF):
+    [0x21068] = 0x0000EF8F
+    [0x21080] = 0xFFFFFFDF
+    [0x21200] = 0x0000205D
+    [0x21218] = 0x00002000
+    [0x2121C] = 0x00004000
+    [0x21220] = 0x00007000
+    [0x21228] = 0x00007000
+    [0x21230] = 0x00004000
+    [0x21234] = 0x00004000
+    [0x21238] = 0x00004000
+    [0x21244] = 0x00005000
+    [0x21248] = 0x00005000
+    [0x2124C] = 0x00004000
+    [0x21250] = 0x00004000
+    [0x21254] = 0x00004000
+    [0x21258] = 0x0000605A
+    [0x2125C] = 0x00004000
+    [0x21260] = 0x00005000
+    [0x21264] = 0x00007000
+    [0x2126C] = 0x00005000
+    [0x21270] = 0x00004000
+    [0x21278] = 0x00004000
+    [0x2128C] = 0x00004000
+    [0x21400] = 0x020588A1
+    [0x21404] = 0x020588A1
+    [0x21408] = 0x020588A1
+    [0x2140C] = 0x020588A1
+    [0x21410] = 0x020588A1
+    [0x21414] = 0x020588A1
+    [0x21418] = 0x020588A1
+    [0x2141C] = 0x020588A1
+    [0x21420] = 0x020588A1
+    [0x21424] = 0x020588A1
+    [0x21428] = 0x020588A1
+    [0x2142C] = 0x020588A1
+    [0x21430] = 0x020588A1
+    [0x21434] = 0x020588A1
+    [0x21438] = 0x020588A1
+    [0x2143C] = 0x020588A1
+    [0x21440] = 0x020588A1
+    [0x21444] = 0x020588A1
+    ... (truncated)
+
+  === NVLink Block Scan v2 ===
+  BADF1301 = PRI_TIMEOUT = engine адрес маршрутизируется, но engine OFF
+  BADF5040 = PRI_ERROR = доступ запрещён или невалиден
+  0/FF = адрес не маршрутизируется вообще
+
+  [IOCTRL (NVLink IO Controller)] 0x0A00000-0x0A04000
+    PRI_TIMEOUT (64 regs) — адрес МАРШРУТИЗИРУЕТСЯ, engine POWER-GATED
+    Код: 0xBADF1301 → PRI_TIMEOUT (engine power-gated)
+    → Шина GPU ЗНАЕТ что здесь должен быть NVLink
+    → Но engine выключен (clock/power gated)
+
+  [NVLIPT_COMMON] 0x0A20000-0x0A24000
+    PRI_TIMEOUT (64 regs) — адрес МАРШРУТИЗИРУЕТСЯ, engine POWER-GATED
+    Код: 0xBADF1301 → PRI_TIMEOUT (engine power-gated)
+    → Шина GPU ЗНАЕТ что здесь должен быть NVLink
+    → Но engine выключен (clock/power gated)
+
+  [NVLIPT_LNK(0)] 0x0A40000-0x0A44000
+    PRI_TIMEOUT (64 regs) — адрес МАРШРУТИЗИРУЕТСЯ, engine POWER-GATED
+    Код: 0xBADF1100 → PRI_TIMEOUT (engine power-gated)
+    → Шина GPU ЗНАЕТ что здесь должен быть NVLink
+    → Но engine выключен (clock/power gated)
+
+  [NVLIPT_LNK(1)] 0x0A60000-0x0A64000
+    PRI_TIMEOUT (64 regs) — адрес МАРШРУТИЗИРУЕТСЯ, engine POWER-GATED
+    Код: 0xBADF1100 → PRI_TIMEOUT (engine power-gated)
+    → Шина GPU ЗНАЕТ что здесь должен быть NVLink
+    → Но engine выключен (clock/power gated)
+
+  [MINION (NVLink FW Controller)] 0x1140000-0x1144000
+    Все нули — адрес не маршрутизируется (блок не существует)
+
+  [NVLW(0) (NVLink Wrapper 0)] 0x1180000-0x1184000
+    Все нули — адрес не маршрутизируется (блок не существует)
+
+  [NVLW(1) (NVLink Wrapper 1)] 0x1184000-0x1188000
+    Все нули — адрес не маршрутизируется (блок не существует)
+
+  [NVLTLC(0) (Transport Layer 0)] 0x11A0000-0x11A4000
+    Все нули — адрес не маршрутизируется (блок не существует)
+
+  [NVLTLC(1) (Transport Layer 1)] 0x11C0000-0x11C4000
+    Все нули — адрес не маршрутизируется (блок не существует)
+
+  [NVLPHY(0) (PHY SerDes 0)] 0x1300000-0x1304000
+    Все нули — адрес не маршрутизируется (блок не существует)
+
+  [NVLPHY(1) (PHY SerDes 1)] 0x1304000-0x1308000
+    Все нули — адрес не маршрутизируется (блок не существует)
+
+
+  === PTOP Discovery Table ===
+  Ada/Hopper GPU используют discovery table для перечисления IP блоков
+
+  Table @ 0x22700:
+    [0x22700] = 0xFFFFFF8F
+    [0x22800] = 0x80000040
+    [0x22804] = 0xC040000C
+    [0x22808] = 0x00C00000
+    [0x2280C] = 0x8D00000E
+    [0x22810] = 0xC0087001 → GR
+    [0x22814] = 0x00C04000
+    [0x22824] = 0x8E01000C
+    [0x22828] = 0xC01CC013 → *** NVLINK TYPE ***
+    [0x2282C] = 0x00C02400
+    [0x22830] = 0x8E02000D
+    [0x22834] = 0xC01D0006
+    [0x22838] = 0x00C02800
+    [0x2283C] = 0x90000019
+    [0x22840] = 0xC083000F
+    [0x22844] = 0x00C01000
+    [0x2286C] = 0x9300000F
+    [0x22870] = 0xC0104002
+    [0x22874] = 0x00C00001 → GR
+    [0x22878] = 0x93010010
+    [0x2287C] = 0xC0104003 → CE
+    [0x22880] = 0x00C00002
+    [0x22884] = 0x93020011
+    [0x22888] = 0xC0104005
+    [0x2288C] = 0x00C00400
+    [0x22890] = 0x93030012
+    [0x22894] = 0xC010400A
+    [0x22898] = 0x00C00800
+    [0x2289C] = 0x93040013 → *** NVLINK TYPE ***
+    [0x228A0] = 0xC010400B
+    [0x228A4] = 0x00C00C00
+    ...
+
+  Table @ 0x22800:
+    [0x22800] = 0x80000040
+    [0x22804] = 0xC040000C
+    [0x22808] = 0x00C00000
+    [0x2280C] = 0x8D00000E
+    [0x22810] = 0xC0087001 → GR
+    [0x22814] = 0x00C04000
+    [0x22824] = 0x8E01000C
+    [0x22828] = 0xC01CC013 → *** NVLINK TYPE ***
+    [0x2282C] = 0x00C02400
+    [0x22830] = 0x8E02000D
+    [0x22834] = 0xC01D0006
+    [0x22838] = 0x00C02800
+    [0x2283C] = 0x90000019
+    [0x22840] = 0xC083000F
+    [0x22844] = 0x00C01000
+    [0x2286C] = 0x9300000F
+    [0x22870] = 0xC0104002
+    [0x22874] = 0x00C00001 → GR
+    [0x22878] = 0x93010010
+    [0x2287C] = 0xC0104003 → CE
+    [0x22880] = 0x00C00002
+    [0x22884] = 0x93020011
+    [0x22888] = 0xC0104005
+    [0x2288C] = 0x00C00400
+    [0x22890] = 0x93030012
+    [0x22894] = 0xC010400A
+    [0x22898] = 0x00C00800
+    [0x2289C] = 0x93040013 → *** NVLINK TYPE ***
+    [0x228A0] = 0xC010400B
+    [0x228A4] = 0x00C00C00
+    [0x228D8] = 0x9600000A
+    ...
+
+
+  === PCIe Vendor Specific Deep Decode ===
+  ExtCap @ 0x600: Vendor Specific
+  Raw data (64 bytes):
+  01 00 41 02 02 00 41 01 01 18 00 00 01 10 00 00 
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+  
+  VSD Version: 0x0001  Length: 577
+  Scan for NVLink-related patterns in VSD:
+
+  === Upper MMIO via PRAMIN Window ===
+  Доступ к NVLink блокам выше 16MB через PRAMIN переадресацию
+
+  PRAMIN window работает! (wrote 0x114, read back 0x00000114)
+
+  [0x1140000] MINION[0] = 0x00000000 → ZERO (unmapped/default)
+  [0x1140004] MINION[1] = 0x00000000 → ZERO (unmapped/default)
+  [0x1180000] NVLW[0] = 0x00000000 → ZERO (unmapped/default)
+  [0x1180004] NVLW[1] = 0x00000000 → ZERO (unmapped/default)
+  [0x11A0000] NVLTLC[0] = 0x00000000 → ZERO (unmapped/default)
+  [0x11A0004] NVLTLC[1] = 0x00000000 → ZERO (unmapped/default)
+  [0x1300000] NVLPHY[0] = 0x00000000 → ZERO (unmapped/default)
+  [0x1300004] NVLPHY[1] = 0x00000000 → ZERO (unmapped/default)
+  [0x1300100] NVLPHY_CTL = 0x00000000 → ZERO (unmapped/default)
+  [0x1304000] NVLPHY2[0] = 0x00000000 → ZERO (unmapped/default)
+  [0x1310000] NVLPHY_ALT = 0x00000000 → ZERO (unmapped/default)
+
+╔══════════════════════════════════════════════════════════════╗
+║               АНАЛИЗ v2 — RTX 4090 (AD102)                ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                            ║
+║  КЛЮЧЕВЫЕ НАХОДКИ:                                        ║
+║                                                            ║
+║  1. PRI_TIMEOUT (0xBADF1301) на IOCTRL/NVLIPT:            ║
+║     → Address decoder GPU МАРШРУТИЗИРУЕТ запросы к NVLink  ║
+║     → Engine за этими адресами POWER-GATED (выключен)     ║
+║     → Это НЕ то же самое что 'нет железа'                 ║
+║     → Если бы блока не было, был бы 0x0 или 0xFFFFFFFF    ║
+║                                                            ║
+║  2. PRI_ERROR (0xBADF5040) на FUSE region:                ║
+║     → Fuse controller для NVLink ЗАБЛОКИРОВАН             ║
+║     → Мы НЕ МОЖЕМ прочитать реальные fuse значения        ║
+║     → NVIDIA может скрывать состояние fuses               ║
+║                                                            ║
+║  3. PMC_ENABLE bit 28 = SET:                              ║
+║     → OS-видимый engine enable бит для NVLink ВКЛЮЧЁН     ║
+║     → Но engine всё равно не отвечает (power-gated)       ║
+║     → Это ПРОТИВОРЕЧИЕ: enable=1 но timeout на доступе    ║
+║                                                            ║
+║  ИНТЕРПРЕТАЦИИ:                                           ║
+║                                                            ║
+║  A) NVLink IP блоки ЕСТЬ в кремнии AD102, но:             ║
+║     - Power management unit (PMU/GSP) не подаёт clk/pwr   ║
+║     - VBIOS/firmware не инициализирует NVLink subsystem    ║
+║     - Даже если включить — нет PCB traces к коннектору    ║
+║                                                            ║
+║  B) Address decoder routing — shared layout:              ║
+║     - AD102 использует общий address decoder с L40/RTX6K  ║
+║     - Маршруты к NVLink прописаны, но за ними пусто       ║
+║     - PRI_TIMEOUT = стандартная реакция на power-gated IP  ║
+║                                                            ║
+║  ВЫВОД:                                                    ║
+║                                                            ║
+║  NVLink адресное пространство РАЗМЕЧЕНО в address decoder  ║
+║  Engine POWER-GATED (не clock/not powered)                 ║
+║  Fuse состояние НЕЧИТАЕМО (заблокировано PRI)             ║
+║                                                            ║
+║  Для 100% ответа нужно:                                   ║
+║  • PRAMIN window (R/W BAR0) → сканировать PHY блоки       ║
+║  • VBIOS дамп → найти NVLink init таблицы                 ║
+║  • GSP-RM firmware → найти NVLink enable/disable логику   ║
+╚══════════════════════════════════════════════════════════════╝

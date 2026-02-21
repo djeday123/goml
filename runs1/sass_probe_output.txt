@@ -1,0 +1,137 @@
+╔══════════════════════════════════════════════════════════════╗
+║  SASS Opcode Decoder Probe — Does sm_89 know sm_90 ops?   ║
+╚══════════════════════════════════════════════════════════════╝
+
+Device: NVIDIA GeForce RTX 4090 (sm_89)
+
+═══ Phase 1: SM Special Registers ═══
+
+  %smid           = 0
+  %nsmid          = 128 (total SMs)
+  %lanemask_eq    = 0x00000001
+  %dynamic_smem   = 0
+  %total_smem     = 0
+
+═══ Phase 2: PTX Opcode Tests ═══
+  Testing which Hopper PTX instructions compile/execute on sm_89
+
+  ─── trap (baseline) [sm_89] ───
+    JIT compile: FAILED — a PTX JIT compilation failed (CUresult=218)
+    JIT error log: ptxas fatal   : Unexpected non-ASCII character encountered on line 13
+ptxas fatal   : Ptx assembly aborted due to errors
+    → ptxas НЕ ЗНАЕТ эту инструкцию для sm_89
+    → Это означает: ptxas отказывается компилировать
+
+  ─── mbarrier.init [sm_89] [sm_89] ───
+    JIT compile: FAILED — a PTX JIT compilation failed (CUresult=218)
+    JIT error log: ptxas fatal   : Unexpected non-ASCII character encountered on line 12
+ptxas fatal   : Ptx assembly aborted due to errors
+    → ptxas НЕ ЗНАЕТ эту инструкцию для sm_89
+    → Это означает: ptxas отказывается компилировать
+
+  ─── mbarrier.init+arrive [sm_89] [sm_89] ───
+    JIT compile: SUCCESS ✓
+    GetFunction: SUCCESS ✓
+    Launching kernel...
+    Launch: submitted ✓
+    Sync: SUCCESS ✓ — kernel executed! result=42
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!! HOPPER INSTRUCTION EXECUTED ON ADA !!!
+    !!! HIDDEN HARDWARE CONFIRMED !!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  ─── mbarrier.init [sm_89 target] [sm_89] ───
+    JIT compile: FAILED — a PTX JIT compilation failed (CUresult=218)
+    JIT error log: ptxas fatal   : Unexpected non-ASCII character encountered on line 12
+ptxas fatal   : Ptx assembly aborted due to errors
+    → ptxas НЕ ЗНАЕТ эту инструкцию для sm_89
+    → Это означает: ptxas отказывается компилировать
+
+  ─── mbarrier.init [sm_90 target] [sm_90] ───
+    JIT compile: FAILED — a PTX JIT compilation failed (CUresult=218)
+    JIT error log: ptxas fatal   : SM version specified by .target is higher than default SM version assumed
+    → ptxas НЕ ЗНАЕТ эту инструкцию для sm_90
+    → Это означает: ptxas отказывается компилировать
+
+  ─── cp.async.bulk [sm_89] [sm_89] ───
+    JIT compile: FAILED — a PTX JIT compilation failed (CUresult=218)
+    JIT error log: ptxas fatal   : Unexpected non-ASCII character encountered on line 13
+ptxas fatal   : Ptx assembly aborted due to errors
+    → ptxas НЕ ЗНАЕТ эту инструкцию для sm_89
+    → Это означает: ptxas отказывается компилировать
+
+  ─── cp.async.bulk [sm_90] [sm_90] ───
+    JIT compile: FAILED — a PTX JIT compilation failed (CUresult=218)
+    JIT error log: ptxas application ptx input, line 14; error   : State space incorrect for instruction 'cp.async.bulk'
+ptxas fatal   : Ptx assembly aborted due to errors
+    → ptxas НЕ ЗНАЕТ эту инструкцию для sm_90
+    → Это означает: ptxas отказывается компилировать
+
+  ─── cluster_ctaid [sm_89] [sm_89] ───
+    JIT compile: FAILED — a PTX JIT compilation failed (CUresult=218)
+    JIT error log: ptxas fatal   : Unexpected non-ASCII character encountered on line 11
+ptxas fatal   : Ptx assembly aborted due to errors
+    → ptxas НЕ ЗНАЕТ эту инструкцию для sm_89
+    → Это означает: ptxas отказывается компилировать
+
+  ─── cluster_ctaid [sm_90] [sm_90] ───
+    JIT compile: FAILED — a PTX JIT compilation failed (CUresult=218)
+    JIT error log: ptxas fatal   : SM version specified by .target is higher than default SM version assumed
+    → ptxas НЕ ЗНАЕТ эту инструкцию для sm_90
+    → Это означает: ptxas отказывается компилировать
+
+  ─── setmaxnreg [sm_89] [sm_89] ───
+    JIT compile: FAILED — a PTX JIT compilation failed (CUresult=218)
+    JIT error log: ptxas fatal   : Unexpected non-ASCII character encountered on line 11
+ptxas fatal   : Ptx assembly aborted due to errors
+    → ptxas НЕ ЗНАЕТ эту инструкцию для sm_89
+    → Это означает: ptxas отказывается компилировать
+
+  ─── fence.proxy.tensormap [sm_89] [sm_89] ───
+    JIT compile: FAILED — a PTX JIT compilation failed (CUresult=218)
+    JIT error log: ptxas fatal   : Unexpected non-ASCII character encountered on line 11
+ptxas fatal   : Ptx assembly aborted due to errors
+    → ptxas НЕ ЗНАЕТ эту инструкцию для sm_89
+    → Это означает: ptxas отказывается компилировать
+
+  ─── cp.async.mbarrier [sm_89] [sm_89] ───
+    JIT compile: FAILED — a PTX JIT compilation failed (CUresult=218)
+    JIT error log: ptxas fatal   : Unexpected non-ASCII character encountered on line 19
+ptxas fatal   : Ptx assembly aborted due to errors
+    → ptxas НЕ ЗНАЕТ эту инструкцию для sm_89
+    → Это означает: ptxas отказывается компилировать
+
+
+═══ Phase 3: Cluster/TMA-related Device Attributes ═══
+
+  attr[ 95] CLUSTER_LAUNCH (CU_DEVICE_ATTRIBUTE_CLUSTER_LAUNCH) = 1  <<< CLUSTER LAUNCH SUPPORTED!
+  attr[ 96] DEFERRED_MAPPING                                   = 1
+  attr[ 97] MAX_SMEM_PER_BLOCK_OPTIN                           = 101376
+  attr[106] MAX_BLOCKS_PER_MULTIPROCESSOR                      = 24
+  attr[111] RESERVED_SHARED_MEMORY_PER_BLOCK                   = 1024
+  attr[112] SPARSE_CUDA_ARRAY_SUPPORTED                        = 1
+  attr[113] READ_ONLY_HOST_REGISTER_SUPPORTED                  = 1
+  attr[114] TIMELINE_SEMAPHORE_INTEROP_SUPPORTED               = 1
+  attr[115] MEMORY_POOLS_SUPPORTED                             = 1
+  attr[117] GPU_DIRECT_RDMA_SUPPORTED                          = 1
+
+╔══════════════════════════════════════════════════════════════╗
+║  INTERPRETATION                                            ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                            ║
+║  Три уровня проверки:                                      ║
+║                                                            ║
+║  1. PTX → SASS compile (ptxas)                             ║
+║     FAILED = ptxas не знает инструкцию для target sm       ║
+║     SUCCESS = ptxas генерирует SASS код                    ║
+║                                                            ║
+║  2. Kernel launch                                          ║
+║     FAILED = driver отказывает (sm mismatch)               ║
+║     SUCCESS = driver пропустил на hardware                  ║
+║                                                            ║
+║  3. Hardware execution                                     ║
+║     ILLEGAL_INSTRUCTION = decoder НЕ знает опкод           ║
+║     ILLEGAL_ADDRESS = decoder знает, unit НЕТ              ║
+║     LAUNCH_FAILED = execution error (investigate!)         ║
+║     SUCCESS = hardware поддерживает!                       ║
+╚══════════════════════════════════════════════════════════════╝

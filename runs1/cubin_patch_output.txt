@@ -1,0 +1,132 @@
+===========================================================
+  Binary Patch Test - Bypass ptxas sm_89 restrictions
+===========================================================
+
+=== Step 2: Compiling PTX -> cubin for sm_90 ===
+
+  Compiling baseline90... OK (2864 bytes)
+  Compiling try_wait... OK (3504 bytes)
+  Compiling expect_tx... OK (3504 bytes)
+  Compiling cluster... OK (2992 bytes)
+  Compiling setmaxnreg... FAILED
+ptxas /tmp/cubin_patch/test_setmaxnreg.ptx, line 7; error   : Instruction 'setmaxnreg.inc' not supported on .target 'sm_90'
+ptxas fatal   : Ptx assembly aborted due to errors
+  Compiling dsmem... OK (3248 bytes)
+
+=== Step 3: Analyzing cubin ELF ===
+
+  baseline90.cubin ELF header:
+00000000: 7f45 4c46 0201 0133 0700 0000 0000 0000  .ELF...3........
+00000010: 0200 be00 8000 0000 0000 0000 0000 0000  ................
+00000020: 180a 0000 0000 0000 1807 0000 0000 0000  ................
+00000030: 5a05 5a00 4000 3800 0500 4000 0c00 0100  Z.Z.@.8...@.....
+00000040: 002e 7368 7374 7274 6162 002e 7374 7274  ..shstrtab..strt
+00000050: 6162 002e 7379 6d74 6162 002e 7379 6d74  ab..symtab..symt
+00000060: 6162 5f73 686e 6478 002e 6e76 2e69 6e66  ab_shndx..nv.inf
+00000070: 6f00 2e74 6578 742e 6b00 2e6e 762e 696e  o..text.k..nv.in
+
+  Looking for SM version markers...
+  e_flags = 0x5a055a00
+  ELF class/data/version:
+00000004: 0201 0133                                ...3
+
+  Searching for 0x5A (sm_90) in cubin...
+48:Z
+50:Z
+
+  readelf sections:
+There are 12 section headers, starting at offset 0x718:
+
+Section Headers:
+  [Nr] Name              Type             Address           Offset
+       Size              EntSize          Flags  Link  Info  Align
+  [ 0]                   NULL             0000000000000000  00000000
+       0000000000000000  0000000000000000           0     0     0
+  [ 1] .shstrtab         STRTAB           0000000000000000  00000040
+       00000000000000c4  0000000000000000           0     0     1
+  [ 2] .strtab           STRTAB           0000000000000000  00000125
+       0000000000000100  0000000000000000           0     0     1
+  [ 3] .symtab           SYMTAB           0000000000000000  00000228
+       00000000000000c0  0000000000000018           2     6     8
+  [ 4] .debug_frame      PROGBITS         0000000000000000  000002e8
+       0000000000000068  0000000000000000           0     0     1
+  [ 5] .nv.info          LOPROC+0         0000000000000000  00000350
+       0000000000000024  0000000000000000           3     0     4
+  [ 6] .nv.info.k        LOPROC+0         0000000000000000  00000374
+       0000000000000040  0000000000000000   I       3     9     4
+  [ 7] .nv.callgraph     LOPROC+0x1       0000000000000000  000003b4
+       0000000000000020  0000000000000008           3     0     4
+  [ 8] .rela.debug_frame RELA             0000000000000000  000003d8
+       0000000000000018  0000000000000018   I       3     4     8
+  [ 9] .text.k           PROGBITS         0000000000000000  00000400
+       0000000000000100  0000000000000000  AX       3     6     128
+  [10] .nv.shared.r[...] NOBITS           0000000000000000  00000500
+       0000000000000000  0000000000000000  WA       0     0     1
+  [11] .nv.constant0.k   PROGBITS         0000000000000000  00000500
+       0000000000000218  0000000000000000  AI       0     9     4
+Key to Flags:
+
+  readelf header:
+ELF Header:
+  Magic:   7f 45 4c 46 02 01 01 33 07 00 00 00 00 00 00 00 
+  Class:                             ELF64
+  Data:                              2's complement, little endian
+  Version:                           1 (current)
+  OS/ABI:                            <unknown: 33>
+  ABI Version:                       7
+  Type:                              EXEC (Executable file)
+  Machine:                           NVIDIA CUDA architecture
+  Version:                           0x80
+  Entry point address:               0x0
+  Start of program headers:          2584 (bytes into file)
+  Start of section headers:          1816 (bytes into file)
+  Flags:                             0x5a055a
+  Size of this header:               64 (bytes)
+  Size of program headers:           56 (bytes)
+  Number of program headers:         5
+  Size of section headers:           64 (bytes)
+  Number of section headers:         12
+  Section header string table index: 1
+
+  cuobjdump info:
+
+=== Step 4: Building loader ===
+
+  Compiling patch_loader...
+/tmp/cubin_patch/patch_loader.cu(95): warning #177-D: variable "count_59" was declared but never referenced
+      int count_5a = 0, count_59 = 0;
+                        ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+  Done.
+
+=== Step 5: Testing cubin loading ===
+
+--- Testing baseline90 (unpatched sm_90) ---
+=== Loading cubin: /tmp/cubin_patch/test_baseline90.cubin ===
+  Size: 2864 bytes
+  Valid ELF magic
+  Original e_flags = 0x005A055A
+  e_flags byte breakdown:
+    [0x30] = 0x5A
+    [0x31] = 0x05
+    [0x32] = 0x5A
+    [0x33] = 0x00
+
+  ELF header (0x28-0x3F):
+    0028: 18 07 00 00 00 00 00 00 5a 05 5a 00 40 00 38 00 
+    0038: 05 00 40 00 0c 00 01 00 
+
+  Searching for SM90 markers (0x5A=90, 0x59=89)...
+    0x5A at offset 0x0030 (prev=0x00) (next=0x05)
+    0x5A at offset 0x0032 (prev=0x05) (next=0x00)
+    Total 0x5A in first 256 bytes: 2
+
+  Searching for 'sm_90' / 'sm_89' strings...
+
+=== Loading cubin on GPU ===
+  Device: NVIDIA GeForce RTX 4090
+  cuModuleLoadData: FAILED [209] no kernel image is available for execution on the device
+  ==> SM version mismatch - driver won't load
+  ==> This is the DRIVER GATE (level 2)
