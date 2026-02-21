@@ -1,2 +1,15 @@
 .env
 data
+./data/arxiv_150.txt
+./data/corpus_multi.txt
+./data/wiki_az.txt
+./data/wiki_tr.txt
+./data/trwiki-latest-pages-articles.xml.bz2
+./data/ruwiki-latest-pages-articles.xml.bz2
+./data/wiki_ru.txt
+./data/wiki_en_200.txt
+./data/arxiv.txt
+./data/azwiki-latest-pages-articles.xml.bz2
+./data/en_combined.txt
+./data/wiki_en_old.txt
+./runs1/fp8_profile.ncu-rep
