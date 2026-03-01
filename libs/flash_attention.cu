@@ -278,7 +278,7 @@ __global__ void __launch_bounds__(FA_THREADS, 2)
 // C API — purego compatible
 // =============================================================================
 
-static bool g_flash_smem_configured = false;
+static int g_flash_smem_max = 0;
 
 extern "C"
 {
@@ -301,9 +301,9 @@ extern "C"
         if (head_dim % 32 != 0 || head_dim > 128)
             return -1; // unsupported head_dim
 
-        int smem_bytes = (FA_BR + FA_BC) * head_dim * sizeof(__half) + FA_BR * FA_BC * sizeof(float);
+        int smem_bytes = (FA_BR + FA_BC) * head_dim * (int)sizeof(__half) + FA_BR * FA_BC * (int)sizeof(float);
 
-        if (!g_flash_smem_configured)
+        if (smem_bytes > g_flash_smem_max)
         {
             cudaError_t err = cudaFuncSetAttribute(
                 flash_attention_kernel,
@@ -311,7 +311,7 @@ extern "C"
                 smem_bytes);
             if (err != cudaSuccess)
                 return (int)err;
-            g_flash_smem_configured = true;
+            g_flash_smem_max = smem_bytes;
         }
 
         float scale = 1.0f / sqrtf((float)head_dim);

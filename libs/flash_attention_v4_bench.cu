@@ -1,0 +1,234 @@
+// flash_attention_v4_bench.cu — v4 vs v2-DB comparison
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
+#include <vector>
+#include <cuda_runtime.h>
+#include <cuda_fp16.h>
+
+extern "C"
+{
+    int flash_attention_forward(const void *, const void *, const void *, void *,
+                                int, int, int, int, void *);
+    int flash_attention_v2_db_forward(const void *, const void *, const void *, void *,
+                                      int, int, int, int, void *);
+    int flash_attention_v4_forward(const void *, const void *, const void *, void *,
+                                   int, int, int, int, void *);
+}
+
+#define CK(c)                                                                      \
+    do                                                                             \
+    {                                                                              \
+        cudaError_t e = (c);                                                       \
+        if (e != cudaSuccess)                                                      \
+        {                                                                          \
+            printf("CUDA %s:%d: %s\n", __FILE__, __LINE__, cudaGetErrorString(e)); \
+            exit(1);                                                               \
+        }                                                                          \
+    } while (0)
+
+struct Timer
+{
+    cudaEvent_t t0, t1;
+    Timer()
+    {
+        cudaEventCreate(&t0);
+        cudaEventCreate(&t1);
+    }
+    void start() { cudaEventRecord(t0); }
+    float stop()
+    {
+        cudaEventRecord(t1);
+        cudaEventSynchronize(t1);
+        float ms;
+        cudaEventElapsedTime(&ms, t0, t1);
+        return ms;
+    }
+    ~Timer()
+    {
+        cudaEventDestroy(t0);
+        cudaEventDestroy(t1);
+    }
+};
+
+void test_correctness()
+{
+    printf("--- Correctness (v4 vs v2-DB) ---\n");
+    struct
+    {
+        int h, s, d;
+    } cfgs[] = {
+        {1, 16, 128},
+        {2, 32, 128},
+        {2, 64, 128},
+        {4, 128, 128},
+        {2, 256, 128},
+        {4, 512, 128},
+        {32, 1024, 128},
+        {32, 2048, 128},
+    };
+    for (auto &c : cfgs)
+    {
+        size_t n = (size_t)c.h * c.s * c.d;
+        size_t bytes = n * 2;
+        __half *dQ, *dK, *dV, *dO_ref, *dO_v4;
+        CK(cudaMalloc(&dQ, bytes));
+        CK(cudaMalloc(&dK, bytes));
+        CK(cudaMalloc(&dV, bytes));
+        CK(cudaMalloc(&dO_ref, bytes));
+        CK(cudaMalloc(&dO_v4, bytes));
+
+        std::vector<__half> h(n);
+        srand(42);
+        for (size_t i = 0; i < n; i++)
+            h[i] = __float2half((float)(rand() % 1000 - 500) / 1000.f);
+        CK(cudaMemcpy(dQ, h.data(), bytes, cudaMemcpyHostToDevice));
+        for (size_t i = 0; i < n; i++)
+            h[i] = __float2half((float)(rand() % 1000 - 500) / 1000.f);
+        CK(cudaMemcpy(dK, h.data(), bytes, cudaMemcpyHostToDevice));
+        for (size_t i = 0; i < n; i++)
+            h[i] = __float2half((float)(rand() % 1000 - 500) / 1000.f);
+        CK(cudaMemcpy(dV, h.data(), bytes, cudaMemcpyHostToDevice));
+
+        CK(cudaMemset(dO_ref, 0, bytes));
+        flash_attention_v2_db_forward(dQ, dK, dV, dO_ref, c.h, c.s, c.d, 1, nullptr);
+        CK(cudaDeviceSynchronize());
+
+        CK(cudaMemset(dO_v4, 0, bytes));
+        flash_attention_v4_forward(dQ, dK, dV, dO_v4, c.h, c.s, c.d, 1, nullptr);
+        CK(cudaDeviceSynchronize());
+
+        std::vector<__half> hr(n), hv(n);
+        CK(cudaMemcpy(hr.data(), dO_ref, bytes, cudaMemcpyDeviceToHost));
+        CK(cudaMemcpy(hv.data(), dO_v4, bytes, cudaMemcpyDeviceToHost));
+
+        float max_ae = 0, max_re = 0;
+        int errors = 0;
+        for (size_t i = 0; i < n; i++)
+        {
+            float rv = __half2float(hr[i]), vv = __half2float(hv[i]);
+            float ae = fabsf(rv - vv);
+            float re = (fabsf(rv) > 1e-6f) ? ae / fabsf(rv) : 0;
+            if (ae > max_ae)
+                max_ae = ae;
+            if (re > max_re)
+                max_re = re;
+            if (ae > 0.005f && re > 0.1f)
+                errors++;
+        }
+        printf("  %dh×%ds×%dd  abs=%.4f rel=%.4f err=%d → %s\n",
+               c.h, c.s, c.d, max_ae, max_re, errors, errors == 0 ? "PASS" : "FAIL");
+
+        cudaFree(dQ);
+        cudaFree(dK);
+        cudaFree(dV);
+        cudaFree(dO_ref);
+        cudaFree(dO_v4);
+    }
+}
+
+void bench()
+{
+    printf("\n--- Performance: v1 vs v2-DB vs v4 ---\n");
+    printf("%-12s %10s %10s %10s  %6s\n", "Config", "v1", "v2-DB", "v4", "v4/DB");
+    printf("---------------------------------------------------------------\n");
+
+    struct
+    {
+        const char *l;
+        int b, h, s, d;
+    } cfgs[] = {
+        {"7B-256", 1, 32, 256, 128},
+        {"7B-512", 1, 32, 512, 128},
+        {"7B-1K", 1, 32, 1024, 128},
+        {"7B-2K", 1, 32, 2048, 128},
+        {"7B-4K", 1, 32, 4096, 128},
+        {"13B-512", 1, 40, 512, 128},
+        {"70B-512", 1, 64, 512, 128},
+        {"70B-2K", 1, 64, 2048, 128},
+    };
+    Timer t;
+
+    for (auto &c : cfgs)
+    {
+        int heads = c.b * c.h;
+        size_t n = (size_t)heads * c.s * c.d;
+        size_t bytes = n * 2;
+        double flops = (double)heads * (4.0 * c.s * c.s * c.d);
+
+        __half *dQ, *dK, *dV, *dO;
+        CK(cudaMalloc(&dQ, bytes));
+        CK(cudaMalloc(&dK, bytes));
+        CK(cudaMalloc(&dV, bytes));
+        CK(cudaMalloc(&dO, bytes));
+        CK(cudaMemset(dQ, 0x3C, bytes));
+        CK(cudaMemset(dK, 0x3C, bytes));
+        CK(cudaMemset(dV, 0x3C, bytes));
+
+        // v1
+        double v1_t = 0;
+        if (c.s <= 2048)
+        {
+            for (int i = 0; i < 3; i++)
+                flash_attention_forward(dQ, dK, dV, dO, heads, c.s, c.d, 1, nullptr);
+            CK(cudaDeviceSynchronize());
+            int it = (c.s <= 512) ? 100 : 20;
+            t.start();
+            for (int i = 0; i < it; i++)
+                flash_attention_forward(dQ, dK, dV, dO, heads, c.s, c.d, 1, nullptr);
+            float ms = t.stop();
+            CK(cudaGetLastError());
+            v1_t = flops / (ms / it / 1000.0) / 1e12;
+        }
+
+        // v2-DB
+        CK(cudaMemset(dO, 0, bytes));
+        for (int i = 0; i < 3; i++)
+            flash_attention_v2_db_forward(dQ, dK, dV, dO, heads, c.s, c.d, 1, nullptr);
+        CK(cudaDeviceSynchronize());
+        int it2 = (c.s <= 1024) ? 100 : 20;
+        t.start();
+        for (int i = 0; i < it2; i++)
+            flash_attention_v2_db_forward(dQ, dK, dV, dO, heads, c.s, c.d, 1, nullptr);
+        float ms_db = t.stop();
+        CK(cudaGetLastError());
+        double db_t = flops / (ms_db / it2 / 1000.0) / 1e12;
+
+        // v4
+        CK(cudaMemset(dO, 0, bytes));
+        for (int i = 0; i < 3; i++)
+            flash_attention_v4_forward(dQ, dK, dV, dO, heads, c.s, c.d, 1, nullptr);
+        CK(cudaDeviceSynchronize());
+        t.start();
+        for (int i = 0; i < it2; i++)
+            flash_attention_v4_forward(dQ, dK, dV, dO, heads, c.s, c.d, 1, nullptr);
+        float ms_v4 = t.stop();
+        CK(cudaGetLastError());
+        double v4_t = flops / (ms_v4 / it2 / 1000.0) / 1e12;
+
+        if (v1_t > 0)
+            printf("%-12s %8.2f T %8.2f T %8.2f T  %5.2fx\n",
+                   c.l, v1_t, db_t, v4_t, v4_t / db_t);
+        else
+            printf("%-12s %10s %8.2f T %8.2f T  %5.2fx\n",
+                   c.l, "skip", db_t, v4_t, v4_t / db_t);
+
+        cudaFree(dQ);
+        cudaFree(dK);
+        cudaFree(dV);
+        cudaFree(dO);
+    }
+}
+
+int main()
+{
+    cudaDeviceProp p;
+    CK(cudaGetDeviceProperties(&p, 0));
+    printf("=== FlashAttention v4 Benchmark ===\n");
+    printf("GPU: %s (%d SMs, %d MHz)\n\n", p.name, p.multiProcessorCount, p.clockRate / 1000);
+    test_correctness();
+    bench();
+    return 0;
+}
