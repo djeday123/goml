@@ -2,6 +2,7 @@ package ops
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/djeday123/goml/backend"
 	"github.com/djeday123/goml/tensor"
@@ -58,10 +59,16 @@ func (f *reluGradFn) Name() string             { return "ReluBackward" }
 func (f *reluGradFn) Inputs() []*tensor.Tensor { return []*tensor.Tensor{f.input} }
 func (f *reluGradFn) Backward(grad *tensor.Tensor) []*tensor.Tensor {
 	// d(relu)/dx = 1 if x > 0 else 0
-	// Approximated: relu'(x) = x > 0, so grad * (input > 0)
-	// For now, we recompute relu mask
-	// TODO: implement proper mask
-	return []*tensor.Tensor{grad}
+	inputData := f.input.ToFloat32Slice()
+	gradData := grad.ToFloat32Slice()
+	out := make([]float32, len(gradData))
+	for i := range out {
+		if inputData[i] > 0 {
+			out[i] = gradData[i]
+		}
+	}
+	result, _ := tensor.FromSlice(out, grad.Shape())
+	return []*tensor.Tensor{result}
 }
 
 // ---- Public API ----
@@ -222,6 +229,53 @@ func Relu(t *tensor.Tensor) (*tensor.Tensor, error) {
 	return out, nil
 }
 
+// softmaxGradFn implements backward for softmax along axis.
+// dx = s * (g - sum(g*s, axis=axis, keepdim=true))
+type softmaxGradFn struct {
+	out  *tensor.Tensor // saved softmax output
+	axis int
+}
+
+func (f *softmaxGradFn) Name() string             { return "SoftmaxBackward" }
+func (f *softmaxGradFn) Inputs() []*tensor.Tensor { return []*tensor.Tensor{f.out} }
+func (f *softmaxGradFn) Backward(grad *tensor.Tensor) []*tensor.Tensor {
+	shape := grad.Shape()
+	rank := len(shape)
+	axis := f.axis
+	if axis < 0 {
+		axis += rank
+	}
+	gData := grad.ToFloat32Slice()
+	sData := f.out.ToFloat32Slice()
+
+	// Compute strides for flat indexing along `axis`.
+	innerSize := 1
+	for i := axis + 1; i < rank; i++ {
+		innerSize *= shape[i]
+	}
+	axisSize := shape[axis]
+	outerSize := len(gData) / (axisSize * innerSize)
+
+	dx := make([]float32, len(gData))
+	for o := 0; o < outerSize; o++ {
+		for in := 0; in < innerSize; in++ {
+			// First pass: dot = sum_j(g_j * s_j) along axis
+			dot := float32(0)
+			for j := 0; j < axisSize; j++ {
+				idx := (o*axisSize+j)*innerSize + in
+				dot += gData[idx] * sData[idx]
+			}
+			// Second pass: dx_j = s_j * (g_j - dot)
+			for j := 0; j < axisSize; j++ {
+				idx := (o*axisSize+j)*innerSize + in
+				dx[idx] = sData[idx] * (gData[idx] - dot)
+			}
+		}
+	}
+	result, _ := tensor.FromSlice(dx, shape)
+	return []*tensor.Tensor{result}
+}
+
 // Softmax applies softmax along the given axis.
 func Softmax(t *tensor.Tensor, axis int) (*tensor.Tensor, error) {
 	bk, err := getBackend(t)
@@ -238,7 +292,12 @@ func Softmax(t *tensor.Tensor, axis int) (*tensor.Tensor, error) {
 		return nil, err
 	}
 
-	return tensor.NewTensor(store, t.Shape(), t.DType()), nil
+	out := tensor.NewTensor(store, t.Shape(), t.DType())
+	if needsGrad(t) {
+		out.SetRequiresGrad(true)
+		out.SetGradFn(&softmaxGradFn{out: out, axis: axis})
+	}
+	return out, nil
 }
 
 // LayerNorm applies layer normalization.
@@ -268,6 +327,32 @@ func LayerNorm(x, gamma, beta *tensor.Tensor, normAxis int, eps float64) (*tenso
 	return tensor.NewTensor(store, x.Shape(), x.DType()), nil
 }
 
+// geluGradFn implements backward for GELU (tanh approximation).
+// y = 0.5*x*(1 + tanh(u)), where u = sqrt(2/π) * (x + 0.044715*x^3)
+// dy/dx = 0.5*(1 + tanh(u)) + 0.5*x * (1 - tanh²(u)) * c * (1 + 3*0.044715*x²)
+type geluGradFn struct {
+	input *tensor.Tensor
+}
+
+func (f *geluGradFn) Name() string             { return "GeluBackward" }
+func (f *geluGradFn) Inputs() []*tensor.Tensor { return []*tensor.Tensor{f.input} }
+func (f *geluGradFn) Backward(grad *tensor.Tensor) []*tensor.Tensor {
+	xData := f.input.ToFloat32Slice()
+	gData := grad.ToFloat32Slice()
+	const c = 0.7978845608028654 // sqrt(2/π)
+	dx := make([]float32, len(gData))
+	for i, x := range xData {
+		x64 := float64(x)
+		u := c * (x64 + 0.044715*x64*x64*x64)
+		tu := math.Tanh(u)
+		dudx := c * (1 + 3*0.044715*x64*x64)
+		dy := 0.5*(1+tu) + 0.5*x64*(1-tu*tu)*dudx
+		dx[i] = gData[i] * float32(dy)
+	}
+	result, _ := tensor.FromSlice(dx, grad.Shape())
+	return []*tensor.Tensor{result}
+}
+
 // Gelu applies GELU activation.
 func Gelu(t *tensor.Tensor) (*tensor.Tensor, error) {
 	bk, err := getBackend(t)
@@ -284,7 +369,33 @@ func Gelu(t *tensor.Tensor) (*tensor.Tensor, error) {
 		return nil, err
 	}
 
-	return tensor.NewTensor(store, t.Shape(), t.DType()), nil
+	out := tensor.NewTensor(store, t.Shape(), t.DType())
+	if needsGrad(t) {
+		out.SetRequiresGrad(true)
+		out.SetGradFn(&geluGradFn{input: t})
+	}
+	return out, nil
+}
+
+// siluGradFn implements backward for SiLU/Swish: y = x*sigmoid(x).
+// dy/dx = sigmoid(x) * (1 + x * (1 - sigmoid(x)))
+type siluGradFn struct {
+	input *tensor.Tensor
+}
+
+func (f *siluGradFn) Name() string             { return "SiluBackward" }
+func (f *siluGradFn) Inputs() []*tensor.Tensor { return []*tensor.Tensor{f.input} }
+func (f *siluGradFn) Backward(grad *tensor.Tensor) []*tensor.Tensor {
+	xData := f.input.ToFloat32Slice()
+	gData := grad.ToFloat32Slice()
+	dx := make([]float32, len(gData))
+	for i, x := range xData {
+		sig := 1.0 / (1.0 + math.Exp(float64(-x)))
+		dy := sig * (1 + float64(x)*(1-sig))
+		dx[i] = gData[i] * float32(dy)
+	}
+	result, _ := tensor.FromSlice(dx, grad.Shape())
+	return []*tensor.Tensor{result}
 }
 
 // Silu applies SiLU (Swish) activation.
@@ -303,7 +414,12 @@ func Silu(t *tensor.Tensor) (*tensor.Tensor, error) {
 		return nil, err
 	}
 
-	return tensor.NewTensor(store, t.Shape(), t.DType()), nil
+	out := tensor.NewTensor(store, t.Shape(), t.DType())
+	if needsGrad(t) {
+		out.SetRequiresGrad(true)
+		out.SetGradFn(&siluGradFn{input: t})
+	}
+	return out, nil
 }
 
 // ScaledDotProductAttention computes multi-head attention.
