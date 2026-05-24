@@ -34,10 +34,7 @@ type Fp8MatmulArgs struct {
 }
 
 func initCuBLASLt() {
-	wrapperLib, err := purego.Dlopen("./libs/libcublaslt_wrapper.so", purego.RTLD_LAZY)
-	if err != nil {
-		wrapperLib, err = purego.Dlopen("libcublaslt_wrapper.so", purego.RTLD_LAZY)
-	}
+	wrapperLib, err := purego.Dlopen(resolveLib("libcublaslt_wrapper.so"), purego.RTLD_LAZY)
 	if err != nil {
 		fmt.Println("[GoML] cuBLASLt wrapper not found:", err)
 		return

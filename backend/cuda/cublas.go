@@ -186,10 +186,7 @@ func initCuBLAS() error {
 		purego.RegisterLibFunc(&cublasSgemm_v2, lib, "cublasSgemm_v2")
 
 		// Try loading GemmEx wrapper (optional)
-		wrapperLib, wErr := purego.Dlopen("./libs/libcublas_wrapper.so", purego.RTLD_LAZY)
-		if wErr != nil {
-			wrapperLib, wErr = purego.Dlopen("libcublas_wrapper.so", purego.RTLD_LAZY)
-		}
+		wrapperLib, wErr := purego.Dlopen(resolveLib("libcublas_wrapper.so"), purego.RTLD_LAZY)
 		if wErr == nil {
 			purego.RegisterLibFunc(&gemmExWrapper, wrapperLib, "gemmex_wrapper")
 			purego.RegisterLibFunc(&gemmStridedBatchedExWrapper, wrapperLib, "gemm_strided_batched_ex_wrapper")

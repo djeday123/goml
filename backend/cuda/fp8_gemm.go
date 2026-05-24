@@ -26,7 +26,7 @@ var fp8gemm struct {
 // initFP8GEMM loads libfp8gemm.so and resolves symbols
 func initFP8GEMM() error {
 	fp8gemm.once.Do(func() {
-		lib, err := purego.Dlopen("libfp8gemm.so", purego.RTLD_LAZY|purego.RTLD_GLOBAL)
+		lib, err := purego.Dlopen(resolveLib("libfp8gemm.so"), purego.RTLD_LAZY|purego.RTLD_GLOBAL)
 		if err != nil {
 			fp8gemm.err = fmt.Errorf("fp8gemm: dlopen: %w", err)
 			return

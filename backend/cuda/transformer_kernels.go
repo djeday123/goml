@@ -22,7 +22,7 @@ var transformer struct {
 
 func initTransformer() error {
 	transformer.once.Do(func() {
-		lib, err := purego.Dlopen("libtransformer.so", purego.RTLD_LAZY|purego.RTLD_GLOBAL)
+		lib, err := purego.Dlopen(resolveLib("libtransformer.so"), purego.RTLD_LAZY|purego.RTLD_GLOBAL)
 		if err != nil {
 			transformer.err = fmt.Errorf("transformer: dlopen: %w", err)
 			return

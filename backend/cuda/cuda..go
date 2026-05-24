@@ -127,7 +127,13 @@ func (b *Backend) ensureInit() error {
 	b.pool = NewPool(backend.CUDADevice(b.deviceIdx))
 
 	b.initialized = true
-	fmt.Printf("[GoML] CUDA backend initialized: %s\n", b.info)
+	fmt.Printf("[GoML] CUDA backend initialized: %s (%s, sm_%d%d)\n",
+		b.info.Name,
+		archName(b.info.ComputeMaj, b.info.ComputeMin),
+		b.info.ComputeMaj, b.info.ComputeMin)
+	if d := LibsDir(); d != "" {
+		fmt.Printf("[GoML] CUDA libs dir: %s\n", d)
+	}
 	return nil
 }
 
