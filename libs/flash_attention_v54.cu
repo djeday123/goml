@@ -373,6 +373,7 @@ __global__ void __launch_bounds__(FA_THREADS, 2)
 __global__ void __launch_bounds__(FA_THREADS, 2)
     fa54_kernel(const __half *__restrict__ Q, const __half *__restrict__ K,
                 const __half *__restrict__ V, __half *__restrict__ O,
+                float *__restrict__ LSE,  // optional [B*H, seq_len], nullptr to skip
                 int seq_len, int head_dim, int causal, float scale)
 {
     int nqt = (seq_len + FA_BR - 1) / FA_BR;
@@ -607,6 +608,19 @@ __global__ void __launch_bounds__(FA_THREADS, 2)
         if (gr8 < seq_len && c1 < head_dim)
             Oh[gr8 * head_dim + c1] = __float2half(Or[nt][3] * li1);
     }
+
+    // Optional LSE export for backward pass.
+    // Each row is owned by 4 threads (tid 0..3 share the same gid). After the
+    // butterfly reduce both rmax and rsexp are identical across those 4 lanes
+    // so any one of them can write — pick tid == 0.
+    if (LSE != nullptr && tid == 0)
+    {
+        float *LSEh = LSE + bh * seq_len;
+        if (gr0 < seq_len)
+            LSEh[gr0] = logf(fmaxf(rsexp[0], 1e-30f)) + rmax[0];
+        if (gr8 < seq_len)
+            LSEh[gr8] = logf(fmaxf(rsexp[1], 1e-30f)) + rmax[1];
+    }
 }
 
 // =============================================================================
@@ -698,7 +712,25 @@ void launch_v54(const __half *Q, const __half *K, const __half *V, __half *O,
     }
     float sc = 1.0f / sqrtf((float)hd);
     int nqt = (sl + FA_BR - 1) / FA_BR;
-    fa54_kernel<<<th * nqt, FA_THREADS, smem>>>(Q, K, V, O, sl, hd, ca, sc);
+    fa54_kernel<<<th * nqt, FA_THREADS, smem>>>(Q, K, V, O, nullptr, sl, hd, ca, sc);
+}
+
+// Same as launch_v54 but also exports per-row LSE (log-sum-exp) into the
+// caller-provided buffer. Required by backward pass.
+//   LSE: [th * sl] float32, must be allocated by caller, mutated by kernel.
+void launch_v54_with_lse(const __half *Q, const __half *K, const __half *V, __half *O,
+                        float *LSE, int th, int sl, int hd, int ca)
+{
+    int smem = 2 * FA_BC * FA_STRIDE * (int)sizeof(__half);
+    if (smem > g_smem54)
+    {
+        CK(cudaFuncSetAttribute(fa54_kernel,
+                                cudaFuncAttributeMaxDynamicSharedMemorySize, smem));
+        g_smem54 = smem;
+    }
+    float sc = 1.0f / sqrtf((float)hd);
+    int nqt = (sl + FA_BR - 1) / FA_BR;
+    fa54_kernel<<<th * nqt, FA_THREADS, smem>>>(Q, K, V, O, LSE, sl, hd, ca, sc);
 }
 
 void test_correctness()
@@ -876,8 +908,10 @@ int main()
 {
     cudaDeviceProp p;
     CK(cudaGetDeviceProperties(&p, 0));
+    int clock_khz = 0;
+    cudaDeviceGetAttribute(&clock_khz, cudaDevAttrClockRate, 0); // CUDA 13: clockRate removed from cudaDeviceProp
     printf("=== FlashAttention v54 — FP16 ex2 softmax ===\n");
-    printf("GPU: %s (%d SMs, %d MHz)\n\n", p.name, p.multiProcessorCount, p.clockRate / 1000);
+    printf("GPU: %s (%d SMs, %d MHz)\n\n", p.name, p.multiProcessorCount, clock_khz / 1000);
     test_correctness();
     bench();
     return 0;

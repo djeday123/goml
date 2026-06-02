@@ -86,24 +86,42 @@ fi
 # User-supplied additions
 GENCODE_FLAGS+=" ${GOML_GENCODE_EXTRA:-}"
 
-echo "gencode: $(echo $GENCODE_FLAGS | tr -s ' ')"
+# Subset of GENCODE that requires sm_89+ (Ada and newer) — FP8 mma needs
+# this. Stripping out sm_80 / sm_86 / fallback PTX for compute_80,86.
+gencode_min_sm89() {
+    echo "$GENCODE_FLAGS" | tr ' ' '\n' \
+        | awk 'BEGIN{p=1} /compute_80/{p=0;next} /compute_86/{p=0;next} {if(p)print; p=1}' \
+        | paste -sd' '
+}
+
+echo "gencode (default):  $(echo $GENCODE_FLAGS | tr -s ' ')"
+echo "gencode (≥sm_89):   $(gencode_min_sm89)"
 echo
 
 # ─── 3. nvcc / gcc flag defaults ────────────────────────────────────────────
 
-NVCC_BASE="-O3 -std=c++17 --shared -Xcompiler -fPIC ${GENCODE_FLAGS}"
+NVCC_BASE_OPTS="-O3 -std=c++17 --shared -Xcompiler -fPIC"
+NVCC_BASE="${NVCC_BASE_OPTS} ${GENCODE_FLAGS}"
+NVCC_FP8="${NVCC_BASE_OPTS} $(gencode_min_sm89)"
 
 # Build targets — each (source, output, extra_flags)
+# Default gencode is all-supported. Pass min_sm=89 as 4th arg to restrict
+# to architectures with FP8 mma (skips sm_80 / sm_86).
 build_so() {
     local src="$1"
     local out="$2"
     local extra="${3:-}"
+    local min_sm="${4:-80}"
     if [ ! -f "$src" ]; then
         echo "  SKIP: $src not found"
         return 0
     fi
-    echo "  --> $out"
-    nvcc ${NVCC_BASE} ${extra} "$src" -o "$out"
+    echo "  --> $out (min sm_${min_sm})"
+    if [ "$min_sm" = "89" ]; then
+        nvcc ${NVCC_FP8} ${extra} "$src" -o "$out"
+    else
+        nvcc ${NVCC_BASE} ${extra} "$src" -o "$out"
+    fi
 }
 
 build_c_so() {
@@ -122,8 +140,8 @@ TARGET="${1:-all}"
 
 case "$TARGET" in
     all|fp8gemm)
-        echo "=== fp8 GEMM ==="
-        build_so libs/fp8_gemm.cu libs/libfp8gemm.so "-lcublas"
+        echo "=== fp8 GEMM (requires sm_89+) ==="
+        build_so libs/fp8_gemm.cu libs/libfp8gemm.so "-lcublas" 89
         ;;
 esac
 
@@ -142,6 +160,13 @@ case "$TARGET" in
         if [ -f libs/libflash_attention_v54.so ]; then
             ln -sf libflash_attention_v54.so libs/libflash_attention.so
         fi
+        ;;
+esac
+
+case "$TARGET" in
+    all|fa_backward|flash_attention_backward)
+        echo "=== Flash Attention backward (v54) ==="
+        build_so libs/flash_attention_v54_backward.cu libs/libflash_attention_v54_backward.so "-DBUILD_AS_LIB"
         ;;
 esac
 

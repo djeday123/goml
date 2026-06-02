@@ -1,5 +1,16 @@
 .env
 data
+
+# Compiled CUDA libraries — built per-architecture by `make cuda`.
+# Don't commit these (fat-binary outputs can be hundreds of MB and are
+# architecture-specific; users should build them locally).
+libs/*.so
+
+# Test binaries
+fa_v*
+runs/fa_*
+/tmp/goml-*
+
 ./data/arxiv_150.txt
 ./data/corpus_multi.txt
 ./data/wiki_az.txt
