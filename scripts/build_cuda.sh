@@ -140,8 +140,22 @@ TARGET="${1:-all}"
 
 case "$TARGET" in
     all|fp8gemm)
-        echo "=== fp8 GEMM (requires sm_89+) ==="
+        echo "=== fp8 GEMM v23 (requires sm_89+) ==="
         build_so libs/fp8_gemm.cu libs/libfp8gemm.so "-lcublas" 89
+        ;;
+esac
+
+case "$TARGET" in
+    all|fp8gemm_v24)
+        echo "=== fp8 GEMM v24 (kind::f8f6f4 + FP16 accum, requires sm_120a) ==="
+        if [ "$HAS_BLACKWELL" = "1" ]; then
+            nvcc -O3 -std=c++17 --shared -Xcompiler -fPIC \
+                 -gencode arch=compute_120a,code=sm_120a \
+                 libs/fp8_gemm_v24.cu -o libs/libfp8gemm_v24.so
+            echo "  --> libs/libfp8gemm_v24.so"
+        else
+            echo "  SKIP: requires CUDA 12.8+ with sm_120a target"
+        fi
         ;;
 esac
 
