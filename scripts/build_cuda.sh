@@ -174,8 +174,15 @@ case "$TARGET" in
     all|fa_backward_v55|flash_attention_backward_v55)
         echo "=== Flash Attention backward (v55 tensor-core two-pass) ==="
         build_so libs/flash_attention_v55_backward.cu libs/libflash_attention_v55_backward.so "-DBUILD_AS_LIB"
-        if [ -f libs/libflash_attention_v55_backward.so ]; then
-            ln -sf libflash_attention_v55_backward.so libs/libflash_attention_backward.so
+        ;;
+esac
+
+case "$TARGET" in
+    all|fa_backward_v56|flash_attention_backward_v56)
+        echo "=== Flash Attention backward (v56 vectorized writeback) ==="
+        build_so libs/flash_attention_v56_backward.cu libs/libflash_attention_v56_backward.so "-DBUILD_AS_LIB"
+        if [ -f libs/libflash_attention_v56_backward.so ]; then
+            ln -sf libflash_attention_v56_backward.so libs/libflash_attention_backward.so
         fi
         ;;
 esac

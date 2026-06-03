@@ -7,7 +7,11 @@ import (
 	"github.com/ebitengine/purego"
 )
 
-// FlashAttention v55 backward kernel bindings (Tri Dao-style two-pass).
+// FlashAttention backward kernel bindings (Tri Dao-style two-pass).
+//
+// Resolves to v56 (vectorized writeback) when available, falls back to v55.
+// Both ABIs are identical — the .so is selected via libflash_attention_backward.so
+// symlink set up by scripts/build_cuda.sh.
 //
 // All tensors are FP16 device pointers in [batch_head, seq_len, head_dim]
 // layout (collapsed batch×heads dim). LSE and D are float32 [batch_head, seq_len].
@@ -16,8 +20,10 @@ import (
 //   Pass 1 (dQ kernel)   — block per Q-tile, iterates K-tiles
 //   Pass 2 (dKdV kernel) — block per K-tile, iterates Q-tiles
 //
-// Measured on RTX PRO 6000 Blackwell: ~110 TFLOPS at sl=4096, ~105 TFLOPS at
-// th=8 sl=2048. Correctness: max FP16 diff < 0.0015 vs FP32 CPU reference.
+// Measured on RTX PRO 6000 Blackwell (v56):
+//   th=4 sl=4096 hd=128 ca=1  → 113.9 TFLOPS
+//   th=8 sl=2048 hd=128 ca=1  → 109.6 TFLOPS
+// Correctness: max FP16 diff < 0.0015 vs FP32 CPU reference.
 
 var faBackward struct {
 	once sync.Once
@@ -32,17 +38,46 @@ var faBackward struct {
 
 func initFlashAttentionBackward() error {
 	faBackward.once.Do(func() {
-		lib, err := purego.Dlopen(resolveLib("libflash_attention_v55_backward.so"), purego.RTLD_LAZY|purego.RTLD_GLOBAL)
-		if err != nil {
-			faBackward.err = fmt.Errorf("flash_attention_backward: dlopen: %w", err)
+		// Prefer the unversioned symlink (v56 latest), fall back to v55.
+		candidates := []string{
+			"libflash_attention_backward.so",
+			"libflash_attention_v56_backward.so",
+			"libflash_attention_v55_backward.so",
+		}
+		var lib uintptr
+		var lastErr error
+		var picked string
+		for _, name := range candidates {
+			l, err := purego.Dlopen(resolveLib(name), purego.RTLD_LAZY|purego.RTLD_GLOBAL)
+			if err == nil {
+				lib = l
+				picked = name
+				break
+			}
+			lastErr = err
+		}
+		if lib == 0 {
+			faBackward.err = fmt.Errorf("flash_attention_backward: dlopen: %w", lastErr)
 			return
 		}
 		faBackward.lib = lib
 
+		// Symbol names: v56 and v55 both export launch_v55_backward_* (kept for ABI
+		// stability) plus their own versioned launch_v5N_backward symbols.
+		dqSym := "launch_v55_backward_dq"
+		dkdvSym := "launch_v55_backward_dkdv"
+		combinedSym := "launch_v55_backward"
+		if picked == "libflash_attention_v56_backward.so" || picked == "libflash_attention_backward.so" {
+			// v56 currently uses launch_v56_* names; try those first.
+			dqSym = "launch_v56_backward_dq"
+			dkdvSym = "launch_v56_backward_dkdv"
+			combinedSym = "launch_v56_backward"
+		}
+
 		purego.RegisterLibFunc(&faBackward.computeD, lib, "launch_compute_D")
-		purego.RegisterLibFunc(&faBackward.dq, lib, "launch_v55_backward_dq")
-		purego.RegisterLibFunc(&faBackward.dkdv, lib, "launch_v55_backward_dkdv")
-		purego.RegisterLibFunc(&faBackward.combined, lib, "launch_v55_backward")
+		purego.RegisterLibFunc(&faBackward.dq, lib, dqSym)
+		purego.RegisterLibFunc(&faBackward.dkdv, lib, dkdvSym)
+		purego.RegisterLibFunc(&faBackward.combined, lib, combinedSym)
 	})
 	return faBackward.err
 }
