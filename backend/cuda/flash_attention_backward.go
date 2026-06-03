@@ -20,9 +20,9 @@ import (
 //   Pass 1 (dQ kernel)   — block per Q-tile, iterates K-tiles
 //   Pass 2 (dKdV kernel) — block per K-tile, iterates Q-tiles
 //
-// Measured on RTX PRO 6000 Blackwell (v56):
-//   th=4 sl=4096 hd=128 ca=1  → 113.9 TFLOPS
-//   th=8 sl=2048 hd=128 ca=1  → 109.6 TFLOPS
+// Measured on RTX PRO 6000 Blackwell (v57):
+//   th=4 sl=4096 hd=128 ca=1  → 117.1 TFLOPS
+//   th=8 sl=2048 hd=128 ca=1  → 112.8 TFLOPS
 // Correctness: max FP16 diff < 0.0015 vs FP32 CPU reference.
 
 var faBackward struct {
@@ -38,9 +38,10 @@ var faBackward struct {
 
 func initFlashAttentionBackward() error {
 	faBackward.once.Do(func() {
-		// Prefer the unversioned symlink (v56 latest), fall back to v55.
+		// Prefer the unversioned symlink (latest), fall back through v57, v56, v55.
 		candidates := []string{
 			"libflash_attention_backward.so",
+			"libflash_attention_v57_backward.so",
 			"libflash_attention_v56_backward.so",
 			"libflash_attention_v55_backward.so",
 		}
@@ -62,16 +63,15 @@ func initFlashAttentionBackward() error {
 		}
 		faBackward.lib = lib
 
-		// Symbol names: v56 and v55 both export launch_v55_backward_* (kept for ABI
-		// stability) plus their own versioned launch_v5N_backward symbols.
+		// Symbol names depend on which .so was loaded.
 		dqSym := "launch_v55_backward_dq"
 		dkdvSym := "launch_v55_backward_dkdv"
 		combinedSym := "launch_v55_backward"
-		if picked == "libflash_attention_v56_backward.so" || picked == "libflash_attention_backward.so" {
-			// v56 currently uses launch_v56_* names; try those first.
-			dqSym = "launch_v56_backward_dq"
-			dkdvSym = "launch_v56_backward_dkdv"
-			combinedSym = "launch_v56_backward"
+		switch picked {
+		case "libflash_attention_v56_backward.so":
+			dqSym, dkdvSym, combinedSym = "launch_v56_backward_dq", "launch_v56_backward_dkdv", "launch_v56_backward"
+		case "libflash_attention_v57_backward.so", "libflash_attention_backward.so":
+			dqSym, dkdvSym, combinedSym = "launch_v57_backward_dq", "launch_v57_backward_dkdv", "launch_v57_backward"
 		}
 
 		purego.RegisterLibFunc(&faBackward.computeD, lib, "launch_compute_D")
