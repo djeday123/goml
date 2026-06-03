@@ -20,10 +20,10 @@ import (
 //   Pass 1 (dQ kernel)   — block per Q-tile, iterates K-tiles
 //   Pass 2 (dKdV kernel) — block per K-tile, iterates Q-tiles
 //
-// Measured on RTX PRO 6000 Blackwell (v57):
-//   th=4 sl=4096 hd=128 ca=1  → 117.1 TFLOPS
-//   th=8 sl=2048 hd=128 ca=1  → 112.8 TFLOPS
-// Correctness: max FP16 diff < 0.0015 vs FP32 CPU reference.
+// Measured on RTX PRO 6000 Blackwell (v58):
+//   th=4 sl=4096 hd=128 ca=1  → 127.2 TFLOPS  (v57: 117.1)
+//   th=8 sl=2048 hd=128 ca=1  → 122.9 TFLOPS  (v57: 112.8)
+// Correctness: max FP16 diff < 0.0014 vs FP32 CPU reference (same as v57).
 
 var faBackward struct {
 	once sync.Once
@@ -38,9 +38,10 @@ var faBackward struct {
 
 func initFlashAttentionBackward() error {
 	faBackward.once.Do(func() {
-		// Prefer the unversioned symlink (latest), fall back through v57, v56, v55.
+		// Prefer the unversioned symlink (latest), fall back through v58, v57, v56, v55.
 		candidates := []string{
 			"libflash_attention_backward.so",
+			"libflash_attention_v58_backward.so",
 			"libflash_attention_v57_backward.so",
 			"libflash_attention_v56_backward.so",
 			"libflash_attention_v55_backward.so",
@@ -70,8 +71,10 @@ func initFlashAttentionBackward() error {
 		switch picked {
 		case "libflash_attention_v56_backward.so":
 			dqSym, dkdvSym, combinedSym = "launch_v56_backward_dq", "launch_v56_backward_dkdv", "launch_v56_backward"
-		case "libflash_attention_v57_backward.so", "libflash_attention_backward.so":
+		case "libflash_attention_v57_backward.so":
 			dqSym, dkdvSym, combinedSym = "launch_v57_backward_dq", "launch_v57_backward_dkdv", "launch_v57_backward"
+		case "libflash_attention_v58_backward.so", "libflash_attention_backward.so":
+			dqSym, dkdvSym, combinedSym = "launch_v58_backward_dq", "launch_v58_backward_dkdv", "launch_v58_backward"
 		}
 
 		purego.RegisterLibFunc(&faBackward.computeD, lib, "launch_compute_D")

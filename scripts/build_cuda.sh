@@ -202,8 +202,15 @@ case "$TARGET" in
     all|fa_backward_v57|flash_attention_backward_v57)
         echo "=== Flash Attention backward (v57 3-stage pipeline) ==="
         build_so libs/flash_attention_v57_backward.cu libs/libflash_attention_v57_backward.so "-DBUILD_AS_LIB"
-        if [ -f libs/libflash_attention_v57_backward.so ]; then
-            ln -sf libflash_attention_v57_backward.so libs/libflash_attention_backward.so
+        ;;
+esac
+
+case "$TARGET" in
+    all|fa_backward_v58|flash_attention_backward_v58)
+        echo "=== Flash Attention backward (v58 FP16 accum on S,dP MMAs) ==="
+        build_so libs/flash_attention_v58_backward.cu libs/libflash_attention_v58_backward.so "-DBUILD_AS_LIB"
+        if [ -f libs/libflash_attention_v58_backward.so ]; then
+            ln -sf libflash_attention_v58_backward.so libs/libflash_attention_backward.so
         fi
         ;;
 esac
