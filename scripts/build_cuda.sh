@@ -165,8 +165,18 @@ esac
 
 case "$TARGET" in
     all|fa_backward|flash_attention_backward)
-        echo "=== Flash Attention backward (v54) ==="
+        echo "=== Flash Attention backward (v54 minimal) ==="
         build_so libs/flash_attention_v54_backward.cu libs/libflash_attention_v54_backward.so "-DBUILD_AS_LIB"
+        ;;
+esac
+
+case "$TARGET" in
+    all|fa_backward_v55|flash_attention_backward_v55)
+        echo "=== Flash Attention backward (v55 tensor-core two-pass) ==="
+        build_so libs/flash_attention_v55_backward.cu libs/libflash_attention_v55_backward.so "-DBUILD_AS_LIB"
+        if [ -f libs/libflash_attention_v55_backward.so ]; then
+            ln -sf libflash_attention_v55_backward.so libs/libflash_attention_backward.so
+        fi
         ;;
 esac
 
