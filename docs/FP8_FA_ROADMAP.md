@@ -1,20 +1,47 @@
 # FP8 Flash Attention Roadmap (goml)
 
 Honest engineering plan for adding FP8 precision to FA forward and backward
-on Blackwell sm_120a. Written 2026-06-04 after exhausting cheap FP16
-optimizations (v54→v58 backward, v54→v55 forward).
+on Blackwell sm_120a. Last update 2026-06-04 (v65 complete, SMEM-bound).
 
-## TL;DR
+## Current state (2026-06-04 evening)
+
+| Version | TFLOPS @ sl=4096 | What |
+|---------|------------------|------|
+| v61 PoC | (verify only) | mma kind::f8f6f4 path proven |
+| v62 full | 75 T | end-to-end correctness, baseline |
+| v63 +transpose +cvt | 166 T | +121% (gather_v_b eliminated, hw FP8 cvt) |
+| v64 +double-buffer | 162 T | parity (not memory-bound, no win) |
+| **v65 +bigger tiles (Br=128)** | **184 T** | **+10% from amortization** |
+| _v55 FP16 baseline_ | _271 T_ | we're at 68% of FP16 |
+
+## Critical insight from v65 NCu profile
+
+v65 is **L1/SMEM cache throughput bound (53%), NOT compute bound (26%)**.
+This was unexpected — naive analysis suggested MMA dispatch was the limit.
+Real bottleneck: too many scalar SMEM reads in the MMA inner loops.
+
+This changes the optimization strategy completely:
+  - stmatrix wouldn't help (it's a STORE op, not a read).
+  - Double-buffering wouldn't help (already proven in v64: no gain).
+  - **M_TILES=2 per warp** is the right next move — amortize each B operand
+    SMEM read across 2× more MMA work.
+
+## TL;DR forward path
 
 | Path | Effort | Expected gain | Risk |
 |------|--------|---------------|------|
-| **v61** FP8 forward (PoC, basic correctness) | 2-3 hours | parity with v55 | low |
-| **v62** FP8 forward (production tuned) | 1-2 days | 271 → **450-550 T** | medium |
-| **v63** FP8 backward (basic) | 5-7 days | 127 → **180-220 T** | high |
-| **v64** FP8 + block scaling (`kind::mxf8f6f4`) | +2-3 days | training-safe accuracy | medium |
-| **v65** FP4 forward via `kind::mxf4nvf4` | 3-5 days research | up to **900 T** | very high |
+| ✅ **v61** PoC | 2-3 hours | parity (75 T) | done |
+| ✅ **v62** full pipeline | done | 75 T | done |
+| ✅ **v63** transpose+cvt | done | **+121% → 166 T** | done |
+| ✅ **v64** double-buffer | done | flat (mem not binding) | done |
+| ✅ **v65** bigger tiles | done | +10% → **184 T** | done |
+| **v66** M_TILES=2/warp | 2-3 hours | +20-30% → 220-240 T | medium |
+| **v67** ldmatrix (if FP8-compatible swizzle works) | 4-6 hours | +30-50% → 280-330 T | high |
+| **v68** block scaled mxf8f6f4 | 4-6 hours | accuracy parity | medium |
+| **v69** FP4 mxf4nvf4 | 1-2 days research | +50-100% → 400+ T | very high |
+| **v70** backward FP8 | 5-7 days | 127→200+ | high |
 
-Total to "production FP8 training-ready" stack: **3-4 weeks** focused.
+Total to "production FP8 training-ready" stack: **2-3 weeks** focused.
 
 ## Why FP8 unlocks real headroom
 
