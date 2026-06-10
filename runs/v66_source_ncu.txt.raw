@@ -1,0 +1,20 @@
+==WARNING== No metrics to collect found in sections.
+==PROF== Connected to process 2585518 (/data/lib/podman-data/projects/goml/runs/fa_v66_fp8)
+==PROF== Profiling "fa66_kernel": 0%....50%....100% - 1 pass
+=== FA v66 FP8 forward — M_TILES=2 per warp (4 warps × 32 rows) ===
+GPU: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (188 SMs, 2617 MHz)
+
+--- Correctness vs CPU FP8-roundtripped reference ---
+  bh=1 sl=64 hd=128 ca=0  max_diff=0.0086 errs=0 → PASS
+  bh=1 sl=128 hd=128 ca=0  max_diff=0.0052 errs=0 → PASS
+  bh=1 sl=256 hd=128 ca=0  max_diff=0.0039 errs=0 → PASS
+  bh=1 sl=512 hd=128 ca=0  max_diff=0.0030 errs=0 → PASS
+  bh=2 sl=256 hd=128 ca=1  max_diff=0.0175 errs=0 → PASS
+
+--- Performance ---
+  bh=4 sl=1024 hd=128  time=0.063 ms  perf=34.1 TFLOPS
+  bh=4 sl=2048 hd=128  time=0.095 ms  perf=90.1 TFLOPS
+  bh=8 sl=2048 hd=128  time=0.097 ms  perf=176.7 TFLOPS
+  bh=4 sl=4096 hd=128  time=1.957 ms  perf=17.6 TFLOPS
+==PROF== Disconnected from process 2585518
+==PROF== Report: /data/lib/podman-data/projects/goml/runs/v66_source.ncu-rep

@@ -751,7 +751,9 @@ int main()
     cudaDeviceProp p;
     CK(cudaGetDeviceProperties(&p, 0));
     printf("=== FP8 GEMM v22: Multi-variant optimization comparison ===\n");
-    printf("GPU: %s (%d SMs, %d MHz)\n", p.name, p.multiProcessorCount, p.clockRate / 1000);
+    int clock_khz = 0;
+    cudaDeviceGetAttribute(&clock_khz, cudaDevAttrClockRate, 0);
+    printf("GPU: %s (%d SMs, %d MHz)\n", p.name, p.multiProcessorCount, clock_khz / 1000);
 
     KernelInfo kernels[] = {
         {"original", kernel_original, SMEM_PER_BLOCK, 3},

@@ -1,0 +1,21 @@
+==PROF== Connected to process 2599749 (/data/lib/podman-data/projects/goml/runs/fa_v68_fp8)
+==PROF== Profiling "fa68_kernel": 0%....50%....100% - 40 passes
+=== FA v68 FP8 forward — Variant C: smV_T stride 64→68 ===
+GPU: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (188 SMs, 2617 MHz)
+Kernel attrs: numRegs=245  binSize=120  sharedSizeBytes(static)=0
+Dynamic SMEM (hd=128): v68=57856 B (56.50 KB) vs v66=57344 B (delta=+512 B)
+
+--- Correctness vs CPU FP8-roundtripped reference ---
+  bh=1 sl=64 hd=128 ca=0  max_diff=0.0086 errs=0 → PASS
+  bh=1 sl=128 hd=128 ca=0  max_diff=0.0052 errs=0 → PASS
+  bh=1 sl=256 hd=128 ca=0  max_diff=0.0039 errs=0 → PASS
+  bh=1 sl=512 hd=128 ca=0  max_diff=0.0030 errs=0 → PASS
+  bh=2 sl=256 hd=128 ca=1  max_diff=0.0175 errs=0 → PASS
+
+--- Performance ---
+  bh=4 sl=1024 hd=128  time=0.071 ms  perf=30.3 TFLOPS
+  bh=4 sl=2048 hd=128  time=0.083 ms  perf=103.4 TFLOPS
+  bh=8 sl=2048 hd=128  time=0.083 ms  perf=206.5 TFLOPS
+  bh=4 sl=4096 hd=128  time=66.348 ms  perf=0.5 TFLOPS
+==PROF== Disconnected from process 2599749
+==PROF== Report: /data/lib/podman-data/projects/goml/runs/v68_ncu.ncu-rep

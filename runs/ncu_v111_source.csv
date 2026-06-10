@@ -1,0 +1,4 @@
+==WARNING== No metrics to collect found in sections.
+==PROF== Connected to process 4102225 (/data/lib/podman-data/projects/goml/runs/fa_v111_producer_skip)
+NCu config: bh=64 sl=8192 hd=128 wnd=0 grid=5504
+==PROF== Disconnected from process 4102225

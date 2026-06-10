@@ -184,7 +184,8 @@ __global__ void __launch_bounds__(FA_THREADS, 2)
         const uint8_t *__restrict__ V,
         __half *__restrict__ O,
         int seq_len, int head_dim, int causal, float scale,
-        float qk_descale, float v_descale)
+        float qk_descale, float v_descale,
+        int window)  // 0 = no window (full attention or causal). >0 = sliding window.
 {
     int nqt = (seq_len + FA_BR - 1) / FA_BR;
     int bh = blockIdx.x / nqt, qt = blockIdx.x % nqt, qs = qt * FA_BR;
@@ -249,14 +250,20 @@ __global__ void __launch_bounds__(FA_THREADS, 2)
     int nkv = (seq_len + FA_BC - 1) / FA_BC;
     int kv_max_blocks = causal ? ((qs + FA_BR - 1) / FA_BC + 1) : nkv;
     if (kv_max_blocks > nkv) kv_max_blocks = nkv;
+    // v69+window: sliding-window lower bound. For causal sliding window, Q-row q
+    // attends to K in [max(0, q - window + 1), q]. Q-block covers qs..qs+Br-1;
+    // earliest K needed = max(0, qs - window + 1). Skip K-blocks below that.
+    int kv_min_blocks = 0;
+    if (window > 0 && qs + 1 > window) {
+        kv_min_blocks = (qs - window + 1) / FA_BC;  // floor
+    }
 
-    // Pre-load iter 0: K[0] AND V into smV. After iter 0 ends, K prefetched
-    // mid-iter (overlap with compute), V prefetched end-of-iter (no overlap).
-    load_tile_fp8(smK[0], Kh, 0, FA_BC, seq_len, head_dim);
-    load_tile_fp8(smV,    Vh, 0, FA_BC, seq_len, head_dim);
+    // Pre-load iter kv_min_blocks: K + V. Iter k prefetches iter k+1 → other bank.
+    load_tile_fp8(smK[kv_min_blocks & 1], Kh, kv_min_blocks * FA_BC, FA_BC, seq_len, head_dim);
+    load_tile_fp8(smV, Vh, kv_min_blocks * FA_BC, FA_BC, seq_len, head_dim);
     cpa_commit();
 
-    for (int kv = 0; kv < kv_max_blocks; kv++)
+    for (int kv = kv_min_blocks; kv < kv_max_blocks; kv++)
     {
         int kvs = kv * FA_BC;
         int buf = kv & 1;
@@ -333,6 +340,9 @@ __global__ void __launch_bounds__(FA_THREADS, 2)
             for (int mi = 0; mi < M_TILES; mi++)
             {
                 int gq0 = qs + mrb + mi * 16 + gid, gq8 = gq0 + 8;
+                // v69+window: sliding-window lower bounds per row.
+                int kmin0 = (window > 0 && gq0 + 1 > window) ? (gq0 - window + 1) : 0;
+                int kmin8 = (window > 0 && gq8 + 1 > window) ? (gq8 - window + 1) : 0;
 #pragma unroll
                 for (int nt = 0; nt < 8; nt++)
                 {
@@ -341,6 +351,11 @@ __global__ void __launch_bounds__(FA_THREADS, 2)
                     if (gk1 > gq0) Sr[nt][mi][1] = -1e30f;
                     if (gk0 > gq8) Sr[nt][mi][2] = -1e30f;
                     if (gk1 > gq8) Sr[nt][mi][3] = -1e30f;
+                    // Sliding window: mask K below row's lower bound.
+                    if (gk0 < kmin0) Sr[nt][mi][0] = -1e30f;
+                    if (gk1 < kmin0) Sr[nt][mi][1] = -1e30f;
+                    if (gk0 < kmin8) Sr[nt][mi][2] = -1e30f;
+                    if (gk1 < kmin8) Sr[nt][mi][3] = -1e30f;
                     if (gq0 >= seq_len) Sr[nt][mi][0] = Sr[nt][mi][1] = -1e30f;
                     if (gq8 >= seq_len) Sr[nt][mi][2] = Sr[nt][mi][3] = -1e30f;
                     if (gk0 >= seq_len) Sr[nt][mi][0] = Sr[nt][mi][2] = -1e30f;
@@ -557,7 +572,7 @@ static inline float fp16f(uint16_t h)
 
 void cpu_attention_fp8(
     const uint8_t *Q, const uint8_t *K, const uint8_t *V,
-    float *O_out, int bh, int sl, int hd, int causal)
+    float *O_out, int bh, int sl, int hd, int causal, int window = 0)
 {
     float scale = 1.0f / sqrtf((float)hd);
     int hs = sl * hd;
@@ -570,9 +585,11 @@ void cpu_attention_fp8(
         for (int q = 0; q < sl; q++)
         {
             int kv_max = causal ? (q + 1) : sl;
+            // Sliding window: K range = [max(0, q - window + 1), q] for causal.
+            int kv_min = (window > 0 && q + 1 > window) ? (q - window + 1) : 0;
             float *P = (float *)malloc(sizeof(float) * sl);
             float rmax = -1e30f;
-            for (int k = 0; k < kv_max; k++)
+            for (int k = kv_min; k < kv_max; k++)
             {
                 float s = 0;
                 for (int d = 0; d < hd; d++)
@@ -581,16 +598,16 @@ void cpu_attention_fp8(
                 if (P[k] > rmax) rmax = P[k];
             }
             float rsum = 0;
-            for (int k = 0; k < kv_max; k++)
+            for (int k = kv_min; k < kv_max; k++)
             {
                 P[k] = expf(P[k] - rmax);
                 rsum += P[k];
             }
-            for (int k = 0; k < kv_max; k++) P[k] /= rsum;
+            for (int k = kv_min; k < kv_max; k++) P[k] /= rsum;
             for (int d = 0; d < hd; d++)
             {
                 float o = 0;
-                for (int k = 0; k < kv_max; k++)
+                for (int k = kv_min; k < kv_max; k++)
                     o += P[k] * e4m3_to_float(Vh[k * hd + d]);
                 Oh[q * hd + d] = o;
             }
@@ -620,16 +637,21 @@ int main()
            smem_hd128 / 1024.0, 2 * smem_hd128 / 1024.0);
 
     printf("--- Correctness vs CPU FP8-roundtripped reference ---\n");
-    int configs[][4] = {
-        {1, 64, 128, 0},
-        {1, 128, 128, 0},
-        {1, 256, 128, 0},
-        {1, 512, 128, 0},
-        {2, 256, 128, 1},
+    // v69+window: 5th column = window (0 = no window). All causal sliding window tests.
+    int configs[][5] = {
+        {1, 64,  128, 0, 0},     // full attn (small)
+        {1, 128, 128, 0, 0},
+        {1, 256, 128, 0, 0},
+        {1, 512, 128, 0, 0},
+        {2, 256, 128, 1, 0},     // causal no-window
+        // Sliding-window edge cases — kept SMALL so CPU ref is tractable:
+        {1, 256, 128, 1, 64},    // window aligned to FA_BC=64
+        {1, 256, 128, 1, 100},   // window NOT multiple of any block boundary
+        {1, 300, 128, 1, 96},    // window cuts mid-block, sl not multiple of Br=128
     };
     for (auto &c : configs)
     {
-        int bh = c[0], sl = c[1], hd = c[2], ca = c[3];
+        int bh = c[0], sl = c[1], hd = c[2], ca = c[3], wnd = c[4];
         size_t n_elems = (size_t)bh * sl * hd;
 
         float *Qf = (float *)malloc(sizeof(float) * n_elems);
@@ -651,7 +673,7 @@ int main()
         }
 
         float *O_ref = (float *)malloc(sizeof(float) * n_elems);
-        cpu_attention_fp8(Qq, Kq, Vq, O_ref, bh, sl, hd, ca);
+        cpu_attention_fp8(Qq, Kq, Vq, O_ref, bh, sl, hd, ca, wnd);
 
         uint8_t *Q_d, *K_d, *V_d;
         __half *O_d;
@@ -675,7 +697,7 @@ int main()
         int nqt = (sl + FA_BR - 1) / FA_BR;
         float scale = 1.0f / sqrtf((float)hd);
         fa69_kernel<<<bh * nqt, FA_THREADS, smem>>>(
-            Q_d, K_d, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f);
+            Q_d, K_d, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
         CK(cudaDeviceSynchronize());
 
         uint16_t *O_cpu = (uint16_t *)malloc(n_elems * 2);
@@ -691,8 +713,8 @@ int main()
             if (ae > mx) mx = ae;
             if (ae > fmaxf(0.05f, fabsf(ref) * 0.1f)) errs++;
         }
-        printf("  bh=%d sl=%d hd=%d ca=%d  max_diff=%.4f errs=%d → %s\n",
-               bh, sl, hd, ca, mx, errs, errs == 0 ? "PASS" : "FAIL");
+        printf("  bh=%d sl=%d hd=%d ca=%d wnd=%d  max_diff=%.4f errs=%d → %s\n",
+               bh, sl, hd, ca, wnd, mx, errs, errs == 0 ? "PASS" : "FAIL");
 
         free(Qf); free(Kf); free(Vf);
         free(Qq); free(Kq); free(Vq);
@@ -701,21 +723,26 @@ int main()
     }
 
     printf("\n--- Performance ---\n");
-    int bench_configs[][3] = {
-        // v68-comparable small grids (< 188 SMs blocks)
-        {4, 1024, 128},   //  32 blocks
-        {4, 2048, 128},   //  64 blocks
-        {8, 2048, 128},   // 128 blocks
-        {4, 4096, 128},   // 128 blocks
-        // v69_singleV-relevant larger grids (where 2 blocks/SM helps wave count)
-        {8, 4096, 128},   // 256 blocks (v68: 2 waves, v69_singleV: 1 wave)
-        {16, 2048, 128},  // 256 blocks (same)
-        {16, 4096, 128},  // 512 blocks (v68: 3 waves, v69_singleV: 2 waves)
-        {32, 2048, 128},  // 512 blocks
+    // 4th column = window (0 = full causal, >0 = sliding window).
+    int bench_configs[][4] = {
+        // Full-attention configs (window=0, causal=0 in launch — non-causal full):
+        {4, 1024, 128, 0},
+        {4, 2048, 128, 0},
+        {8, 2048, 128, 0},
+        {4, 4096, 128, 0},
+        {8, 4096, 128, 0},
+        {16, 2048, 128, 0},
+        {16, 4096, 128, 0},
+        {32, 2048, 128, 0},
+        // SLIDING WINDOW configs (Phase A quick check: window=1024, causal=1):
+        {4, 8192, 128, 1024},  // dominant Gemma 3 local-layer shape
+        {4, 4096, 128, 1024},
+        {8, 8192, 128, 1024},  // bigger bh stress
     };
     for (auto &c : bench_configs)
     {
-        int bh = c[0], sl = c[1], hd = c[2];
+        int bh = c[0], sl = c[1], hd = c[2], wnd = c[3];
+        int ca_bench = (wnd > 0) ? 1 : 0;  // sliding window requires causal=1
         size_t n_elems = (size_t)bh * sl * hd;
         uint8_t *Q_d, *K_d, *V_d;
         __half *O_d;
@@ -738,7 +765,7 @@ int main()
 
         for (int i = 0; i < 5; i++)
             fa69_kernel<<<bh * nqt, FA_THREADS, smem>>>(
-                Q_d, K_d, V_d, O_d, sl, hd, 0, scale, 1.0f, 1.0f);
+                Q_d, K_d, V_d, O_d, sl, hd, ca_bench, scale, 1.0f, 1.0f, wnd);
         CK(cudaDeviceSynchronize());
 
         cudaEvent_t t0, t1; cudaEventCreate(&t0); cudaEventCreate(&t1);
@@ -746,15 +773,20 @@ int main()
         cudaEventRecord(t0);
         for (int i = 0; i < it; i++)
             fa69_kernel<<<bh * nqt, FA_THREADS, smem>>>(
-                Q_d, K_d, V_d, O_d, sl, hd, 0, scale, 1.0f, 1.0f);
+                Q_d, K_d, V_d, O_d, sl, hd, ca_bench, scale, 1.0f, 1.0f, wnd);
         cudaEventRecord(t1);
         cudaEventSynchronize(t1);
         float ms; cudaEventElapsedTime(&ms, t0, t1);
         ms /= it;
-        double flops = 4.0 * (double)bh * (double)sl * (double)sl * (double)hd;
+        // Theoretical work: sliding window reduces total to ~bh * sl * window * hd * 4.
+        // Reported TFLOPS uses ACTUAL FLOPS done (not theoretical full attn), so direct
+        // comparison vs full-attn perf shows whether early-skip materializes the work cut.
+        double sl_eff = (wnd > 0) ? (double)wnd : (double)sl;
+        if (ca_bench && wnd == 0) sl_eff = (double)sl / 2.0;  // causal triangular
+        double flops = 4.0 * (double)bh * (double)sl * sl_eff * (double)hd;
         double tf = flops / (ms / 1000.0) / 1e12;
-        printf("  bh=%d sl=%d hd=%d  time=%.3f ms  perf=%.1f TFLOPS\n",
-               bh, sl, hd, ms, tf);
+        printf("  bh=%d sl=%d hd=%d ca=%d wnd=%d  time=%.3f ms  perf=%.1f TFLOPS (effective work)\n",
+               bh, sl, hd, ca_bench, wnd, ms, tf);
         cudaEventDestroy(t0); cudaEventDestroy(t1);
         cudaFree(Q_d); cudaFree(K_d); cudaFree(V_d); cudaFree(O_d);
     }

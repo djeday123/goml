@@ -1,0 +1,16 @@
+Device: NVIDIA RTX PRO 6000 Blackwell Workstation Edition
+
+############################################################
+# ldmatrix.trans → QMMA m16n8k32 B-frag layout probe
+############################################################
+=== Test: A=1, B[k][n]=n  →  D[r][n] = 32*n ===
+
+Hypothesis 0 (CONTROL): direct byte-gather load of B[n,k] uint32
+  -- control (byte-gather) --
+     [match] lane  0 (gid=0,tid=0): d=[0,32,0,32]  exp=[0,32,0,32]
+     [match] lane  1 (gid=0,tid=1): d=[64,96,64,96]  exp=[64,96,64,96]
+     [match] lane  2 (gid=0,tid=2): d=[128,160,128,160]  exp=[128,160,128,160]
+     [match] lane  3 (gid=0,tid=3): d=[192,224,192,224]  exp=[192,224,192,224]
+     verdict: 32/32 lanes OK
+
+Hypothesis 1: ldmatrix.x2.trans.m8n8.b16 from B[k][n] FP8 SMEM

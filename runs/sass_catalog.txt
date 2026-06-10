@@ -1,0 +1,2907 @@
+Total unique opcode variants: 2400
+Total unique opcode families: 167
+
+=== Top families (by total variant count) ===
+  ATOM           315 variants
+  ATOMG          307 variants
+  SUATOM         200 variants
+  SULD            81 variants
+  ISETP           73 variants
+  FSET            66 variants
+  FSETP           66 variants
+  DSETP           64 variants
+  IMMA            60 variants
+  QMMA            57 variants
+  TEX             51 variants
+  LDG             39 variants
+  CSMTEST         35 variants
+  TLD             32 variants
+  I2FP            29 variants
+  ATOMS           29 variants
+  TLD4            28 variants
+  LD              27 variants
+  HSET2           26 variants
+  HSETP2          26 variants
+  TXD             24 variants
+  FOOTPRINT       20 variants
+  MUFU            19 variants
+  FMUL            17 variants
+  SYNCS           16 variants
+  LDL             15 variants
+  IMAD            14 variants
+  HMMA            14 variants
+  HMNMX2          14 variants
+  LDGSTS          14 variants
+  HFMA2           13 variants
+  UTMAPF          13 variants
+  F2IP            12 variants
+  OMMA            12 variants
+  ISBERD          12 variants
+  I2IP            11 variants
+  F2FP            11 variants
+  LDC             11 variants
+  LDSM            11 variants
+  FMNMX           10 variants
+  FFMA            10 variants
+  F2I             10 variants
+  I2F             10 variants
+  ALD             10 variants
+  UBLKRED         10 variants
+  FSWZADD         10 variants
+  SUQUERY         10 variants
+  SHF              9 variants
+  UFMUL            9 variants
+  UI2FP            9 variants
+  UISETP           9 variants
+  UIMAD            9 variants
+  IPA              9 variants
+  TMML             9 variants
+  UTMALDG          9 variants
+  FADD             8 variants
+  HMUL2            8 variants
+  UFSET            8 variants
+  UFSETP           8 variants
+  UTMAREDG         8 variants
+  UBLKCP           8 variants
+  REDAS            8 variants
+  HADD2            7 variants
+  UF2IP            7 variants
+  REDUX            7 variants
+  LDCU             7 variants
+  LDS              7 variants
+  PRMT             6 variants
+  IDP              6 variants
+  UI2IP            6 variants
+  UFFMA            6 variants
+  USHF             6 variants
+  QSPC             6 variants
+  UTMASTG          6 variants
+  LEA              5 variants
+  FHADD            5 variants
+  FHFMA            5 variants
+  VIADD            5 variants
+  MOVM             5 variants
+  VIMNMX           5 variants
+  UFMNMX           5 variants
+  UFADD            5 variants
+  AL2P             5 variants
+  PIXLD            5 variants
+  P2R              4 variants
+  IMNMX            4 variants
+  DMUL             4 variants
+  DADD             4 variants
+  DFMA             4 variants
+  IADD             4 variants
+  I2I              4 variants
+  DMMA             4 variants
+  UIADD3           4 variants
+  R2UR             4 variants
+  FLO              4 variants
+  SETCTAID         4 variants
+  TXQ              4 variants
+  SHFL             4 variants
+  MATCH            4 variants
+  VOTE             4 variants
+  VOTEU            4 variants
+  STAS             4 variants
+  MOV              3 variants
+  SGXT             3 variants
+  UVIADD           3 variants
+  UVIMNMX          3 variants
+  UI2I             3 variants
+  UIMNMX           3 variants
+  ULEA             3 variants
+  USGXT            3 variants
+  UFLO             3 variants
+  B2R              3 variants
+  OUT              3 variants
+  UP2UR            3 variants
+  UTMACCTL         3 variants
+  UI2F             3 variants
+  SEL              2 variants
+  FSEL             2 variants
+  IADD3            2 variants
+  LOP3             2 variants
+  BMSK             2 variants
+  UFSEL            2 variants
+  USEL             2 variants
+  ULOP3            2 variants
+  UBMSK            2 variants
+  RPCMOV           2 variants
+  LDTRAM           2 variants
+  USETSHMSZ        2 variants
+  UMOV             2 variants
+  CS2R             2 variants
+  ELECT            2 variants
+  CS2UR            2 variants
+  R2P              1 variants
+  IABS             1 variants
+  PLOP3            1 variants
+  UIABS            1 variants
+  UPRMT            1 variants
+  UPLOP3           1 variants
+  UBREV            1 variants
+  UPOPC            1 variants
+  BREV             1 variants
+  FCHK             1 variants
+  POPC             1 variants
+  LEPC             1 variants
+  UBLKPF           1 variants
+  GETLMEMBASE      1 variants
+  ULEPC            1 variants
+  UVIRTCOUNT       1 variants
+  MOV64IUR         1 variants
+  CGAERRBAR        1 variants
+  PMTRIG           1 variants
+  PREEXIT          1 variants
+  ACQBULK          1 variants
+  ACQSHMINIT       1 variants
+  UR2UP            1 variants
+  UCLEA            1 variants
+  NOP              1 variants
+  S2R              1 variants
+  ENDCOLLECTIVE     1 variants
+  ERRBAR           1 variants
+  LDGDEPBAR        1 variants
+  UTMACMDFLUSH     1 variants
+  S2UR             1 variants
+  UCGABAR_ARV      1 variants
+  UCGABAR_WAIT     1 variants
+  UFHADD           1 variants
+  UFHFMA           1 variants
+
+=== All families with their variants ===
+
+[ACQBULK]  (1 variants)
+      97  ACQBULK
+
+[ACQSHMINIT]  (1 variants)
+      97  ACQSHMINIT
+
+[AL2P]  (5 variants)
+      95  AL2P
+       1  AL2P.128
+       2  AL2P.64
+       2  AL2P.96
+       3  AL2P.O
+
+[ALD]  (10 variants)
+      92  ALD
+       1  ALD.64
+       1  ALD.96
+       1  ALD.O
+       1  ALD.O.P
+       1  ALD.O.PHYS
+      93  ALD.P
+       1  ALD.P.64
+       1  ALD.P.96
+      92  ALD.PHYS
+
+[ATOM]  (315 variants)
+       5  ATOM.ADD
+     243  ATOM.ADD.EF
+       4  ATOM.ADD.EF.128
+       3  ATOM.ADD.EF.64
+       4  ATOM.ADD.EF.CONSTANT.CTA
+       2  ATOM.ADD.EF.CONSTANT.CTA.PRIVATE
+       1  ATOM.ADD.EF.CONSTANT.GPU
+       6  ATOM.ADD.EF.CONSTANT.PRIVATE
+       2  ATOM.ADD.EF.CONSTANT.SM
+       1  ATOM.ADD.EF.CONSTANT.SM.PRIVATE
+       1  ATOM.ADD.EF.CONSTANT.VC
+       1  ATOM.ADD.EF.CONSTANT.VC.PRIVATE
+       2  ATOM.ADD.EF.F32.FTZ.RN
+       1  ATOM.ADD.EF.F32.FTZ.RN.CONSTANT.CTA
+       1  ATOM.ADD.EF.F32.FTZ.RN.CONSTANT.CTA.PRIVATE
+       1  ATOM.ADD.EF.F32.FTZ.RN.CONSTANT.GPU
+       1  ATOM.ADD.EF.F32.FTZ.RN.CONSTANT.PRIVATE
+       1  ATOM.ADD.EF.F32.FTZ.RN.CONSTANT.SM
+       1  ATOM.ADD.EF.F32.FTZ.RN.CONSTANT.SM.PRIVATE
+       1  ATOM.ADD.EF.F32.FTZ.RN.CONSTANT.VC
+       1  ATOM.ADD.EF.F32.FTZ.RN.CONSTANT.VC.PRIVATE
+       1  ATOM.ADD.EF.F32.FTZ.RN.MMIO.GPU
+       1  ATOM.ADD.EF.F32.FTZ.RN.MMIO.SYS
+       1  ATOM.ADD.EF.F32.FTZ.RN.STRONG.GPU
+       1  ATOM.ADD.EF.F32.FTZ.RN.STRONG.GPU.PRIVATE
+       1  ATOM.ADD.EF.F32.FTZ.RN.STRONG.SM
+       1  ATOM.ADD.EF.F32.FTZ.RN.STRONG.SM.PRIVATE
+       1  ATOM.ADD.EF.F32.FTZ.RN.STRONG.SYS
+       2  ATOM.ADD.EF.F32.RN
+       1  ATOM.ADD.EF.F32.RN.CONSTANT.CTA
+       1  ATOM.ADD.EF.F32.RN.CONSTANT.CTA.PRIVATE
+       1  ATOM.ADD.EF.F32.RN.CONSTANT.GPU
+       1  ATOM.ADD.EF.F32.RN.CONSTANT.PRIVATE
+       1  ATOM.ADD.EF.F32.RN.CONSTANT.SM
+       1  ATOM.ADD.EF.F32.RN.CONSTANT.SM.PRIVATE
+       1  ATOM.ADD.EF.F32.RN.CONSTANT.VC
+       1  ATOM.ADD.EF.F32.RN.CONSTANT.VC.PRIVATE
+       1  ATOM.ADD.EF.F32.RN.MMIO.GPU
+       1  ATOM.ADD.EF.F32.RN.MMIO.SYS
+       1  ATOM.ADD.EF.F32.RN.STRONG.GPU
+       1  ATOM.ADD.EF.F32.RN.STRONG.GPU.PRIVATE
+       1  ATOM.ADD.EF.F32.RN.STRONG.SM
+       1  ATOM.ADD.EF.F32.RN.STRONG.SM.PRIVATE
+       1  ATOM.ADD.EF.F32.RN.STRONG.SYS
+       1  ATOM.ADD.EF.F64.RN
+       1  ATOM.ADD.EF.F64.RN.CONSTANT.CTA
+       1  ATOM.ADD.EF.F64.RN.CONSTANT.CTA.PRIVATE
+       1  ATOM.ADD.EF.F64.RN.CONSTANT.GPU
+       1  ATOM.ADD.EF.F64.RN.CONSTANT.PRIVATE
+       1  ATOM.ADD.EF.F64.RN.CONSTANT.SM
+       1  ATOM.ADD.EF.F64.RN.CONSTANT.SM.PRIVATE
+       1  ATOM.ADD.EF.F64.RN.CONSTANT.VC
+       1  ATOM.ADD.EF.F64.RN.CONSTANT.VC.PRIVATE
+       1  ATOM.ADD.EF.F64.RN.MMIO.GPU
+       1  ATOM.ADD.EF.F64.RN.MMIO.SYS
+       1  ATOM.ADD.EF.F64.RN.STRONG.GPU
+       1  ATOM.ADD.EF.F64.RN.STRONG.GPU.PRIVATE
+       1  ATOM.ADD.EF.F64.RN.STRONG.SM
+       1  ATOM.ADD.EF.F64.RN.STRONG.SM.PRIVATE
+       1  ATOM.ADD.EF.F64.RN.STRONG.SYS
+       4  ATOM.ADD.EF.INVALID16
+       3  ATOM.ADD.EF.INVALID6
+       1  ATOM.ADD.EF.INVALID6.CONSTANT.CTA
+       1  ATOM.ADD.EF.INVALID6.CONSTANT.CTA.PRIVATE
+       1  ATOM.ADD.EF.INVALID6.CONSTANT.GPU
+       1  ATOM.ADD.EF.INVALID6.CONSTANT.PRIVATE
+       1  ATOM.ADD.EF.INVALID6.CONSTANT.SM
+       1  ATOM.ADD.EF.INVALID6.CONSTANT.SM.PRIVATE
+       1  ATOM.ADD.EF.INVALID6.CONSTANT.VC
+       1  ATOM.ADD.EF.INVALID6.CONSTANT.VC.PRIVATE
+       1  ATOM.ADD.EF.INVALID6.MMIO.GPU
+       1  ATOM.ADD.EF.INVALID6.MMIO.SYS
+       1  ATOM.ADD.EF.INVALID6.STRONG.GPU
+       1  ATOM.ADD.EF.INVALID6.STRONG.GPU.PRIVATE
+       1  ATOM.ADD.EF.INVALID6.STRONG.SM
+       1  ATOM.ADD.EF.INVALID6.STRONG.SM.PRIVATE
+       1  ATOM.ADD.EF.INVALID6.STRONG.SYS
+       1  ATOM.ADD.EF.INVALID7
+       1  ATOM.ADD.EF.INVALID7.CONSTANT.CTA
+       1  ATOM.ADD.EF.INVALID7.CONSTANT.CTA.PRIVATE
+       1  ATOM.ADD.EF.INVALID7.CONSTANT.GPU
+       1  ATOM.ADD.EF.INVALID7.CONSTANT.PRIVATE
+       1  ATOM.ADD.EF.INVALID7.CONSTANT.SM
+       1  ATOM.ADD.EF.INVALID7.CONSTANT.SM.PRIVATE
+       1  ATOM.ADD.EF.INVALID7.CONSTANT.VC
+       1  ATOM.ADD.EF.INVALID7.CONSTANT.VC.PRIVATE
+       1  ATOM.ADD.EF.INVALID7.MMIO.GPU
+       1  ATOM.ADD.EF.INVALID7.MMIO.SYS
+       1  ATOM.ADD.EF.INVALID7.STRONG.GPU
+       1  ATOM.ADD.EF.INVALID7.STRONG.GPU.PRIVATE
+       1  ATOM.ADD.EF.INVALID7.STRONG.SM
+       1  ATOM.ADD.EF.INVALID7.STRONG.SM.PRIVATE
+       1  ATOM.ADD.EF.INVALID7.STRONG.SYS
+       4  ATOM.ADD.EF.INVALID8
+       1  ATOM.ADD.EF.INVALID8.CONSTANT.CTA
+       1  ATOM.ADD.EF.INVALID8.CONSTANT.CTA.PRIVATE
+       1  ATOM.ADD.EF.INVALID8.CONSTANT.GPU
+       2  ATOM.ADD.EF.INVALID8.CONSTANT.PRIVATE
+       1  ATOM.ADD.EF.INVALID8.CONSTANT.SM
+       1  ATOM.ADD.EF.INVALID8.CONSTANT.SM.PRIVATE
+       1  ATOM.ADD.EF.INVALID8.CONSTANT.VC
+       1  ATOM.ADD.EF.INVALID8.CONSTANT.VC.PRIVATE
+       1  ATOM.ADD.EF.INVALID8.MMIO.GPU
+       1  ATOM.ADD.EF.INVALID8.MMIO.SYS
+       1  ATOM.ADD.EF.INVALID8.STRONG.GPU
+       1  ATOM.ADD.EF.INVALID8.STRONG.GPU.PRIVATE
+       1  ATOM.ADD.EF.INVALID8.STRONG.SM
+       1  ATOM.ADD.EF.INVALID8.STRONG.SM.PRIVATE
+       1  ATOM.ADD.EF.INVALID8.STRONG.SYS
+       5  ATOM.ADD.EF.MMIO.GPU
+       2  ATOM.ADD.EF.MMIO.SYS
+       3  ATOM.ADD.EF.S32
+       1  ATOM.ADD.EF.S64
+       1  ATOM.ADD.EF.STRONG.GPU
+       2  ATOM.ADD.EF.STRONG.GPU.PRIVATE
+       2  ATOM.ADD.EF.STRONG.SM
+       4  ATOM.ADD.EF.STRONG.SM.PRIVATE
+       1  ATOM.ADD.EF.STRONG.SYS
+       4  ATOM.ADD.EL
+       1  ATOM.ADD.EL.INVALID16
+       4  ATOM.ADD.EU
+       2  ATOM.ADD.EU.INVALID16
+       2  ATOM.ADD.INVALID16
+       2  ATOM.ADD.INVALID6
+       1  ATOM.ADD.INVALID6.INVALID16
+       1  ATOM.ADD.INVALID7
+       1  ATOM.ADD.INVALID7.INVALID16
+       2  ATOM.ADD.LU
+       1  ATOM.ADD.LU.INVALID16
+       2  ATOM.ADD.NA
+       1  ATOM.ADD.NA.INVALID16
+       1  ATOM.AND
+       1  ATOM.AND.EF
+       1  ATOM.AND.EL
+       1  ATOM.AND.EU
+       1  ATOM.AND.INVALID6
+       1  ATOM.AND.INVALID7
+       1  ATOM.AND.LU
+       1  ATOM.AND.NA
+       5  ATOM.CAS
+     169  ATOM.CAS.EF
+       3  ATOM.CAS.EF.128
+       2  ATOM.CAS.EF.64
+       3  ATOM.CAS.EF.CONSTANT.CTA
+       2  ATOM.CAS.EF.CONSTANT.CTA.PRIVATE
+       1  ATOM.CAS.EF.CONSTANT.GPU
+       5  ATOM.CAS.EF.CONSTANT.PRIVATE
+       2  ATOM.CAS.EF.CONSTANT.SM
+       1  ATOM.CAS.EF.CONSTANT.SM.PRIVATE
+       1  ATOM.CAS.EF.CONSTANT.VC
+       1  ATOM.CAS.EF.CONSTANT.VC.PRIVATE
+       1  ATOM.CAS.EF.INVALID3
+       1  ATOM.CAS.EF.INVALID6
+       4  ATOM.CAS.EF.MMIO.GPU
+       2  ATOM.CAS.EF.MMIO.SYS
+       2  ATOM.CAS.EF.S32
+       1  ATOM.CAS.EF.STRONG.GPU
+       2  ATOM.CAS.EF.STRONG.GPU.PRIVATE
+       2  ATOM.CAS.EF.STRONG.SM
+       3  ATOM.CAS.EF.STRONG.SM.PRIVATE
+       1  ATOM.CAS.EF.STRONG.SYS
+       3  ATOM.CAS.EL
+       3  ATOM.CAS.EU
+       2  ATOM.CAS.INVALID6
+       1  ATOM.CAS.INVALID7
+       2  ATOM.CAS.LU
+       2  ATOM.CAS.NA
+       2  ATOM.CAST
+       3  ATOM.CAST.EF
+       1  ATOM.CAST.EL
+       2  ATOM.CAST.EU
+       1  ATOM.CAST.INVALID6
+       1  ATOM.CAST.INVALID7
+       1  ATOM.CAST.LU
+       1  ATOM.CAST.NA
+       2  ATOM.DEC
+       4  ATOM.DEC.EF
+       1  ATOM.DEC.EL
+       1  ATOM.DEC.EU
+       1  ATOM.DEC.INVALID6
+       1  ATOM.DEC.INVALID7
+       1  ATOM.DEC.LU
+       1  ATOM.DEC.NA
+       4  ATOM.E.ADD.EF
+       1  ATOM.E.ADD.EF.S32
+       3  ATOM.E.CAS.EF
+       1  ATOM.E.CAS.EF.S32
+       2  ATOM.EXCH
+       4  ATOM.EXCH.EF
+       1  ATOM.EXCH.EL
+       1  ATOM.EXCH.EU
+       1  ATOM.EXCH.INVALID6
+       1  ATOM.EXCH.INVALID7
+       1  ATOM.EXCH.LU
+       1  ATOM.EXCH.NA
+       1  ATOM.INC
+       2  ATOM.INC.EF
+       1  ATOM.INC.EL
+       1  ATOM.INC.EU
+       1  ATOM.INC.INVALID6
+       1  ATOM.INC.INVALID7
+       1  ATOM.INC.LU
+       1  ATOM.INC.NA
+       1  ATOM.INVALID10
+       1  ATOM.INVALID10.EF
+       1  ATOM.INVALID10.EL
+       1  ATOM.INVALID10.EU
+       1  ATOM.INVALID10.INVALID6
+       1  ATOM.INVALID10.INVALID7
+       1  ATOM.INVALID10.LU
+       1  ATOM.INVALID10.NA
+       1  ATOM.INVALID11
+       1  ATOM.INVALID11.EF
+       1  ATOM.INVALID11.EL
+       1  ATOM.INVALID11.EU
+       1  ATOM.INVALID11.INVALID6
+       1  ATOM.INVALID11.INVALID7
+       1  ATOM.INVALID11.LU
+       1  ATOM.INVALID11.NA
+       1  ATOM.INVALID12
+       2  ATOM.INVALID12.EF
+       1  ATOM.INVALID12.EL
+       1  ATOM.INVALID12.EU
+       1  ATOM.INVALID12.INVALID6
+       1  ATOM.INVALID12.INVALID7
+       1  ATOM.INVALID12.LU
+       1  ATOM.INVALID12.NA
+       1  ATOM.INVALID13
+       1  ATOM.INVALID13.EF
+       1  ATOM.INVALID13.EL
+       1  ATOM.INVALID13.EU
+       1  ATOM.INVALID13.INVALID6
+       1  ATOM.INVALID13.INVALID7
+       1  ATOM.INVALID13.LU
+       1  ATOM.INVALID13.NA
+       1  ATOM.INVALID14
+       1  ATOM.INVALID14.EF
+       1  ATOM.INVALID14.EL
+       1  ATOM.INVALID14.EU
+       1  ATOM.INVALID14.INVALID6
+       1  ATOM.INVALID14.INVALID7
+       1  ATOM.INVALID14.LU
+       1  ATOM.INVALID14.NA
+       1  ATOM.INVALID15
+       1  ATOM.INVALID15.EF
+       1  ATOM.INVALID15.EL
+       1  ATOM.INVALID15.EU
+       1  ATOM.INVALID15.INVALID6
+       1  ATOM.INVALID15.INVALID7
+       1  ATOM.INVALID15.LU
+       1  ATOM.INVALID15.NA
+       1  ATOM.INVALID3.EF.INVALID16
+       1  ATOM.INVALID3.EL.INVALID16
+       1  ATOM.INVALID3.EU.INVALID16
+       1  ATOM.INVALID3.INVALID16
+       1  ATOM.INVALID3.INVALID6.INVALID16
+       1  ATOM.INVALID3.INVALID7.INVALID16
+       1  ATOM.INVALID3.LU.INVALID16
+       1  ATOM.INVALID3.NA.INVALID16
+       1  ATOM.INVALID9
+       1  ATOM.INVALID9.EF
+       1  ATOM.INVALID9.EL
+       1  ATOM.INVALID9.EU
+       1  ATOM.INVALID9.INVALID6
+       1  ATOM.INVALID9.INVALID7
+       1  ATOM.INVALID9.LU
+       1  ATOM.INVALID9.NA
+       2  ATOM.MAX
+       4  ATOM.MAX.EF
+       1  ATOM.MAX.EF.INVALID16
+       1  ATOM.MAX.EL
+       1  ATOM.MAX.EL.INVALID16
+       1  ATOM.MAX.EU
+       1  ATOM.MAX.EU.INVALID16
+       1  ATOM.MAX.INVALID16
+       1  ATOM.MAX.INVALID6
+       1  ATOM.MAX.INVALID6.INVALID16
+       1  ATOM.MAX.INVALID7
+       1  ATOM.MAX.INVALID7.INVALID16
+       1  ATOM.MAX.LU
+       1  ATOM.MAX.LU.INVALID16
+       1  ATOM.MAX.NA
+       1  ATOM.MAX.NA.INVALID16
+       2  ATOM.MIN
+       4  ATOM.MIN.EF
+       2  ATOM.MIN.EF.INVALID16
+       1  ATOM.MIN.EL
+       1  ATOM.MIN.EL.INVALID16
+       2  ATOM.MIN.EU
+       1  ATOM.MIN.EU.INVALID16
+       1  ATOM.MIN.INVALID16
+       1  ATOM.MIN.INVALID6
+       1  ATOM.MIN.INVALID6.INVALID16
+       1  ATOM.MIN.INVALID7
+       1  ATOM.MIN.INVALID7.INVALID16
+       1  ATOM.MIN.LU
+       1  ATOM.MIN.LU.INVALID16
+       1  ATOM.MIN.NA
+       1  ATOM.MIN.NA.INVALID16
+       1  ATOM.OR
+       2  ATOM.OR.EF
+       1  ATOM.OR.EL
+       1  ATOM.OR.EU
+       1  ATOM.OR.INVALID6
+       1  ATOM.OR.INVALID7
+       1  ATOM.OR.LU
+       1  ATOM.OR.NA
+       1  ATOM.XOR
+       1  ATOM.XOR.EF
+       1  ATOM.XOR.EL
+       1  ATOM.XOR.EU
+       1  ATOM.XOR.INVALID6
+       1  ATOM.XOR.INVALID7
+       1  ATOM.XOR.LU
+       1  ATOM.XOR.NA
+
+[ATOMG]  (307 variants)
+       5  ATOMG.ADD
+     243  ATOMG.ADD.EF
+       4  ATOMG.ADD.EF.128
+       3  ATOMG.ADD.EF.64
+       4  ATOMG.ADD.EF.CONSTANT.CTA
+       2  ATOMG.ADD.EF.CONSTANT.CTA.PRIVATE
+       1  ATOMG.ADD.EF.CONSTANT.GPU
+       6  ATOMG.ADD.EF.CONSTANT.PRIVATE
+       2  ATOMG.ADD.EF.CONSTANT.SM
+       1  ATOMG.ADD.EF.CONSTANT.SM.PRIVATE
+       1  ATOMG.ADD.EF.CONSTANT.VC
+       1  ATOMG.ADD.EF.CONSTANT.VC.PRIVATE
+       2  ATOMG.ADD.EF.F32.FTZ.RN
+       1  ATOMG.ADD.EF.F32.FTZ.RN.CONSTANT.CTA
+       1  ATOMG.ADD.EF.F32.FTZ.RN.CONSTANT.CTA.PRIVATE
+       1  ATOMG.ADD.EF.F32.FTZ.RN.CONSTANT.GPU
+       1  ATOMG.ADD.EF.F32.FTZ.RN.CONSTANT.PRIVATE
+       1  ATOMG.ADD.EF.F32.FTZ.RN.CONSTANT.SM
+       1  ATOMG.ADD.EF.F32.FTZ.RN.CONSTANT.SM.PRIVATE
+       1  ATOMG.ADD.EF.F32.FTZ.RN.CONSTANT.VC
+       1  ATOMG.ADD.EF.F32.FTZ.RN.CONSTANT.VC.PRIVATE
+       1  ATOMG.ADD.EF.F32.FTZ.RN.MMIO.GPU
+       1  ATOMG.ADD.EF.F32.FTZ.RN.MMIO.SYS
+       1  ATOMG.ADD.EF.F32.FTZ.RN.STRONG.GPU
+       1  ATOMG.ADD.EF.F32.FTZ.RN.STRONG.GPU.PRIVATE
+       1  ATOMG.ADD.EF.F32.FTZ.RN.STRONG.SM
+       1  ATOMG.ADD.EF.F32.FTZ.RN.STRONG.SM.PRIVATE
+       1  ATOMG.ADD.EF.F32.FTZ.RN.STRONG.SYS
+       2  ATOMG.ADD.EF.F32.RN
+       1  ATOMG.ADD.EF.F32.RN.CONSTANT.CTA
+       1  ATOMG.ADD.EF.F32.RN.CONSTANT.CTA.PRIVATE
+       1  ATOMG.ADD.EF.F32.RN.CONSTANT.GPU
+       1  ATOMG.ADD.EF.F32.RN.CONSTANT.PRIVATE
+       1  ATOMG.ADD.EF.F32.RN.CONSTANT.SM
+       1  ATOMG.ADD.EF.F32.RN.CONSTANT.SM.PRIVATE
+       1  ATOMG.ADD.EF.F32.RN.CONSTANT.VC
+       1  ATOMG.ADD.EF.F32.RN.CONSTANT.VC.PRIVATE
+       1  ATOMG.ADD.EF.F32.RN.MMIO.GPU
+       1  ATOMG.ADD.EF.F32.RN.MMIO.SYS
+       1  ATOMG.ADD.EF.F32.RN.STRONG.GPU
+       1  ATOMG.ADD.EF.F32.RN.STRONG.GPU.PRIVATE
+       1  ATOMG.ADD.EF.F32.RN.STRONG.SM
+       1  ATOMG.ADD.EF.F32.RN.STRONG.SM.PRIVATE
+       1  ATOMG.ADD.EF.F32.RN.STRONG.SYS
+       1  ATOMG.ADD.EF.F64.RN
+       1  ATOMG.ADD.EF.F64.RN.CONSTANT.CTA
+       1  ATOMG.ADD.EF.F64.RN.CONSTANT.CTA.PRIVATE
+       1  ATOMG.ADD.EF.F64.RN.CONSTANT.GPU
+       1  ATOMG.ADD.EF.F64.RN.CONSTANT.PRIVATE
+       1  ATOMG.ADD.EF.F64.RN.CONSTANT.SM
+       1  ATOMG.ADD.EF.F64.RN.CONSTANT.SM.PRIVATE
+       1  ATOMG.ADD.EF.F64.RN.CONSTANT.VC
+       1  ATOMG.ADD.EF.F64.RN.CONSTANT.VC.PRIVATE
+       1  ATOMG.ADD.EF.F64.RN.MMIO.GPU
+       1  ATOMG.ADD.EF.F64.RN.MMIO.SYS
+       1  ATOMG.ADD.EF.F64.RN.STRONG.GPU
+       1  ATOMG.ADD.EF.F64.RN.STRONG.GPU.PRIVATE
+       1  ATOMG.ADD.EF.F64.RN.STRONG.SM
+       1  ATOMG.ADD.EF.F64.RN.STRONG.SM.PRIVATE
+       1  ATOMG.ADD.EF.F64.RN.STRONG.SYS
+       4  ATOMG.ADD.EF.INVALID16
+       3  ATOMG.ADD.EF.INVALID6
+       1  ATOMG.ADD.EF.INVALID6.CONSTANT.CTA
+       1  ATOMG.ADD.EF.INVALID6.CONSTANT.CTA.PRIVATE
+       1  ATOMG.ADD.EF.INVALID6.CONSTANT.GPU
+       1  ATOMG.ADD.EF.INVALID6.CONSTANT.PRIVATE
+       1  ATOMG.ADD.EF.INVALID6.CONSTANT.SM
+       1  ATOMG.ADD.EF.INVALID6.CONSTANT.SM.PRIVATE
+       1  ATOMG.ADD.EF.INVALID6.CONSTANT.VC
+       1  ATOMG.ADD.EF.INVALID6.CONSTANT.VC.PRIVATE
+       1  ATOMG.ADD.EF.INVALID6.MMIO.GPU
+       1  ATOMG.ADD.EF.INVALID6.MMIO.SYS
+       1  ATOMG.ADD.EF.INVALID6.STRONG.GPU
+       1  ATOMG.ADD.EF.INVALID6.STRONG.GPU.PRIVATE
+       1  ATOMG.ADD.EF.INVALID6.STRONG.SM
+       1  ATOMG.ADD.EF.INVALID6.STRONG.SM.PRIVATE
+       1  ATOMG.ADD.EF.INVALID6.STRONG.SYS
+       1  ATOMG.ADD.EF.INVALID7
+       1  ATOMG.ADD.EF.INVALID7.CONSTANT.CTA
+       1  ATOMG.ADD.EF.INVALID7.CONSTANT.CTA.PRIVATE
+       1  ATOMG.ADD.EF.INVALID7.CONSTANT.GPU
+       1  ATOMG.ADD.EF.INVALID7.CONSTANT.PRIVATE
+       1  ATOMG.ADD.EF.INVALID7.CONSTANT.SM
+       1  ATOMG.ADD.EF.INVALID7.CONSTANT.SM.PRIVATE
+       1  ATOMG.ADD.EF.INVALID7.CONSTANT.VC
+       1  ATOMG.ADD.EF.INVALID7.CONSTANT.VC.PRIVATE
+       1  ATOMG.ADD.EF.INVALID7.MMIO.GPU
+       1  ATOMG.ADD.EF.INVALID7.MMIO.SYS
+       1  ATOMG.ADD.EF.INVALID7.STRONG.GPU
+       1  ATOMG.ADD.EF.INVALID7.STRONG.GPU.PRIVATE
+       1  ATOMG.ADD.EF.INVALID7.STRONG.SM
+       1  ATOMG.ADD.EF.INVALID7.STRONG.SM.PRIVATE
+       1  ATOMG.ADD.EF.INVALID7.STRONG.SYS
+       4  ATOMG.ADD.EF.INVALID8
+       1  ATOMG.ADD.EF.INVALID8.CONSTANT.CTA
+       1  ATOMG.ADD.EF.INVALID8.CONSTANT.CTA.PRIVATE
+       1  ATOMG.ADD.EF.INVALID8.CONSTANT.GPU
+       2  ATOMG.ADD.EF.INVALID8.CONSTANT.PRIVATE
+       1  ATOMG.ADD.EF.INVALID8.CONSTANT.SM
+       1  ATOMG.ADD.EF.INVALID8.CONSTANT.SM.PRIVATE
+       1  ATOMG.ADD.EF.INVALID8.CONSTANT.VC
+       1  ATOMG.ADD.EF.INVALID8.CONSTANT.VC.PRIVATE
+       1  ATOMG.ADD.EF.INVALID8.MMIO.GPU
+       1  ATOMG.ADD.EF.INVALID8.MMIO.SYS
+       1  ATOMG.ADD.EF.INVALID8.STRONG.GPU
+       1  ATOMG.ADD.EF.INVALID8.STRONG.GPU.PRIVATE
+       1  ATOMG.ADD.EF.INVALID8.STRONG.SM
+       1  ATOMG.ADD.EF.INVALID8.STRONG.SM.PRIVATE
+       1  ATOMG.ADD.EF.INVALID8.STRONG.SYS
+       5  ATOMG.ADD.EF.MMIO.GPU
+       2  ATOMG.ADD.EF.MMIO.SYS
+       3  ATOMG.ADD.EF.S32
+       1  ATOMG.ADD.EF.S64
+       1  ATOMG.ADD.EF.STRONG.GPU
+       2  ATOMG.ADD.EF.STRONG.GPU.PRIVATE
+       2  ATOMG.ADD.EF.STRONG.SM
+       4  ATOMG.ADD.EF.STRONG.SM.PRIVATE
+       1  ATOMG.ADD.EF.STRONG.SYS
+       4  ATOMG.ADD.EL
+       1  ATOMG.ADD.EL.INVALID16
+       4  ATOMG.ADD.EU
+       2  ATOMG.ADD.EU.INVALID16
+       2  ATOMG.ADD.INVALID16
+       2  ATOMG.ADD.INVALID6
+       1  ATOMG.ADD.INVALID6.INVALID16
+       1  ATOMG.ADD.INVALID7
+       1  ATOMG.ADD.INVALID7.INVALID16
+       2  ATOMG.ADD.LU
+       1  ATOMG.ADD.LU.INVALID16
+       2  ATOMG.ADD.NA
+       1  ATOMG.ADD.NA.INVALID16
+       1  ATOMG.AND
+       1  ATOMG.AND.EF
+       1  ATOMG.AND.EL
+       1  ATOMG.AND.EU
+       1  ATOMG.AND.INVALID6
+       1  ATOMG.AND.INVALID7
+       1  ATOMG.AND.LU
+       1  ATOMG.AND.NA
+       5  ATOMG.CAS
+     171  ATOMG.CAS.EF
+       3  ATOMG.CAS.EF.128
+       2  ATOMG.CAS.EF.64
+       3  ATOMG.CAS.EF.CONSTANT.CTA
+       2  ATOMG.CAS.EF.CONSTANT.CTA.PRIVATE
+       1  ATOMG.CAS.EF.CONSTANT.GPU
+       5  ATOMG.CAS.EF.CONSTANT.PRIVATE
+       2  ATOMG.CAS.EF.CONSTANT.SM
+       1  ATOMG.CAS.EF.CONSTANT.SM.PRIVATE
+       1  ATOMG.CAS.EF.CONSTANT.VC
+       1  ATOMG.CAS.EF.CONSTANT.VC.PRIVATE
+       1  ATOMG.CAS.EF.INVALID3
+       1  ATOMG.CAS.EF.INVALID6
+       4  ATOMG.CAS.EF.MMIO.GPU
+       2  ATOMG.CAS.EF.MMIO.SYS
+       2  ATOMG.CAS.EF.S32
+       1  ATOMG.CAS.EF.STRONG.GPU
+       2  ATOMG.CAS.EF.STRONG.GPU.PRIVATE
+       2  ATOMG.CAS.EF.STRONG.SM
+       3  ATOMG.CAS.EF.STRONG.SM.PRIVATE
+       1  ATOMG.CAS.EF.STRONG.SYS
+       3  ATOMG.CAS.EL
+       3  ATOMG.CAS.EU
+       2  ATOMG.CAS.INVALID6
+       1  ATOMG.CAS.INVALID7
+       2  ATOMG.CAS.LU
+       2  ATOMG.CAS.NA
+       2  ATOMG.DEC
+       4  ATOMG.DEC.EF
+       1  ATOMG.DEC.EL
+       1  ATOMG.DEC.EU
+       1  ATOMG.DEC.INVALID6
+       1  ATOMG.DEC.INVALID7
+       1  ATOMG.DEC.LU
+       1  ATOMG.DEC.NA
+       4  ATOMG.E.ADD.EF
+       1  ATOMG.E.ADD.EF.S32
+       3  ATOMG.E.CAS.EF
+       1  ATOMG.E.CAS.EF.S32
+       2  ATOMG.EXCH
+       4  ATOMG.EXCH.EF
+       1  ATOMG.EXCH.EL
+       1  ATOMG.EXCH.EU
+       1  ATOMG.EXCH.INVALID6
+       1  ATOMG.EXCH.INVALID7
+       1  ATOMG.EXCH.LU
+       1  ATOMG.EXCH.NA
+       1  ATOMG.INC
+       2  ATOMG.INC.EF
+       1  ATOMG.INC.EL
+       1  ATOMG.INC.EU
+       1  ATOMG.INC.INVALID6
+       1  ATOMG.INC.INVALID7
+       1  ATOMG.INC.LU
+       1  ATOMG.INC.NA
+       1  ATOMG.INVALID10
+       1  ATOMG.INVALID10.EF
+       1  ATOMG.INVALID10.EL
+       1  ATOMG.INVALID10.EU
+       1  ATOMG.INVALID10.INVALID6
+       1  ATOMG.INVALID10.INVALID7
+       1  ATOMG.INVALID10.LU
+       1  ATOMG.INVALID10.NA
+       1  ATOMG.INVALID11
+       1  ATOMG.INVALID11.EF
+       1  ATOMG.INVALID11.EL
+       1  ATOMG.INVALID11.EU
+       1  ATOMG.INVALID11.INVALID6
+       1  ATOMG.INVALID11.INVALID7
+       1  ATOMG.INVALID11.LU
+       1  ATOMG.INVALID11.NA
+       1  ATOMG.INVALID12
+       2  ATOMG.INVALID12.EF
+       1  ATOMG.INVALID12.EL
+       1  ATOMG.INVALID12.EU
+       1  ATOMG.INVALID12.INVALID6
+       1  ATOMG.INVALID12.INVALID7
+       1  ATOMG.INVALID12.LU
+       1  ATOMG.INVALID12.NA
+       1  ATOMG.INVALID13
+       1  ATOMG.INVALID13.EF
+       1  ATOMG.INVALID13.EL
+       1  ATOMG.INVALID13.EU
+       1  ATOMG.INVALID13.INVALID6
+       1  ATOMG.INVALID13.INVALID7
+       1  ATOMG.INVALID13.LU
+       1  ATOMG.INVALID13.NA
+       1  ATOMG.INVALID14
+       1  ATOMG.INVALID14.EF
+       1  ATOMG.INVALID14.EL
+       1  ATOMG.INVALID14.EU
+       1  ATOMG.INVALID14.INVALID6
+       1  ATOMG.INVALID14.INVALID7
+       1  ATOMG.INVALID14.LU
+       1  ATOMG.INVALID14.NA
+       1  ATOMG.INVALID15
+       1  ATOMG.INVALID15.EF
+       1  ATOMG.INVALID15.EL
+       1  ATOMG.INVALID15.EU
+       1  ATOMG.INVALID15.INVALID6
+       1  ATOMG.INVALID15.INVALID7
+       1  ATOMG.INVALID15.LU
+       1  ATOMG.INVALID15.NA
+       1  ATOMG.INVALID3.EF.INVALID16
+       1  ATOMG.INVALID3.EL.INVALID16
+       1  ATOMG.INVALID3.EU.INVALID16
+       1  ATOMG.INVALID3.INVALID16
+       1  ATOMG.INVALID3.INVALID6.INVALID16
+       1  ATOMG.INVALID3.INVALID7.INVALID16
+       1  ATOMG.INVALID3.LU.INVALID16
+       1  ATOMG.INVALID3.NA.INVALID16
+       2  ATOMG.MAX
+       4  ATOMG.MAX.EF
+       1  ATOMG.MAX.EF.INVALID16
+       1  ATOMG.MAX.EL
+       1  ATOMG.MAX.EL.INVALID16
+       1  ATOMG.MAX.EU
+       1  ATOMG.MAX.EU.INVALID16
+       1  ATOMG.MAX.INVALID16
+       1  ATOMG.MAX.INVALID6
+       1  ATOMG.MAX.INVALID6.INVALID16
+       1  ATOMG.MAX.INVALID7
+       1  ATOMG.MAX.INVALID7.INVALID16
+       1  ATOMG.MAX.LU
+       1  ATOMG.MAX.LU.INVALID16
+       1  ATOMG.MAX.NA
+       1  ATOMG.MAX.NA.INVALID16
+       2  ATOMG.MIN
+       4  ATOMG.MIN.EF
+       2  ATOMG.MIN.EF.INVALID16
+       1  ATOMG.MIN.EL
+       1  ATOMG.MIN.EL.INVALID16
+       2  ATOMG.MIN.EU
+       1  ATOMG.MIN.EU.INVALID16
+       1  ATOMG.MIN.INVALID16
+       1  ATOMG.MIN.INVALID6
+       1  ATOMG.MIN.INVALID6.INVALID16
+       1  ATOMG.MIN.INVALID7
+       1  ATOMG.MIN.INVALID7.INVALID16
+       1  ATOMG.MIN.LU
+       1  ATOMG.MIN.LU.INVALID16
+       1  ATOMG.MIN.NA
+       1  ATOMG.MIN.NA.INVALID16
+       1  ATOMG.OR
+       2  ATOMG.OR.EF
+       1  ATOMG.OR.EL
+       1  ATOMG.OR.EU
+       1  ATOMG.OR.INVALID6
+       1  ATOMG.OR.INVALID7
+       1  ATOMG.OR.LU
+       1  ATOMG.OR.NA
+       1  ATOMG.SAFEADD
+       1  ATOMG.SAFEADD.EF
+       1  ATOMG.SAFEADD.EL
+       1  ATOMG.SAFEADD.EU
+       1  ATOMG.SAFEADD.INVALID6
+       1  ATOMG.SAFEADD.INVALID7
+       1  ATOMG.SAFEADD.LU
+       1  ATOMG.SAFEADD.NA
+       1  ATOMG.XOR
+       1  ATOMG.XOR.EF
+       1  ATOMG.XOR.EL
+       1  ATOMG.XOR.EU
+       1  ATOMG.XOR.INVALID6
+       1  ATOMG.XOR.INVALID7
+       1  ATOMG.XOR.LU
+       1  ATOMG.XOR.NA
+
+[ATOMS]  (29 variants)
+     272  ATOMS.ADD
+       4  ATOMS.ADD.128
+       3  ATOMS.ADD.64
+       1  ATOMS.ADD.INVALID3
+       1  ATOMS.ADD.INVALID6
+       4  ATOMS.ADD.S32
+       2  ATOMS.AND
+     188  ATOMS.CAS
+       3  ATOMS.CAS.128
+       2  ATOMS.CAS.64
+       1  ATOMS.CAS.INVALID3
+       1  ATOMS.CAS.INVALID6
+       3  ATOMS.CAS.S32
+       8  ATOMS.CAST
+       2  ATOMS.CAST.SPIN
+       4  ATOMS.DEC
+       4  ATOMS.EXCH
+       2  ATOMS.INC
+       1  ATOMS.INVALID10
+       1  ATOMS.INVALID11
+       2  ATOMS.INVALID12
+       1  ATOMS.INVALID13
+       1  ATOMS.INVALID14
+       1  ATOMS.INVALID15
+       2  ATOMS.INVALID9
+       4  ATOMS.MAX
+       5  ATOMS.MIN
+       2  ATOMS.OR
+       1  ATOMS.XOR
+
+[B2R]  (3 variants)
+      96  B2R
+      95  B2R.RESULT
+      95  B2R.WARP
+
+[BMSK]  (2 variants)
+     288  BMSK
+       7  BMSK.W
+
+[BREV]  (1 variants)
+     291  BREV
+
+[CGAERRBAR]  (1 variants)
+      97  CGAERRBAR
+
+[CS2R]  (2 variants)
+       4  CS2R
+      97  CS2R.32
+
+[CS2UR]  (2 variants)
+       4  CS2UR
+      97  CS2UR.32
+
+[CSMTEST]  (35 variants)
+       2  CSMTEST.A.F.AND
+       2  CSMTEST.INVALID0.CSM_MX.AND
+       1  CSMTEST.INVALID0.CSM_MX.INVALID3
+       1  CSMTEST.INVALID0.CSM_MX.OR
+       1  CSMTEST.INVALID0.CSM_MX.XOR
+       2  CSMTEST.INVALID0.CSM_TA.AND
+       1  CSMTEST.INVALID0.CSM_TA.INVALID3
+       2  CSMTEST.INVALID0.CSM_TA.OR
+       2  CSMTEST.INVALID0.CSM_TA.XOR
+       2  CSMTEST.INVALID0.CSM_TR.AND
+       1  CSMTEST.INVALID0.CSM_TR.INVALID3
+       2  CSMTEST.INVALID0.CSM_TR.OR
+       1  CSMTEST.INVALID0.CSM_TR.XOR
+      96  CSMTEST.INVALID0.F.AND
+       2  CSMTEST.INVALID0.F.INVALID3
+       4  CSMTEST.INVALID0.F.OR
+       2  CSMTEST.INVALID0.F.XOR
+       1  CSMTEST.INVALID0.FCSM_MX.AND
+       1  CSMTEST.INVALID0.FCSM_MX.INVALID3
+       1  CSMTEST.INVALID0.FCSM_MX.OR
+       1  CSMTEST.INVALID0.FCSM_MX.XOR
+       1  CSMTEST.INVALID0.FCSM_TA.AND
+       1  CSMTEST.INVALID0.FCSM_TA.INVALID3
+       1  CSMTEST.INVALID0.FCSM_TA.OR
+       1  CSMTEST.INVALID0.FCSM_TA.XOR
+       2  CSMTEST.INVALID0.FCSM_TR.AND
+       1  CSMTEST.INVALID0.FCSM_TR.INVALID3
+       1  CSMTEST.INVALID0.FCSM_TR.OR
+       1  CSMTEST.INVALID0.FCSM_TR.XOR
+       2  CSMTEST.INVALID0.T.AND
+       1  CSMTEST.INVALID0.T.INVALID3
+       2  CSMTEST.INVALID0.T.OR
+       1  CSMTEST.INVALID0.T.XOR
+       4  CSMTEST.R.F.AND
+       2  CSMTEST.RA.F.AND
+
+[DADD]  (4 variants)
+     293  DADD
+       5  DADD.RM
+       5  DADD.RP
+       2  DADD.RZ
+
+[DFMA]  (4 variants)
+     493  DFMA
+       8  DFMA.RM
+       8  DFMA.RP
+       3  DFMA.RZ
+
+[DMMA]  (4 variants)
+       4  DMMA.INVALID1
+       3  DMMA.INVALID2
+       1  DMMA.INVALID2.RM
+       2  DMMA.INVALID3
+
+[DMUL]  (4 variants)
+     294  DMUL
+       5  DMUL.RM
+       5  DMUL.RP
+       2  DMUL.RZ
+
+[DSETP]  (64 variants)
+       5  DSETP.EQ.AND
+       2  DSETP.EQ.INVALID3
+       4  DSETP.EQ.OR
+       2  DSETP.EQ.XOR
+       2  DSETP.EQU.AND
+       2  DSETP.EQU.INVALID3
+       2  DSETP.EQU.OR
+       2  DSETP.EQU.XOR
+       4  DSETP.GE.AND
+       2  DSETP.GE.INVALID3
+       2  DSETP.GE.OR
+       2  DSETP.GE.XOR
+       2  DSETP.GEU.AND
+       2  DSETP.GEU.INVALID3
+       2  DSETP.GEU.OR
+       2  DSETP.GEU.XOR
+       5  DSETP.GT.AND
+       2  DSETP.GT.INVALID3
+       4  DSETP.GT.OR
+       2  DSETP.GT.XOR
+       4  DSETP.GTU.AND
+       2  DSETP.GTU.INVALID3
+       2  DSETP.GTU.OR
+       2  DSETP.GTU.XOR
+       4  DSETP.LE.AND
+       2  DSETP.LE.INVALID3
+       2  DSETP.LE.OR
+       2  DSETP.LE.XOR
+       2  DSETP.LEU.AND
+       2  DSETP.LEU.INVALID3
+       2  DSETP.LEU.OR
+       2  DSETP.LEU.XOR
+       5  DSETP.LT.AND
+       2  DSETP.LT.INVALID3
+       4  DSETP.LT.OR
+       4  DSETP.LT.XOR
+       2  DSETP.LTU.AND
+       2  DSETP.LTU.INVALID3
+       2  DSETP.LTU.OR
+       2  DSETP.LTU.XOR
+       2  DSETP.MAX.AND
+       2  DSETP.MAX.INVALID3
+       2  DSETP.MAX.OR
+       2  DSETP.MAX.XOR
+     290  DSETP.MIN.AND
+       4  DSETP.MIN.INVALID3
+       9  DSETP.MIN.OR
+       5  DSETP.MIN.XOR
+       5  DSETP.NAN.AND
+       2  DSETP.NAN.INVALID3
+       4  DSETP.NAN.OR
+       2  DSETP.NAN.XOR
+       2  DSETP.NE.AND
+       2  DSETP.NE.INVALID3
+       2  DSETP.NE.OR
+       2  DSETP.NE.XOR
+       2  DSETP.NEU.AND
+       2  DSETP.NEU.INVALID3
+       2  DSETP.NEU.OR
+       2  DSETP.NEU.XOR
+       2  DSETP.NUM.AND
+       2  DSETP.NUM.INVALID3
+       2  DSETP.NUM.OR
+       2  DSETP.NUM.XOR
+
+[ELECT]  (2 variants)
+     195  ELECT
+       4  ELECT.IGNOREKILL
+
+[ENDCOLLECTIVE]  (1 variants)
+      99  ENDCOLLECTIVE
+
+[ERRBAR]  (1 variants)
+      97  ERRBAR
+
+[F2FP]  (11 variants)
+       1  F2FP.BF16.F32.MERGE_C
+       5  F2FP.BF16.F32.PACK_AB
+      86  F2FP.F16.F32.MERGE_C
+     245  F2FP.F16.F32.PACK_AB
+       2  F2FP.F16.F32.PACK_AB.RZ
+       2  F2FP.RELU.BF16.F32.PACK_AB
+       1  F2FP.RELU.F16.F32.MERGE_C
+       3  F2FP.RELU.F16.F32.PACK_AB
+       2  F2FP.SATFINITE.BF16.F32.PACK_AB
+       3  F2FP.SATFINITE.F16.F32.MERGE_C
+       3  F2FP.SATFINITE.F16.F32.PACK_AB
+
+[F2I]  (10 variants)
+       2  F2I.FTZ.U8.F16
+       2  F2I.S8.F16
+       2  F2I.U16.F16
+       2  F2I.U32.F16
+       2  F2I.U8
+       2  F2I.U8.BF16
+     174  F2I.U8.F16
+       2  F2I.U8.F16.CEIL
+       2  F2I.U8.F16.FLOOR
+       2  F2I.U8.F16.NTZ
+
+[F2IP]  (12 variants)
+       8  F2IP.INVALID2.F32
+       3  F2IP.INVALID2.F32.INVALID1
+       6  F2IP.INVALID3.F32
+       8  F2IP.S8.F32
+       3  F2IP.S8.F32.RELU
+     463  F2IP.U8.F32
+       5  F2IP.U8.F32.INVALID1
+       8  F2IP.U8.F32.INVALID2
+       8  F2IP.U8.F32.NTZ
+       3  F2IP.U8.F32.NTZ.RELU
+       5  F2IP.U8.F32.RELU
+       3  F2IP.U8.F32.TRUNC
+
+[FADD]  (8 variants)
+     286  FADD
+       4  FADD.FTZ
+       2  FADD.FTZ.RP
+       3  FADD.RM
+       2  FADD.RM.SAT
+       3  FADD.RP
+       2  FADD.RZ
+       5  FADD.SAT
+
+[FCHK]  (1 variants)
+     302  FCHK
+
+[FFMA]  (10 variants)
+     472  FFMA
+       8  FFMA.FMZ
+       3  FFMA.FMZ.SAT
+       7  FFMA.FTZ
+       3  FFMA.FTZ.RP
+       5  FFMA.RM
+       3  FFMA.RM.SAT
+       5  FFMA.RP
+       3  FFMA.RZ
+       5  FFMA.SAT
+
+[FHADD]  (5 variants)
+      93  FHADD
+       1  FHADD.BF16
+       1  FHADD.RM
+       1  FHADD.RP
+       1  FHADD.SAT
+
+[FHFMA]  (5 variants)
+      94  FHFMA
+       1  FHFMA.BF16
+       1  FHFMA.RM
+       1  FHFMA.RP
+       1  FHFMA.SAT
+
+[FLO]  (4 variants)
+       7  FLO
+       2  FLO.SH
+     291  FLO.U32
+       5  FLO.U32.SH
+
+[FMNMX]  (10 variants)
+     292  FMNMX
+       5  FMNMX.FTZ
+       2  FMNMX.FTZ.IS_A
+       2  FMNMX.FTZ.NAN
+     187  FMNMX.IS_A
+       3  FMNMX.NAN
+       2  FMNMX.NAN.IS_A
+       2  FMNMX.NAN.XORSIGN
+       5  FMNMX.XORSIGN
+       2  FMNMX.XORSIGN.IS_A
+
+[FMUL]  (17 variants)
+       5  FMUL
+       4  FMUL.D2
+       5  FMUL.D4
+       9  FMUL.D8
+       5  FMUL.FMZ.INVALID0
+       2  FMUL.FMZ.INVALID0.SAT
+       5  FMUL.FTZ.INVALID0
+       2  FMUL.FTZ.INVALID0.RP
+     278  FMUL.INVALID0
+       3  FMUL.INVALID0.RM
+       2  FMUL.INVALID0.RM.SAT
+       3  FMUL.INVALID0.RP
+       2  FMUL.INVALID0.RZ
+       3  FMUL.INVALID0.SAT
+       4  FMUL.M2
+       4  FMUL.M4
+       2  FMUL.M8
+
+[FOOTPRINT]  (20 variants)
+     176  FOOTPRINT.B.TEX
+       2  FOOTPRINT.B.TEX.COARSE
+       2  FOOTPRINT.B.TEX.INVALID2
+       2  FOOTPRINT.B.TEX.LB
+       2  FOOTPRINT.B.TEX.LC
+       2  FOOTPRINT.B.TEX.LZ
+       2  FOOTPRINT.B.TEX.NDV
+       2  FOOTPRINT.B.TEX.NODEP
+       2  FOOTPRINT.B.TXD
+       2  FOOTPRINT.SCR.B.TEX
+       1  FOOTPRINT.SCR.TEX
+      88  FOOTPRINT.TEX
+       1  FOOTPRINT.TEX.COARSE
+       1  FOOTPRINT.TEX.INVALID2
+       1  FOOTPRINT.TEX.LB
+       1  FOOTPRINT.TEX.LC
+       1  FOOTPRINT.TEX.LZ
+       1  FOOTPRINT.TEX.NDV
+       1  FOOTPRINT.TEX.NODEP
+       1  FOOTPRINT.TXD
+
+[FSEL]  (2 variants)
+     301  FSEL
+       7  FSEL.FTZ
+
+[FSET]  (66 variants)
+       5  FSET.BF.EQ.AND
+       2  FSET.BF.EQ.INVALID3
+       4  FSET.BF.EQ.OR
+       2  FSET.BF.EQ.XOR
+       2  FSET.BF.EQU.AND
+       2  FSET.BF.EQU.INVALID3
+       2  FSET.BF.EQU.OR
+       2  FSET.BF.EQU.XOR
+     283  FSET.BF.F.AND
+       5  FSET.BF.F.FTZ.AND
+       4  FSET.BF.F.INVALID3
+       7  FSET.BF.F.OR
+       5  FSET.BF.F.XOR
+       4  FSET.BF.GE.AND
+       2  FSET.BF.GE.INVALID3
+       2  FSET.BF.GE.OR
+       2  FSET.BF.GE.XOR
+       2  FSET.BF.GEU.AND
+       2  FSET.BF.GEU.INVALID3
+       2  FSET.BF.GEU.OR
+       2  FSET.BF.GEU.XOR
+       5  FSET.BF.GT.AND
+       2  FSET.BF.GT.INVALID3
+       4  FSET.BF.GT.OR
+       2  FSET.BF.GT.XOR
+       4  FSET.BF.GTU.AND
+       2  FSET.BF.GTU.INVALID3
+       2  FSET.BF.GTU.OR
+       2  FSET.BF.GTU.XOR
+       4  FSET.BF.LE.AND
+       2  FSET.BF.LE.INVALID3
+       2  FSET.BF.LE.OR
+       2  FSET.BF.LE.XOR
+       2  FSET.BF.LEU.AND
+       2  FSET.BF.LEU.INVALID3
+       2  FSET.BF.LEU.OR
+       2  FSET.BF.LEU.XOR
+       5  FSET.BF.LT.AND
+       2  FSET.BF.LT.INVALID3
+       4  FSET.BF.LT.OR
+       4  FSET.BF.LT.XOR
+       2  FSET.BF.LTU.AND
+       2  FSET.BF.LTU.INVALID3
+       2  FSET.BF.LTU.OR
+       2  FSET.BF.LTU.XOR
+       5  FSET.BF.NAN.AND
+       2  FSET.BF.NAN.FTZ.AND
+       2  FSET.BF.NAN.INVALID3
+       4  FSET.BF.NAN.OR
+       2  FSET.BF.NAN.XOR
+       2  FSET.BF.NE.AND
+       2  FSET.BF.NE.INVALID3
+       2  FSET.BF.NE.OR
+       2  FSET.BF.NE.XOR
+       2  FSET.BF.NEU.AND
+       2  FSET.BF.NEU.INVALID3
+       2  FSET.BF.NEU.OR
+       2  FSET.BF.NEU.XOR
+       2  FSET.BF.NUM.AND
+       2  FSET.BF.NUM.INVALID3
+       2  FSET.BF.NUM.OR
+       2  FSET.BF.NUM.XOR
+       2  FSET.BF.T.AND
+       2  FSET.BF.T.INVALID3
+       2  FSET.BF.T.OR
+       2  FSET.BF.T.XOR
+
+[FSETP]  (66 variants)
+       5  FSETP.EQ.AND
+       2  FSETP.EQ.INVALID3
+       4  FSETP.EQ.OR
+       2  FSETP.EQ.XOR
+       2  FSETP.EQU.AND
+       2  FSETP.EQU.INVALID3
+       2  FSETP.EQU.OR
+       2  FSETP.EQU.XOR
+     285  FSETP.F.AND
+       5  FSETP.F.FTZ.AND
+       4  FSETP.F.INVALID3
+       7  FSETP.F.OR
+       5  FSETP.F.XOR
+       4  FSETP.GE.AND
+       2  FSETP.GE.INVALID3
+       2  FSETP.GE.OR
+       2  FSETP.GE.XOR
+       2  FSETP.GEU.AND
+       2  FSETP.GEU.INVALID3
+       2  FSETP.GEU.OR
+       2  FSETP.GEU.XOR
+       5  FSETP.GT.AND
+       2  FSETP.GT.INVALID3
+       4  FSETP.GT.OR
+       2  FSETP.GT.XOR
+       4  FSETP.GTU.AND
+       2  FSETP.GTU.INVALID3
+       2  FSETP.GTU.OR
+       2  FSETP.GTU.XOR
+       4  FSETP.LE.AND
+       2  FSETP.LE.INVALID3
+       2  FSETP.LE.OR
+       2  FSETP.LE.XOR
+       2  FSETP.LEU.AND
+       2  FSETP.LEU.INVALID3
+       2  FSETP.LEU.OR
+       2  FSETP.LEU.XOR
+       5  FSETP.LT.AND
+       2  FSETP.LT.INVALID3
+       4  FSETP.LT.OR
+       4  FSETP.LT.XOR
+       2  FSETP.LTU.AND
+       2  FSETP.LTU.INVALID3
+       2  FSETP.LTU.OR
+       2  FSETP.LTU.XOR
+       5  FSETP.NAN.AND
+       2  FSETP.NAN.FTZ.AND
+       2  FSETP.NAN.INVALID3
+       4  FSETP.NAN.OR
+       2  FSETP.NAN.XOR
+       2  FSETP.NE.AND
+       2  FSETP.NE.INVALID3
+       2  FSETP.NE.OR
+       2  FSETP.NE.XOR
+       2  FSETP.NEU.AND
+       2  FSETP.NEU.INVALID3
+       2  FSETP.NEU.OR
+       2  FSETP.NEU.XOR
+       2  FSETP.NUM.AND
+       2  FSETP.NUM.INVALID3
+       2  FSETP.NUM.OR
+       2  FSETP.NUM.XOR
+       2  FSETP.T.AND
+       2  FSETP.T.INVALID3
+       2  FSETP.T.OR
+       2  FSETP.T.XOR
+
+[FSWZADD]  (10 variants)
+      92  FSWZADD
+       1  FSWZADD.FTZ
+       1  FSWZADD.FTZ.INVALID2
+       1  FSWZADD.FTZ.RP
+       2  FSWZADD.INVALID2
+       2  FSWZADD.NDV
+       1  FSWZADD.RM
+       1  FSWZADD.RM.NDV
+       1  FSWZADD.RP
+       1  FSWZADD.RZ
+
+[GETLMEMBASE]  (1 variants)
+      97  GETLMEMBASE
+
+[HADD2]  (7 variants)
+     294  HADD2
+       7  HADD2.BF16_V2
+      96  HADD2.F32
+       1  HADD2.F32.FTZ
+       2  HADD2.F32.SAT
+       7  HADD2.FTZ
+       5  HADD2.SAT
+
+[HFMA2]  (13 variants)
+     483  HFMA2
+      11  HFMA2.BF16_V2
+       3  HFMA2.BF16_V2.RELU
+       5  HFMA2.F32
+       3  HFMA2.F32.RELU
+       3  HFMA2.F32.SAT
+       8  HFMA2.FMZ
+       3  HFMA2.FMZ.RELU
+       3  HFMA2.FMZ.SAT
+       8  HFMA2.FTZ
+       3  HFMA2.FTZ.RELU
+     275  HFMA2.RELU
+       5  HFMA2.SAT
+
+[HMMA]  (14 variants)
+       5  HMMA.16816.F16
+       2  HMMA.16816.F32
+       5  HMMA.1684.F16
+     184  HMMA.1688.F16
+       3  HMMA.1688.F16.BF16
+       1  HMMA.1688.F16.INVALID3
+       3  HMMA.1688.F16.TF32
+       3  HMMA.1688.F32
+       1  HMMA.SP.16816.F16
+      90  HMMA.SP.1688.F16
+       1  HMMA.SP.1688.F16.BF16
+       1  HMMA.SP.1688.F16.TF32
+       1  HMMA.SP.1688.F32
+       1  HMMA.SP.INVALID2.F16
+
+[HMNMX2]  (14 variants)
+     292  HMNMX2
+       7  HMNMX2.BF16_V2
+       2  HMNMX2.BF16_V2.IS_A
+       5  HMNMX2.FTZ
+       2  HMNMX2.FTZ.IS_A
+       2  HMNMX2.FTZ.NAN
+       7  HMNMX2.INVALID1
+       2  HMNMX2.INVALID1.IS_A
+     183  HMNMX2.IS_A
+       3  HMNMX2.NAN
+       2  HMNMX2.NAN.IS_A
+       2  HMNMX2.NAN.XORSIGN
+       5  HMNMX2.XORSIGN
+       2  HMNMX2.XORSIGN.IS_A
+
+[HMUL2]  (8 variants)
+     289  HMUL2
+       7  HMUL2.BF16_V2
+       5  HMUL2.FMZ
+       2  HMUL2.FMZ.SAT
+       7  HMUL2.FTZ
+       5  HMUL2.INVALID1
+       2  HMUL2.INVALID1.SAT
+       3  HMUL2.SAT
+
+[HSET2]  (26 variants)
+       5  HSET2.BF.F.AND
+       2  HSET2.BF.F.XOR
+       5  HSET2.BF16_V2.F.AND
+       5  HSET2.EQ.AND
+       2  HSET2.EQU.AND
+     277  HSET2.F.AND
+       5  HSET2.F.FTZ.AND
+       4  HSET2.F.INVALID3
+       7  HSET2.F.OR
+       5  HSET2.F.XOR
+       4  HSET2.GE.AND
+       2  HSET2.GEU.AND
+       5  HSET2.GT.AND
+       4  HSET2.GTU.AND
+       5  HSET2.INVALID1.F.AND
+       2  HSET2.INVALID3.F.AND
+       4  HSET2.LE.AND
+       2  HSET2.LEU.AND
+       7  HSET2.LT.AND
+       4  HSET2.LTU.AND
+       5  HSET2.NAN.AND
+       2  HSET2.NAN.FTZ.AND
+       4  HSET2.NE.AND
+       2  HSET2.NEU.AND
+       2  HSET2.NUM.AND
+       2  HSET2.T.AND
+
+[HSETP2]  (26 variants)
+       5  HSETP2.BF16_V2.F.AND
+       5  HSETP2.EQ.AND
+       2  HSETP2.EQU.AND
+     279  HSETP2.F.AND
+       5  HSETP2.F.FTZ.AND
+       5  HSETP2.F.H_AND.AND
+       2  HSETP2.F.H_AND.XOR
+       4  HSETP2.F.INVALID3
+       7  HSETP2.F.OR
+       5  HSETP2.F.XOR
+       4  HSETP2.GE.AND
+       2  HSETP2.GEU.AND
+       5  HSETP2.GT.AND
+       4  HSETP2.GTU.AND
+       5  HSETP2.INVALID1.F.AND
+       2  HSETP2.INVALID3.F.AND
+       4  HSETP2.LE.AND
+       2  HSETP2.LEU.AND
+       7  HSETP2.LT.AND
+       4  HSETP2.LTU.AND
+       5  HSETP2.NAN.AND
+       2  HSETP2.NAN.FTZ.AND
+       4  HSETP2.NE.AND
+       2  HSETP2.NEU.AND
+       2  HSETP2.NUM.AND
+       2  HSETP2.T.AND
+
+[I2F]  (10 variants)
+       2  I2F.BF16.S8
+       1  I2F.BF16.U32
+       3  I2F.BF16.U8
+       1  I2F.BF16.U8.RM
+       2  I2F.F16.S8
+       1  I2F.F16.U32
+       3  I2F.F16.U8
+       2  I2F.S8
+       1  I2F.U32
+       3  I2F.U8
+
+[I2FP]  (29 variants)
+       3  I2FP.F32.INVALID0
+       2  I2FP.F32.INVALID1
+       1  I2FP.F32.U32
+     179  I2FP.INVALID0.INVALID0
+       2  I2FP.INVALID0.INVALID0.INVALID1
+       3  I2FP.INVALID0.INVALID0.INVALID2
+       1  I2FP.INVALID0.INVALID0.RZ
+       4  I2FP.INVALID0.INVALID1
+       5  I2FP.INVALID0.INVALID2
+       2  I2FP.INVALID0.INVALID6
+       1  I2FP.INVALID0.S32
+      92  I2FP.INVALID0.U32
+       1  I2FP.INVALID0.U32.INVALID1
+       1  I2FP.INVALID0.U32.INVALID2
+       3  I2FP.INVALID1.INVALID0
+       2  I2FP.INVALID1.INVALID1
+       1  I2FP.INVALID1.U32
+       2  I2FP.INVALID3.INVALID0
+       1  I2FP.INVALID3.INVALID1
+       3  I2FP.INVALID4.INVALID0
+       1  I2FP.INVALID4.INVALID0.INVALID1
+       2  I2FP.INVALID4.INVALID1
+       1  I2FP.INVALID4.U32
+       1  I2FP.INVALID5.INVALID0
+       1  I2FP.INVALID5.INVALID1
+       2  I2FP.INVALID6.INVALID0
+       1  I2FP.INVALID6.INVALID1
+       1  I2FP.INVALID7.INVALID0
+       1  I2FP.INVALID7.INVALID1
+
+[I2I]  (4 variants)
+       4  I2I.S16.S32.SAT
+       9  I2I.S8.S32.SAT
+       5  I2I.U16.S32.SAT
+     287  I2I.U8.S32.SAT
+
+[I2IP]  (11 variants)
+       4  I2IP.S16.S32
+       2  I2IP.S2.S32
+       5  I2IP.S8.S32
+       2  I2IP.S8.S32.SATRELU
+       5  I2IP.U16.S32
+       5  I2IP.U2.S32
+       2  I2IP.U4.S32
+     282  I2IP.U8.S32
+       2  I2IP.U8.S32.INVALID3
+       5  I2IP.U8.S32.SAT
+       3  I2IP.U8.S32.SATRELU
+
+[IABS]  (1 variants)
+     291  IABS
+
+[IADD]  (4 variants)
+     291  IADD
+       5  IADD.64
+       2  IADD.64.X
+     191  IADD.X
+
+[IADD3]  (2 variants)
+     300  IADD3
+     193  IADD3.X
+
+[IDP]  (6 variants)
+       1  IDP.2A.HI.U16.U8
+       4  IDP.2A.LO.U16.U8
+       2  IDP.4A.S8.S8
+       5  IDP.4A.S8.U8
+       4  IDP.4A.U8.S8
+     187  IDP.4A.U8.U8
+
+[IMAD]  (14 variants)
+       8  IMAD
+       2  IMAD.HI
+     180  IMAD.HI.U32
+       2  IMAD.HI.U32.X
+       1  IMAD.IADD.U32
+       3  IMAD.MOV
+      65  IMAD.MOV.U32
+     414  IMAD.U32
+     287  IMAD.U32.X
+       8  IMAD.WIDE
+     386  IMAD.WIDE.U32
+     192  IMAD.WIDE.U32.X
+       2  IMAD.WIDE.X
+       3  IMAD.X
+
+[IMMA]  (60 variants)
+       1  IMMA.16816.INVALID4.INVALID4
+       2  IMMA.16816.INVALID4.U8
+       1  IMMA.16816.U8.INVALID4
+       3  IMMA.16816.U8.U8
+       1  IMMA.INVALID0.INVALID2.INVALID2
+       1  IMMA.INVALID0.INVALID2.INVALID3
+       2  IMMA.INVALID0.INVALID2.S8
+       3  IMMA.INVALID0.INVALID2.U8
+       1  IMMA.INVALID0.INVALID3.INVALID2
+       1  IMMA.INVALID0.INVALID3.INVALID3
+       1  IMMA.INVALID0.INVALID3.S8
+       2  IMMA.INVALID0.INVALID3.U8
+       2  IMMA.INVALID0.INVALID4.INVALID4
+       3  IMMA.INVALID0.INVALID4.U8
+       1  IMMA.INVALID0.INVALID4.U8.SAT
+       1  IMMA.INVALID0.S8.INVALID2
+       1  IMMA.INVALID0.S8.INVALID3
+       1  IMMA.INVALID0.S8.S8
+       3  IMMA.INVALID0.S8.U8
+       3  IMMA.INVALID0.U8.INVALID2
+       2  IMMA.INVALID0.U8.INVALID3
+       3  IMMA.INVALID0.U8.INVALID4
+       3  IMMA.INVALID0.U8.S8
+     173  IMMA.INVALID0.U8.U8
+       3  IMMA.INVALID0.U8.U8.SAT
+       1  IMMA.INVALID1.INVALID2.INVALID2
+       1  IMMA.INVALID1.INVALID2.INVALID3
+       1  IMMA.INVALID1.INVALID2.S8
+       2  IMMA.INVALID1.INVALID2.U8
+       1  IMMA.INVALID1.INVALID3.INVALID2
+       1  IMMA.INVALID1.INVALID3.INVALID3
+       1  IMMA.INVALID1.INVALID3.S8
+       1  IMMA.INVALID1.INVALID3.U8
+       1  IMMA.INVALID1.S8.INVALID2
+       1  IMMA.INVALID1.S8.INVALID3
+       1  IMMA.INVALID1.S8.S8
+       2  IMMA.INVALID1.S8.U8
+       2  IMMA.INVALID1.U8.INVALID2
+       1  IMMA.INVALID1.U8.INVALID3
+       2  IMMA.INVALID1.U8.S8
+       5  IMMA.INVALID1.U8.U8
+       1  IMMA.INVALID2.INVALID4.INVALID4
+       2  IMMA.INVALID2.INVALID4.U8
+       2  IMMA.INVALID2.U8.INVALID4
+       3  IMMA.INVALID2.U8.U8
+       1  IMMA.INVALID6.INVALID4.INVALID4
+       1  IMMA.INVALID6.INVALID4.U8
+       1  IMMA.INVALID6.U8.INVALID4
+       2  IMMA.INVALID6.U8.U8
+       1  IMMA.SP.INVALID0.INVALID2.U8
+       1  IMMA.SP.INVALID0.INVALID4.U8
+       1  IMMA.SP.INVALID0.S8.U8
+       1  IMMA.SP.INVALID0.U8.INVALID2
+       1  IMMA.SP.INVALID0.U8.INVALID4
+       1  IMMA.SP.INVALID0.U8.S8
+      85  IMMA.SP.INVALID0.U8.U8
+       1  IMMA.SP.INVALID0.U8.U8.SAT
+       1  IMMA.SP.INVALID1.U8.U8
+       1  IMMA.SP.INVALID2.U8.U8
+       1  IMMA.SP.INVALID4.U8.U8
+
+[IMNMX]  (4 variants)
+       9  IMNMX
+       4  IMNMX.S64
+     299  IMNMX.U32
+       5  IMNMX.U64
+
+[IPA]  (9 variants)
+       4  IPA.CONSTANT
+       3  IPA.CONSTANT.OFFSET
+       2  IPA.INVALID3
+       1  IPA.INVALID3.OFFSET
+     188  IPA.PASS
+       3  IPA.PASS.CENTROID
+      97  IPA.PASS.OFFSET
+       3  IPA.STATE
+       2  IPA.STATE.OFFSET
+
+[ISBERD]  (12 variants)
+     180  ISBERD
+       2  ISBERD.32
+       1  ISBERD.ATTR
+       1  ISBERD.INVALID3
+       3  ISBERD.O
+       1  ISBERD.O.SKEW
+       2  ISBERD.PATCH
+       1  ISBERD.PATCH.32
+       2  ISBERD.PRIM
+       1  ISBERD.PRIM.SKEW
+       2  ISBERD.SKEW
+       3  ISBERD.U16
+
+[ISETP]  (73 variants)
+       4  ISETP.EQ.AND
+       2  ISETP.EQ.INVALID3
+       2  ISETP.EQ.OR
+       5  ISETP.EQ.U32.AND
+       2  ISETP.EQ.U32.AND.EX
+       2  ISETP.EQ.U32.INVALID3
+       2  ISETP.EQ.U32.OR
+       2  ISETP.EQ.U32.XOR
+       2  ISETP.EQ.XOR
+       7  ISETP.F.AND
+       2  ISETP.F.AND.EX
+       2  ISETP.F.INVALID3
+       4  ISETP.F.OR
+     275  ISETP.F.U32.AND
+     179  ISETP.F.U32.AND.EX
+       4  ISETP.F.U32.INVALID3
+       5  ISETP.F.U32.OR
+       2  ISETP.F.U32.OR.EX
+       5  ISETP.F.U32.XOR
+       2  ISETP.F.U32.XOR.EX
+       9  ISETP.F.U64.AND
+       2  ISETP.F.U64.AND.EX
+       4  ISETP.F.XOR
+       2  ISETP.GE.AND
+       2  ISETP.GE.INVALID3
+       2  ISETP.GE.OR
+       4  ISETP.GE.U32.AND
+       2  ISETP.GE.U32.INVALID3
+       2  ISETP.GE.U32.OR
+       2  ISETP.GE.U32.XOR
+       2  ISETP.GE.XOR
+       4  ISETP.GT.AND
+       2  ISETP.GT.INVALID3
+       2  ISETP.GT.OR
+       5  ISETP.GT.U32.AND
+       2  ISETP.GT.U32.AND.EX
+       2  ISETP.GT.U32.INVALID3
+       2  ISETP.GT.U32.OR
+       2  ISETP.GT.U32.XOR
+       2  ISETP.GT.XOR
+       2  ISETP.LE.AND
+       2  ISETP.LE.INVALID3
+       2  ISETP.LE.OR
+       4  ISETP.LE.U32.AND
+       2  ISETP.LE.U32.INVALID3
+       2  ISETP.LE.U32.OR
+       2  ISETP.LE.U32.XOR
+       2  ISETP.LE.XOR
+       4  ISETP.LT.AND
+       2  ISETP.LT.INVALID3
+       2  ISETP.LT.OR
+       5  ISETP.LT.U32.AND
+       2  ISETP.LT.U32.AND.EX
+       2  ISETP.LT.U32.INVALID3
+       2  ISETP.LT.U32.OR
+       4  ISETP.LT.U32.XOR
+       2  ISETP.LT.XOR
+       2  ISETP.NE.AND
+       2  ISETP.NE.INVALID3
+       2  ISETP.NE.OR
+       2  ISETP.NE.U32.AND
+       2  ISETP.NE.U32.INVALID3
+       2  ISETP.NE.U32.OR
+       2  ISETP.NE.U32.XOR
+       2  ISETP.NE.XOR
+       2  ISETP.T.AND
+       2  ISETP.T.INVALID3
+       2  ISETP.T.OR
+       2  ISETP.T.U32.AND
+       2  ISETP.T.U32.INVALID3
+       2  ISETP.T.U32.OR
+       2  ISETP.T.U32.XOR
+       2  ISETP.T.XOR
+
+[LD]  (27 variants)
+       1  LD.E.EF.S8
+       5  LD.E.EF.U8
+       5  LD.EF
+       2  LD.EF.128
+       2  LD.EF.64
+       1  LD.EF.INVALID7
+       5  LD.EF.LTC128B.U8
+       1  LD.EF.LTC256B.U8
+       5  LD.EF.LTC64B.U8
+       2  LD.EF.S16
+       6  LD.EF.S8
+       5  LD.EF.U16
+     330  LD.EF.U8
+       4  LD.EF.U8.CONSTANT
+       5  LD.EF.U8.CONSTANT.CTA
+       2  LD.EF.U8.CONSTANT.CTA.PRIVATE
+       6  LD.EF.U8.CONSTANT.PRIVATE
+       6  LD.EF.U8.MMIO.GPU
+       1  LD.EF.U8.MMIO.SYS
+       1  LD.EF.U8.STRONG.GPU.PRIVATE
+       5  LD.EL.U8
+       5  LD.EU.U8
+       2  LD.INVALID6.U8
+       1  LD.INVALID7.U8
+       2  LD.LU.U8
+       2  LD.NA.U8
+       7  LD.U8
+
+[LDC]  (11 variants)
+       4  LDC
+       2  LDC.64
+       2  LDC.INVALID6
+       1  LDC.INVALID7
+       2  LDC.S16
+       6  LDC.S8
+       4  LDC.U16
+     276  LDC.U8
+       4  LDC.U8.IL
+       4  LDC.U8.IS
+       1  LDC.U8.ISL
+
+[LDCU]  (7 variants)
+       1  LDCU
+      97  LDCU.256
+       1  LDCU.S8
+       1  LDCU.U16
+      92  LDCU.U8
+       1  LDCU.U8.HDRUNPACK
+       1  LDCU.U8.TEXUNPACK
+
+[LDG]  (39 variants)
+      85  LDG.E.EF.EFL2.256
+       1  LDG.E.EF.EFL2.256.CONSTANT
+       1  LDG.E.EF.EFL2.256.CONSTANT.CTA
+       1  LDG.E.EF.EFL2.256.CONSTANT.PRIVATE
+       1  LDG.E.EF.EFL2.256.MMIO.GPU
+       1  LDG.E.EF.EFL2.LTC128B.256
+       1  LDG.E.EF.EFL2.LTC64B.256
+       1  LDG.E.EF.ELL2.256
+       1  LDG.E.EF.ENL2.256
+       1  LDG.E.EF.S8
+       5  LDG.E.EF.U8
+       1  LDG.E.EFL2.256
+       1  LDG.E.EL.EFL2.256
+       1  LDG.E.EU.EFL2.256
+       5  LDG.EF
+       2  LDG.EF.128
+       2  LDG.EF.64
+       1  LDG.EF.INVALID7
+       5  LDG.EF.LTC128B.U8
+       1  LDG.EF.LTC256B.U8
+       5  LDG.EF.LTC64B.U8
+       2  LDG.EF.S16
+       6  LDG.EF.S8
+       5  LDG.EF.U16
+     330  LDG.EF.U8
+       4  LDG.EF.U8.CONSTANT
+       5  LDG.EF.U8.CONSTANT.CTA
+       2  LDG.EF.U8.CONSTANT.CTA.PRIVATE
+       6  LDG.EF.U8.CONSTANT.PRIVATE
+       6  LDG.EF.U8.MMIO.GPU
+       1  LDG.EF.U8.MMIO.SYS
+       1  LDG.EF.U8.STRONG.GPU.PRIVATE
+       5  LDG.EL.U8
+       5  LDG.EU.U8
+       2  LDG.INVALID6.U8
+       1  LDG.INVALID7.U8
+       2  LDG.LU.U8
+       2  LDG.NA.U8
+       7  LDG.U8
+
+[LDGDEPBAR]  (1 variants)
+      97  LDGDEPBAR
+
+[LDGSTS]  (14 variants)
+       1  LDGSTS.E.BYPASS
+      83  LDGSTS.E.BYPASS.EF
+       1  LDGSTS.E.BYPASS.EF.128
+       1  LDGSTS.E.BYPASS.EF.64
+       1  LDGSTS.E.BYPASS.EF.CONSTANT
+       1  LDGSTS.E.BYPASS.EF.CONSTANT.CTA
+       1  LDGSTS.E.BYPASS.EF.CONSTANT.PRIVATE
+       1  LDGSTS.E.BYPASS.EF.LTC128B
+       1  LDGSTS.E.BYPASS.EF.LTC64B
+       1  LDGSTS.E.BYPASS.EF.MMIO.SM
+       1  LDGSTS.E.BYPASS.EF.ZFILL
+       1  LDGSTS.E.BYPASS.EL
+       1  LDGSTS.E.BYPASS.EU
+       1  LDGSTS.E.EF
+
+[LDL]  (15 variants)
+       4  LDL.EF
+       2  LDL.EF.128
+       2  LDL.EF.64
+       1  LDL.EF.INVALID7
+       2  LDL.EF.S16
+       6  LDL.EF.S8
+       4  LDL.EF.U16
+     272  LDL.EF.U8
+       4  LDL.EL.U8
+       4  LDL.EU.U8
+       2  LDL.INVALID6.U8
+       1  LDL.INVALID7.U8
+       2  LDL.LU.U8
+       2  LDL.NA.U8
+       6  LDL.U8
+
+[LDS]  (7 variants)
+       4  LDS
+       2  LDS.128
+       2  LDS.64
+       2  LDS.S16
+       6  LDS.S8
+       4  LDS.U16
+     284  LDS.U8
+
+[LDSM]  (11 variants)
+       2  LDSM.16.INVALID5
+       2  LDSM.16.INVALID6
+       1  LDSM.16.INVALID7
+       4  LDSM.16.M816
+       2  LDSM.16.M832
+     266  LDSM.16.M88
+       4  LDSM.16.M88.2
+       4  LDSM.16.M88.4
+       1  LDSM.16.M88.INVALID3
+       4  LDSM.16.MT1616
+       5  LDSM.16.MT88
+
+[LDTRAM]  (2 variants)
+      96  LDTRAM.AB
+       1  LDTRAM.C
+
+[LEA]  (5 variants)
+     286  LEA
+     193  LEA.HI
+       2  LEA.HI.SX32
+       3  LEA.HI.X
+     189  LEA.X
+
+[LEPC]  (1 variants)
+     195  LEPC
+
+[LOP3]  (2 variants)
+     292  LOP3.LUT
+       7  LOP3.LUT.PAND
+
+[MATCH]  (4 variants)
+      96  MATCH.ALL
+       3  MATCH.ALL.U64
+      95  MATCH.ANY
+       1  MATCH.ANY.U64
+
+[MOV]  (3 variants)
+     290  MOV
+     194  MOV.64
+       1  MOV.SPILL
+
+[MOV64IUR]  (1 variants)
+     194  MOV64IUR
+
+[MOVM]  (5 variants)
+       2  MOVM.16.INVALID3
+       3  MOVM.16.M832
+       2  MOVM.16.M864
+      93  MOVM.16.MT88
+       3  MOVM.U4TO8.MT88
+
+[MUFU]  (19 variants)
+     278  MUFU.COS
+       3  MUFU.COS.BF16
+       5  MUFU.COS.F16
+       5  MUFU.EX2
+       2  MUFU.INVALID10
+       2  MUFU.INVALID11
+       4  MUFU.INVALID12
+       2  MUFU.INVALID13
+       2  MUFU.INVALID14
+       2  MUFU.INVALID15
+       4  MUFU.LG2
+       5  MUFU.RCP
+       4  MUFU.RCP64H
+       4  MUFU.RSQ
+       2  MUFU.RSQ64H
+       7  MUFU.SIN
+       2  MUFU.SIN.BF16
+       5  MUFU.SQRT
+       4  MUFU.TANH
+
+[NOP]  (1 variants)
+      97  NOP
+
+[OMMA]  (12 variants)
+       2  OMMA.SF.16864.F32.E0M3.E0M3.E8.4X
+       4  OMMA.SF.16864.F32.E0M3.E2M1.E8.4X
+       3  OMMA.SF.16864.F32.E2M1.E0M3.E8.4X
+       3  OMMA.SF.16864.F32.E2M1.E2M1.E8
+     190  OMMA.SF.16864.F32.E2M1.E2M1.E8.4X
+       2  OMMA.SF.16864.F32.E2M1.E2M1.UE4M3
+       5  OMMA.SF.16864.F32.E2M1.E2M1.UE4M3.4X
+       1  OMMA.SF.SP.168128.F32.E0M3.E2M1.E8.4X
+       1  OMMA.SF.SP.168128.F32.E2M1.E0M3.E8.4X
+       1  OMMA.SF.SP.168128.F32.E2M1.E2M1.E8
+      91  OMMA.SF.SP.168128.F32.E2M1.E2M1.E8.4X
+       1  OMMA.SF.SP.168128.F32.E2M1.E2M1.UE4M3.4X
+
+[OUT]  (3 variants)
+      95  OUT.CUT
+     100  OUT.EMIT
+       3  OUT.EMIT_THEN_CUT
+
+[P2R]  (4 variants)
+     285  P2R
+       5  P2R.B1
+       5  P2R.B2
+       2  P2R.B3
+
+[PIXLD]  (5 variants)
+      94  PIXLD
+       1  PIXLD.CENTROID_OFFSET
+       2  PIXLD.COVMASK
+       2  PIXLD.INNER_COVERAGE
+       1  PIXLD.MY_INDEX
+
+[PLOP3]  (1 variants)
+     796  PLOP3.LUT
+
+[PMTRIG]  (1 variants)
+      99  PMTRIG
+
+[POPC]  (1 variants)
+     293  POPC
+
+[PREEXIT]  (1 variants)
+      97  PREEXIT
+
+[PRMT]  (6 variants)
+     470  PRMT
+       5  PRMT.B4E
+       8  PRMT.ECL
+       8  PRMT.F4E
+       3  PRMT.RC16
+       3  PRMT.RC8
+
+[QMMA]  (57 variants)
+       3  QMMA.16816.F16.E2M3.E4M3
+       4  QMMA.16816.F16.E4M3.E2M3
+     177  QMMA.16816.F16.E4M3.E4M3
+       3  QMMA.16816.F16.E4M3.E5M2
+       1  QMMA.16816.F16.E4M3.INVALID6
+       3  QMMA.16816.F16.E5M2.E4M3
+       2  QMMA.16816.F16.E5M2.E5M2
+       1  QMMA.16816.F16.INVALID6.E4M3
+       3  QMMA.16816.F32.E4M3.E4M3
+       1  QMMA.16816.F32.E4M3.E5M2
+       2  QMMA.16816.F32.E5M2.E4M3
+       1  QMMA.16816.F32.E5M2.E5M2
+       4  QMMA.16832.F16.E4M3.E4M3
+       2  QMMA.16832.F16.E4M3.E5M2
+       2  QMMA.16832.F16.E5M2.E4M3
+       1  QMMA.16832.F16.E5M2.E5M2
+       2  QMMA.16832.F32.E4M3.E4M3
+       1  QMMA.16832.F32.E4M3.E5M2
+       1  QMMA.16832.F32.E5M2.E4M3
+       1  QMMA.16832.F32.E5M2.E5M2
+       3  QMMA.INVALID2.F16.E4M3.E4M3
+       1  QMMA.INVALID2.F16.E4M3.E5M2
+       1  QMMA.INVALID2.F16.E5M2.E4M3
+       1  QMMA.INVALID2.F16.E5M2.E5M2
+       2  QMMA.INVALID2.F32.E4M3.E4M3
+       1  QMMA.INVALID2.F32.E4M3.E5M2
+       1  QMMA.INVALID2.F32.E5M2.E4M3
+       1  QMMA.INVALID2.F32.E5M2.E5M2
+       2  QMMA.INVALID3.F16.E4M3.E4M3
+       1  QMMA.INVALID3.F16.E4M3.E5M2
+       1  QMMA.INVALID3.F16.E5M2.E4M3
+       1  QMMA.INVALID3.F16.E5M2.E5M2
+       1  QMMA.INVALID3.F32.E4M3.E4M3
+       1  QMMA.INVALID3.F32.E4M3.E5M2
+       1  QMMA.INVALID3.F32.E5M2.E4M3
+       1  QMMA.INVALID3.F32.E5M2.E5M2
+       3  QMMA.SF.16832.F32.E2M3.E4M3.E8
+       4  QMMA.SF.16832.F32.E4M3.E2M3.E8
+     186  QMMA.SF.16832.F32.E4M3.E4M3.E8
+       3  QMMA.SF.16832.F32.E4M3.E5M2.E8
+       1  QMMA.SF.16832.F32.E4M3.INVALID6.E8
+       4  QMMA.SF.16832.F32.E5M2.E4M3.E8
+       2  QMMA.SF.16832.F32.E5M2.E5M2.E8
+       1  QMMA.SF.16832.F32.INVALID6.E4M3.E8
+       1  QMMA.SF.SP.16864.F32.E2M3.E4M3.E8
+       1  QMMA.SF.SP.16864.F32.E4M3.E2M3.E8
+      89  QMMA.SF.SP.16864.F32.E4M3.E4M3.E8
+       1  QMMA.SF.SP.16864.F32.E4M3.E5M2.E8
+       1  QMMA.SF.SP.16864.F32.E5M2.E4M3.E8
+       1  QMMA.SP.16832.F16.E4M3.E4M3
+       1  QMMA.SP.16864.F16.E4M3.E4M3
+       1  QMMA.SP.INVALID0.F16.E2M3.E4M3
+       1  QMMA.SP.INVALID0.F16.E4M3.E2M3
+      86  QMMA.SP.INVALID0.F16.E4M3.E4M3
+       1  QMMA.SP.INVALID0.F16.E4M3.E5M2
+       1  QMMA.SP.INVALID0.F16.E5M2.E4M3
+       1  QMMA.SP.INVALID0.F32.E4M3.E4M3
+
+[QSPC]  (6 variants)
+       2  QSPC.D
+       4  QSPC.E.G
+       1  QSPC.E.L
+     281  QSPC.G
+       5  QSPC.L
+       4  QSPC.S
+
+[R2P]  (1 variants)
+     297  R2P
+
+[R2UR]  (4 variants)
+      95  R2UR
+       2  R2UR.BROADCAST
+       2  R2UR.FILL
+       3  R2UR.OR
+
+[REDAS]  (8 variants)
+      90  REDAS.ADD
+       1  REDAS.ADD.64
+       1  REDAS.ADD.INVALID4
+       1  REDAS.ADD.S32
+       1  REDAS.DEC
+       1  REDAS.INVALID8
+       1  REDAS.MAX
+       1  REDAS.MIN
+
+[REDUX]  (7 variants)
+      93  REDUX
+       1  REDUX.INVALID6
+       2  REDUX.MIN
+       2  REDUX.OR
+       3  REDUX.S32
+       1  REDUX.SUM
+       1  REDUX.XOR
+
+[RPCMOV]  (2 variants)
+     394  RPCMOV.32
+     195  RPCMOV.64
+
+[S2R]  (1 variants)
+      97  S2R
+
+[S2UR]  (1 variants)
+      97  S2UR
+
+[SEL]  (2 variants)
+     295  SEL
+     192  SEL.64
+
+[SETCTAID]  (4 variants)
+       2  SETCTAID
+      96  SETCTAID.X
+       4  SETCTAID.Y
+       2  SETCTAID.Z
+
+[SGXT]  (3 variants)
+       9  SGXT
+     287  SGXT.U32
+       7  SGXT.W.U32
+
+[SHF]  (9 variants)
+       8  SHF.L.S32
+     463  SHF.L.S64
+      11  SHF.L.S64.HI
+       6  SHF.L.U32
+      11  SHF.L.U64
+       3  SHF.L.W.S32
+       5  SHF.L.W.S64
+      11  SHF.R.S64
+       3  SHF.R.W.S64
+
+[SHFL]  (4 variants)
+       8  SHFL.BFLY
+       8  SHFL.DOWN
+     392  SHFL.IDX
+      16  SHFL.UP
+
+[STAS]  (4 variants)
+       1  STAS
+      94  STAS.INVALID0
+       1  STAS.INVALID1
+       1  STAS.INVALID2
+
+[SUATOM]  (200 variants)
+       5  SUATOM.D.1D.ADD.EF
+       4  SUATOM.D.1D.ADD.EF.CONSTANT.CTA.IGN
+       2  SUATOM.D.1D.ADD.EF.CONSTANT.CTA.PRIVATE.IGN
+       1  SUATOM.D.1D.ADD.EF.CONSTANT.GPU.IGN
+       6  SUATOM.D.1D.ADD.EF.CONSTANT.PRIVATE.IGN
+       2  SUATOM.D.1D.ADD.EF.CONSTANT.SM.IGN
+       1  SUATOM.D.1D.ADD.EF.CONSTANT.SM.PRIVATE.IGN
+       1  SUATOM.D.1D.ADD.EF.CONSTANT.VC.IGN
+       1  SUATOM.D.1D.ADD.EF.CONSTANT.VC.PRIVATE.IGN
+       1  SUATOM.D.1D.ADD.EF.F32.FTZ.RN.IGN
+     229  SUATOM.D.1D.ADD.EF.IGN
+       2  SUATOM.D.1D.ADD.EF.INVALID3
+       5  SUATOM.D.1D.ADD.EF.MMIO.GPU.IGN
+       2  SUATOM.D.1D.ADD.EF.MMIO.SYS.IGN
+       3  SUATOM.D.1D.ADD.EF.S32.IGN
+       1  SUATOM.D.1D.ADD.EF.SD32.IGN
+       1  SUATOM.D.1D.ADD.EF.STRONG.GPU.IGN
+       2  SUATOM.D.1D.ADD.EF.STRONG.GPU.PRIVATE.IGN
+       2  SUATOM.D.1D.ADD.EF.STRONG.SM.IGN
+       4  SUATOM.D.1D.ADD.EF.STRONG.SM.PRIVATE.IGN
+       1  SUATOM.D.1D.ADD.EF.STRONG.SYS.IGN
+       4  SUATOM.D.1D.ADD.EF.TRAP
+       3  SUATOM.D.1D.ADD.EF.U64.IGN
+       4  SUATOM.D.1D.ADD.EL.IGN
+       4  SUATOM.D.1D.ADD.EU.IGN
+       5  SUATOM.D.1D.ADD.IGN
+       2  SUATOM.D.1D.ADD.INVALID6.IGN
+       1  SUATOM.D.1D.ADD.INVALID7.IGN
+       2  SUATOM.D.1D.ADD.LU.IGN
+       2  SUATOM.D.1D.ADD.NA.IGN
+       1  SUATOM.D.1D.AND.EF.IGN
+       1  SUATOM.D.1D.AND.EL.IGN
+       1  SUATOM.D.1D.AND.EU.IGN
+       1  SUATOM.D.1D.AND.IGN
+       1  SUATOM.D.1D.AND.INVALID6.IGN
+       1  SUATOM.D.1D.AND.INVALID7.IGN
+       1  SUATOM.D.1D.AND.LU.IGN
+       1  SUATOM.D.1D.AND.NA.IGN
+       2  SUATOM.D.1D.CAS.EF
+       2  SUATOM.D.1D.CAS.EF.64.IGN
+       2  SUATOM.D.1D.CAS.EF.CONSTANT.CTA.IGN
+       2  SUATOM.D.1D.CAS.EF.CONSTANT.PRIVATE.IGN
+     155  SUATOM.D.1D.CAS.EF.IGN
+       2  SUATOM.D.1D.CAS.EF.INVALID4.IGN
+       2  SUATOM.D.1D.CAS.EF.MMIO.GPU.IGN
+       2  SUATOM.D.1D.CAS.EF.S32.IGN
+       2  SUATOM.D.1D.CAS.EF.STRONG.SM.PRIVATE.IGN
+       2  SUATOM.D.1D.CAS.EF.TRAP
+       2  SUATOM.D.1D.CAS.EL.IGN
+       2  SUATOM.D.1D.CAS.EU.IGN
+       2  SUATOM.D.1D.CAS.IGN
+       4  SUATOM.D.1D.DEC.EF.IGN
+       1  SUATOM.D.1D.DEC.EL.IGN
+       1  SUATOM.D.1D.DEC.EU.IGN
+       2  SUATOM.D.1D.DEC.IGN
+       1  SUATOM.D.1D.DEC.INVALID6.IGN
+       1  SUATOM.D.1D.DEC.INVALID7.IGN
+       1  SUATOM.D.1D.DEC.LU.IGN
+       1  SUATOM.D.1D.DEC.NA.IGN
+       4  SUATOM.D.1D.EXCH.EF.IGN
+       1  SUATOM.D.1D.EXCH.EL.IGN
+       1  SUATOM.D.1D.EXCH.EU.IGN
+       2  SUATOM.D.1D.EXCH.IGN
+       1  SUATOM.D.1D.EXCH.INVALID6.IGN
+       1  SUATOM.D.1D.EXCH.INVALID7.IGN
+       1  SUATOM.D.1D.EXCH.LU.IGN
+       1  SUATOM.D.1D.EXCH.NA.IGN
+       2  SUATOM.D.1D.INC.EF.IGN
+       1  SUATOM.D.1D.INC.EL.IGN
+       1  SUATOM.D.1D.INC.EU.IGN
+       1  SUATOM.D.1D.INC.IGN
+       1  SUATOM.D.1D.INC.INVALID6.IGN
+       1  SUATOM.D.1D.INC.INVALID7.IGN
+       1  SUATOM.D.1D.INC.LU.IGN
+       1  SUATOM.D.1D.INC.NA.IGN
+       1  SUATOM.D.1D.INVALID10.EF.IGN
+       1  SUATOM.D.1D.INVALID10.EL.IGN
+       1  SUATOM.D.1D.INVALID10.EU.IGN
+       1  SUATOM.D.1D.INVALID10.IGN
+       1  SUATOM.D.1D.INVALID10.INVALID6.IGN
+       1  SUATOM.D.1D.INVALID10.INVALID7.IGN
+       1  SUATOM.D.1D.INVALID10.LU.IGN
+       1  SUATOM.D.1D.INVALID10.NA.IGN
+       1  SUATOM.D.1D.INVALID11.EF.IGN
+       1  SUATOM.D.1D.INVALID11.EL.IGN
+       1  SUATOM.D.1D.INVALID11.EU.IGN
+       1  SUATOM.D.1D.INVALID11.IGN
+       1  SUATOM.D.1D.INVALID11.INVALID6.IGN
+       1  SUATOM.D.1D.INVALID11.INVALID7.IGN
+       1  SUATOM.D.1D.INVALID11.LU.IGN
+       1  SUATOM.D.1D.INVALID11.NA.IGN
+       2  SUATOM.D.1D.INVALID12.EF.IGN
+       1  SUATOM.D.1D.INVALID12.EL.IGN
+       1  SUATOM.D.1D.INVALID12.EU.IGN
+       1  SUATOM.D.1D.INVALID12.IGN
+       1  SUATOM.D.1D.INVALID12.INVALID6.IGN
+       1  SUATOM.D.1D.INVALID12.INVALID7.IGN
+       1  SUATOM.D.1D.INVALID12.LU.IGN
+       1  SUATOM.D.1D.INVALID12.NA.IGN
+       1  SUATOM.D.1D.INVALID13.EF.IGN
+       1  SUATOM.D.1D.INVALID13.EL.IGN
+       1  SUATOM.D.1D.INVALID13.EU.IGN
+       1  SUATOM.D.1D.INVALID13.IGN
+       1  SUATOM.D.1D.INVALID13.INVALID6.IGN
+       1  SUATOM.D.1D.INVALID13.INVALID7.IGN
+       1  SUATOM.D.1D.INVALID13.LU.IGN
+       1  SUATOM.D.1D.INVALID13.NA.IGN
+       1  SUATOM.D.1D.INVALID14.EF.IGN
+       1  SUATOM.D.1D.INVALID14.EL.IGN
+       1  SUATOM.D.1D.INVALID14.EU.IGN
+       1  SUATOM.D.1D.INVALID14.IGN
+       1  SUATOM.D.1D.INVALID14.INVALID6.IGN
+       1  SUATOM.D.1D.INVALID14.INVALID7.IGN
+       1  SUATOM.D.1D.INVALID14.LU.IGN
+       1  SUATOM.D.1D.INVALID14.NA.IGN
+       1  SUATOM.D.1D.INVALID15.EF.IGN
+       1  SUATOM.D.1D.INVALID15.EL.IGN
+       1  SUATOM.D.1D.INVALID15.EU.IGN
+       1  SUATOM.D.1D.INVALID15.IGN
+       1  SUATOM.D.1D.INVALID15.INVALID6.IGN
+       1  SUATOM.D.1D.INVALID15.INVALID7.IGN
+       1  SUATOM.D.1D.INVALID15.LU.IGN
+       1  SUATOM.D.1D.INVALID15.NA.IGN
+       1  SUATOM.D.1D.INVALID9.EF.IGN
+       1  SUATOM.D.1D.INVALID9.EL.IGN
+       1  SUATOM.D.1D.INVALID9.EU.IGN
+       1  SUATOM.D.1D.INVALID9.IGN
+       1  SUATOM.D.1D.INVALID9.INVALID6.IGN
+       1  SUATOM.D.1D.INVALID9.INVALID7.IGN
+       1  SUATOM.D.1D.INVALID9.LU.IGN
+       1  SUATOM.D.1D.INVALID9.NA.IGN
+       4  SUATOM.D.1D.MAX.EF.IGN
+       1  SUATOM.D.1D.MAX.EL.IGN
+       1  SUATOM.D.1D.MAX.EU.IGN
+       2  SUATOM.D.1D.MAX.IGN
+       1  SUATOM.D.1D.MAX.INVALID6.IGN
+       1  SUATOM.D.1D.MAX.INVALID7.IGN
+       1  SUATOM.D.1D.MAX.LU.IGN
+       1  SUATOM.D.1D.MAX.NA.IGN
+       4  SUATOM.D.1D.MIN.EF.IGN
+       1  SUATOM.D.1D.MIN.EL.IGN
+       2  SUATOM.D.1D.MIN.EU.IGN
+       2  SUATOM.D.1D.MIN.IGN
+       1  SUATOM.D.1D.MIN.INVALID6.IGN
+       1  SUATOM.D.1D.MIN.INVALID7.IGN
+       1  SUATOM.D.1D.MIN.LU.IGN
+       1  SUATOM.D.1D.MIN.NA.IGN
+       2  SUATOM.D.1D.OR.EF.IGN
+       1  SUATOM.D.1D.OR.EL.IGN
+       1  SUATOM.D.1D.OR.EU.IGN
+       1  SUATOM.D.1D.OR.IGN
+       1  SUATOM.D.1D.OR.INVALID6.IGN
+       1  SUATOM.D.1D.OR.INVALID7.IGN
+       1  SUATOM.D.1D.OR.LU.IGN
+       1  SUATOM.D.1D.OR.NA.IGN
+       1  SUATOM.D.1D.UAI.ADD.EF
+       4  SUATOM.D.1D.UAI.ADD.EF.IGN
+       2  SUATOM.D.1D.UAI.CAS.EF.IGN
+       1  SUATOM.D.1D.XOR.EF.IGN
+       1  SUATOM.D.1D.XOR.EL.IGN
+       1  SUATOM.D.1D.XOR.EU.IGN
+       1  SUATOM.D.1D.XOR.IGN
+       1  SUATOM.D.1D.XOR.INVALID6.IGN
+       1  SUATOM.D.1D.XOR.INVALID7.IGN
+       1  SUATOM.D.1D.XOR.LU.IGN
+       1  SUATOM.D.1D.XOR.NA.IGN
+       2  SUATOM.D.1D_ARRAY.ADD.EF
+       4  SUATOM.D.1D_ARRAY.ADD.EF.IGN
+       1  SUATOM.D.1D_ARRAY.ADD.EF.INVALID3
+       1  SUATOM.D.1D_ARRAY.ADD.EF.TRAP
+       2  SUATOM.D.1D_ARRAY.CAS.EF.IGN
+       2  SUATOM.D.1D_BUFFER.ADD.EF
+       4  SUATOM.D.1D_BUFFER.ADD.EF.IGN
+       1  SUATOM.D.1D_BUFFER.ADD.EF.INVALID3
+       2  SUATOM.D.1D_BUFFER.ADD.EF.TRAP
+       2  SUATOM.D.1D_BUFFER.CAS.EF.IGN
+       1  SUATOM.D.2D.ADD.EF
+       2  SUATOM.D.2D.ADD.EF.IGN
+       1  SUATOM.D.2D.ADD.EF.INVALID3
+       1  SUATOM.D.2D.ADD.EF.TRAP
+       2  SUATOM.D.2D_ARRAY.ADD.EF
+       4  SUATOM.D.2D_ARRAY.ADD.EF.IGN
+       1  SUATOM.D.2D_ARRAY.ADD.EF.INVALID3
+       1  SUATOM.D.2D_ARRAY.ADD.EF.TRAP
+       2  SUATOM.D.2D_ARRAY.CAS.EF.IGN
+       1  SUATOM.D.3D.ADD.EF
+       1  SUATOM.D.3D.ADD.EF.IGN
+       1  SUATOM.D.3D.ADD.EF.INVALID3
+       1  SUATOM.D.3D.ADD.EF.TRAP
+       4  SUATOM.D.BA.1D.ADD.EF.IGN
+       1  SUATOM.D.BA.1D.ADD.EF.S32.IGN
+       2  SUATOM.D.BA.1D.CAS.EF.IGN
+       1  SUATOM.D.INVALID6.ADD.EF
+       2  SUATOM.D.INVALID6.ADD.EF.IGN
+       1  SUATOM.D.INVALID6.ADD.EF.INVALID3
+       1  SUATOM.D.INVALID6.ADD.EF.TRAP
+       1  SUATOM.D.INVALID7.ADD.EF
+       1  SUATOM.D.INVALID7.ADD.EF.IGN
+       1  SUATOM.D.INVALID7.ADD.EF.INVALID3
+       1  SUATOM.D.INVALID7.ADD.EF.TRAP
+
+[SULD]  (81 variants)
+       2  SULD.D.1D.EF.IGN
+       2  SULD.D.1D.EF.S8.IGN
+       2  SULD.D.1D.EF.U16.IGN
+       2  SULD.D.1D.EF.U8
+       2  SULD.D.1D.EF.U8.CONSTANT.CTA.IGN
+       2  SULD.D.1D.EF.U8.CONSTANT.IGN
+       2  SULD.D.1D.EF.U8.CONSTANT.PRIVATE.IGN
+     155  SULD.D.1D.EF.U8.IGN
+       2  SULD.D.1D.EF.U8.MMIO.GPU.IGN
+       2  SULD.D.1D.EF.U8.TRAP
+       2  SULD.D.1D.EL.U8.IGN
+       2  SULD.D.1D.EU.U8.IGN
+       2  SULD.D.1D.U8.IGN
+       2  SULD.D.1D.UAI.EF.U8.IGN
+       2  SULD.D.1D_ARRAY.EF.U8.IGN
+       2  SULD.D.1D_BUFFER.EF.U8.IGN
+       2  SULD.D.2D_ARRAY.EF.U8.IGN
+       2  SULD.D.BA.1D.EF.U8.IGN
+       4  SULD.P.1D.EF.CONSTANT.CTA.INVALID0.IGN
+       2  SULD.P.1D.EF.CONSTANT.CTA.PRIVATE.INVALID0.IGN
+       3  SULD.P.1D.EF.CONSTANT.INVALID0.IGN
+       5  SULD.P.1D.EF.CONSTANT.PRIVATE.INVALID0.IGN
+       1  SULD.P.1D.EF.IGN
+       5  SULD.P.1D.EF.INVALID0
+     241  SULD.P.1D.EF.INVALID0.IGN
+       2  SULD.P.1D.EF.INVALID0.INVALID3
+       4  SULD.P.1D.EF.INVALID0.TRAP
+       1  SULD.P.1D.EF.INVALID10.IGN
+       1  SULD.P.1D.EF.INVALID11.IGN
+       2  SULD.P.1D.EF.INVALID12.IGN
+       1  SULD.P.1D.EF.INVALID13.IGN
+       1  SULD.P.1D.EF.INVALID14.IGN
+       4  SULD.P.1D.EF.INVALID2.IGN
+       4  SULD.P.1D.EF.INVALID4.IGN
+       2  SULD.P.1D.EF.INVALID5.IGN
+       2  SULD.P.1D.EF.INVALID6.IGN
+       1  SULD.P.1D.EF.INVALID7.IGN
+       4  SULD.P.1D.EF.INVALID8.IGN
+       2  SULD.P.1D.EF.INVALID9.IGN
+       5  SULD.P.1D.EF.MMIO.GPU.INVALID0.IGN
+       1  SULD.P.1D.EF.MMIO.SYS.INVALID0.IGN
+       6  SULD.P.1D.EF.R.IGN
+       2  SULD.P.1D.EF.RG.IGN
+       1  SULD.P.1D.EF.STRONG.GPU.PRIVATE.INVALID0.IGN
+       4  SULD.P.1D.EL.INVALID0.IGN
+       4  SULD.P.1D.EU.INVALID0.IGN
+       6  SULD.P.1D.INVALID0.IGN
+       2  SULD.P.1D.INVALID6.INVALID0.IGN
+       1  SULD.P.1D.INVALID7.INVALID0.IGN
+       2  SULD.P.1D.LU.INVALID0.IGN
+       2  SULD.P.1D.NA.INVALID0.IGN
+       1  SULD.P.1D.UAI.EF.INVALID0
+       4  SULD.P.1D.UAI.EF.INVALID0.IGN
+       2  SULD.P.1D_ARRAY.EF.INVALID0
+       4  SULD.P.1D_ARRAY.EF.INVALID0.IGN
+       1  SULD.P.1D_ARRAY.EF.INVALID0.INVALID3
+       1  SULD.P.1D_ARRAY.EF.INVALID0.TRAP
+       2  SULD.P.1D_BUFFER.EF.INVALID0
+       4  SULD.P.1D_BUFFER.EF.INVALID0.IGN
+       1  SULD.P.1D_BUFFER.EF.INVALID0.INVALID3
+       2  SULD.P.1D_BUFFER.EF.INVALID0.TRAP
+       1  SULD.P.2D.EF.INVALID0
+       2  SULD.P.2D.EF.INVALID0.IGN
+       1  SULD.P.2D.EF.INVALID0.INVALID3
+       1  SULD.P.2D.EF.INVALID0.TRAP
+       2  SULD.P.2D_ARRAY.EF.INVALID0
+       4  SULD.P.2D_ARRAY.EF.INVALID0.IGN
+       1  SULD.P.2D_ARRAY.EF.INVALID0.INVALID3
+       1  SULD.P.2D_ARRAY.EF.INVALID0.TRAP
+       1  SULD.P.3D.EF.INVALID0
+       1  SULD.P.3D.EF.INVALID0.IGN
+       1  SULD.P.3D.EF.INVALID0.INVALID3
+       1  SULD.P.3D.EF.INVALID0.TRAP
+       1  SULD.P.INVALID6.EF.INVALID0
+       2  SULD.P.INVALID6.EF.INVALID0.IGN
+       1  SULD.P.INVALID6.EF.INVALID0.INVALID3
+       1  SULD.P.INVALID6.EF.INVALID0.TRAP
+       1  SULD.P.INVALID7.EF.INVALID0
+       1  SULD.P.INVALID7.EF.INVALID0.IGN
+       1  SULD.P.INVALID7.EF.INVALID0.INVALID3
+       1  SULD.P.INVALID7.EF.INVALID0.TRAP
+
+[SUQUERY]  (10 variants)
+     279  SUQUERY.1D
+       5  SUQUERY.1D.UAI
+       4  SUQUERY.1D_ARRAY
+       6  SUQUERY.1D_BUFFER
+       2  SUQUERY.2D
+       4  SUQUERY.2D_ARRAY
+       2  SUQUERY.3D
+       5  SUQUERY.BA.1D
+       2  SUQUERY.INVALID6
+       1  SUQUERY.INVALID7
+
+[SYNCS]  (16 variants)
+      89  SYNCS.ARRIVE.TRANS64
+       1  SYNCS.ARRIVE.TRANS64.A0T1
+       1  SYNCS.ARRIVE.TRANS64.A0TX
+       1  SYNCS.ARRIVE.TRANS64.A1T0
+       1  SYNCS.ARRIVE.TRANS64.OPTOUT
+       1  SYNCS.ARRIVE.TRANS64.RED
+       1  SYNCS.ARRIVE.TRANS64.TMASK
+       1  SYNCS.CAS.64
+      95  SYNCS.CCTL.IV
+      96  SYNCS.CCTL.IVALL
+       1  SYNCS.CCTL.WB
+       4  SYNCS.CCTL.WBALL
+       1  SYNCS.EXCH.64
+       2  SYNCS.FLUSH
+      96  SYNCS.LD.64
+       1  SYNCS.PHASECHK.TRANS64
+
+[TEX]  (51 variants)
+       1  TEX
+       1  TEX.AOFFI.EF
+       5  TEX.B
+       4  TEX.B.AOFFI.EF
+       3  TEX.B.DC.EF
+       1  TEX.B.DC.EF.INVALID2
+     239  TEX.B.EF
+       1  TEX.B.EF.DXY
+       3  TEX.B.EF.INVALID2
+       5  TEX.B.EF.NDV
+       3  TEX.B.EF.NODEP
+       4  TEX.B.EL
+       4  TEX.B.EU
+       1  TEX.B.F16.RN.DC.EF
+       5  TEX.B.F16.RN.EF
+       5  TEX.B.F16.RZ.EF
+       1  TEX.B.INVALID12.EF
+       3  TEX.B.INVALID3.EF
+       2  TEX.B.INVALID6
+       1  TEX.B.INVALID7
+       3  TEX.B.LB.EF
+       1  TEX.B.LB.EU
+       3  TEX.B.LC.EF
+       2  TEX.B.LU
+       3  TEX.B.LZ.EF
+       1  TEX.B.LZ.UAI.EF
+       2  TEX.B.NA
+       3  TEX.B.UAI.EF
+       3  TEX.B.UAOFFI.EF
+       1  TEX.B.UAOFFI.UAI.EF
+       1  TEX.B.ULB.EF
+       3  TEX.B.ULC.EF
+       1  TEX.B.ULC.EF.NODEP
+       1  TEX.DC.EF
+      80  TEX.EF
+       1  TEX.EF.INVALID2
+       1  TEX.EF.NDV
+       1  TEX.EF.NODEP
+       1  TEX.EL
+       1  TEX.EU
+       1  TEX.F16.RN.EF
+       1  TEX.F16.RZ.EF
+       1  TEX.LB.EF
+       1  TEX.LC.EF
+       1  TEX.LZ.EF
+       4  TEX.SCR.B.EF
+       1  TEX.SCR.B.LZ.EF
+       1  TEX.SCR.EF
+       1  TEX.UAI.EF
+       1  TEX.UAOFFI.EF
+       1  TEX.ULC.EF
+
+[TLD]  (32 variants)
+       1  TLD.B.F16.RN.LZ.EF
+       1  TLD.B.F16.RZ.LZ.EF
+       1  TLD.B.LL.EF
+       1  TLD.B.LZ
+       1  TLD.B.LZ.AOFFI.EF
+      83  TLD.B.LZ.EF
+       1  TLD.B.LZ.EF.CL
+       1  TLD.B.LZ.EF.MS
+       1  TLD.B.LZ.EF.NODEP
+       1  TLD.B.LZ.EF.UMS
+       1  TLD.B.LZ.EL
+       1  TLD.B.LZ.EU
+       1  TLD.B.LZ.UAI.EF
+       1  TLD.B.LZ.UAOFFI.EF
+       1  TLD.B.ULL.EF
+       1  TLD.F16.RN.LZ.EF
+       1  TLD.F16.RZ.LZ.EF
+       1  TLD.LL.EF
+       1  TLD.LZ
+       1  TLD.LZ.AOFFI.EF
+      82  TLD.LZ.EF
+       1  TLD.LZ.EF.CL
+       1  TLD.LZ.EF.MS
+       1  TLD.LZ.EF.NODEP
+       1  TLD.LZ.EF.UMS
+       1  TLD.LZ.EL
+       1  TLD.LZ.EU
+       1  TLD.LZ.UAI.EF
+       1  TLD.LZ.UAOFFI.EF
+       1  TLD.SCR.B.LZ.EF
+       1  TLD.SCR.LZ.EF
+       1  TLD.ULL.EF
+
+[TLD4]  (28 variants)
+       2  TLD4.B.B.EF
+       1  TLD4.B.EF
+       2  TLD4.G.B.EF
+       1  TLD4.G.EF
+       1  TLD4.R
+       1  TLD4.R.AOFFI.EF
+       2  TLD4.R.B
+       2  TLD4.R.B.AOFFI.EF
+       2  TLD4.R.B.DC.EF
+     168  TLD4.R.B.EF
+       2  TLD4.R.B.EF.NODEP
+       2  TLD4.R.B.EL
+       2  TLD4.R.B.EU
+       2  TLD4.R.B.F16.RN.EF
+       2  TLD4.R.B.F16.RZ.EF
+       2  TLD4.R.B.PTP.EF
+       2  TLD4.R.B.UAI.EF
+       1  TLD4.R.DC.EF
+      84  TLD4.R.EF
+       1  TLD4.R.EF.NODEP
+       1  TLD4.R.EL
+       1  TLD4.R.EU
+       1  TLD4.R.F16.RN.EF
+       1  TLD4.R.F16.RZ.EF
+       1  TLD4.R.PTP.EF
+       1  TLD4.R.UAI.EF
+       2  TLD4.SCR.R.B.EF
+       1  TLD4.SCR.R.EF
+
+[TMML]  (9 variants)
+     281  TMML.B.LOD
+       1  TMML.B.LOD.DXY
+       4  TMML.B.LOD.INVALID2
+       5  TMML.B.LOD.NDV
+       4  TMML.B.LOD.NODEP
+      94  TMML.LOD
+       1  TMML.LOD.INVALID2
+       1  TMML.LOD.NDV
+       1  TMML.LOD.NODEP
+
+[TXD]  (24 variants)
+       1  TXD
+       1  TXD.AOFFI.EF
+       1  TXD.B
+       1  TXD.B.AOFFI.EF
+      87  TXD.B.EF
+       1  TXD.B.EF.NODEP
+       1  TXD.B.EL
+       1  TXD.B.EU
+       1  TXD.B.F16.RN.EF
+       1  TXD.B.F16.RZ.EF
+       1  TXD.B.LC.EF
+       1  TXD.B.UAI.EF
+       1  TXD.B.UAOFFI.EF
+       1  TXD.B.ULC.EF
+      86  TXD.EF
+       1  TXD.EF.NODEP
+       1  TXD.EL
+       1  TXD.EU
+       1  TXD.F16.RN.EF
+       1  TXD.F16.RZ.EF
+       1  TXD.LC.EF
+       1  TXD.UAI.EF
+       1  TXD.UAOFFI.EF
+       1  TXD.ULC.EF
+
+[TXQ]  (4 variants)
+      96  TXQ
+     194  TXQ.B
+       3  TXQ.B.NODEP
+       1  TXQ.NODEP
+
+[UBLKCP]  (8 variants)
+      86  UBLKCP.G.G
+       1  UBLKCP.G.G.DST_G_BYTE_MASK
+       1  UBLKCP.G.G.LTC128B
+       1  UBLKCP.G.G.LTC64B
+       1  UBLKCP.G.G.MULTICAST
+       1  UBLKCP.G.G.SEQUENCED
+       1  UBLKCP.G.S
+       1  UBLKCP.S.G
+
+[UBLKPF]  (1 variants)
+      97  UBLKPF.L2
+
+[UBLKRED]  (10 variants)
+      84  UBLKRED.G.INVALID0.ADD
+       1  UBLKRED.G.INVALID0.ADD.BF16.RN
+       1  UBLKRED.G.INVALID0.ADD.F16.RN
+       1  UBLKRED.G.INVALID0.ADD.S32
+       1  UBLKRED.G.INVALID0.ADD.U64
+       1  UBLKRED.G.INVALID0.DEC
+       1  UBLKRED.G.INVALID0.MAX
+       1  UBLKRED.G.INVALID0.MIN
+       1  UBLKRED.G.S.ADD
+       1  UBLKRED.S.INVALID0.ADD
+
+[UBMSK]  (2 variants)
+     192  UBMSK
+       2  UBMSK.W
+
+[UBREV]  (1 variants)
+     194  UBREV
+
+[UCGABAR_ARV]  (1 variants)
+      96  UCGABAR_ARV
+
+[UCGABAR_WAIT]  (1 variants)
+      97  UCGABAR_WAIT
+
+[UCLEA]  (1 variants)
+     194  UCLEA
+
+[UF2IP]  (7 variants)
+       3  UF2IP.INVALID2.F32
+       3  UF2IP.S8.F32
+     273  UF2IP.U8.F32
+       3  UF2IP.U8.F32.INVALID1
+       3  UF2IP.U8.F32.INVALID2
+       3  UF2IP.U8.F32.NTZ
+       3  UF2IP.U8.F32.RELU
+
+[UFADD]  (5 variants)
+     185  UFADD
+       2  UFADD.FTZ
+       2  UFADD.RM
+       2  UFADD.RP
+       2  UFADD.SAT
+
+[UFFMA]  (6 variants)
+     275  UFFMA
+       3  UFFMA.FMZ
+       3  UFFMA.FTZ
+       3  UFFMA.RM
+       3  UFFMA.RP
+       3  UFFMA.SAT
+
+[UFHADD]  (1 variants)
+       1  UFHADD
+
+[UFHFMA]  (1 variants)
+       1  UFHFMA
+
+[UFLO]  (3 variants)
+       2  UFLO
+     190  UFLO.U32
+       2  UFLO.U32.SH
+
+[UFMNMX]  (5 variants)
+     186  UFMNMX
+       2  UFMNMX.FTZ
+       2  UFMNMX.IS_A
+       2  UFMNMX.NAN
+       2  UFMNMX.XORSIGN
+
+[UFMUL]  (9 variants)
+       2  UFMUL
+       2  UFMUL.D4
+       2  UFMUL.D8
+       2  UFMUL.FMZ.INVALID0
+       2  UFMUL.FTZ.INVALID0
+     178  UFMUL.INVALID0
+       2  UFMUL.INVALID0.RM
+       2  UFMUL.INVALID0.RP
+       2  UFMUL.INVALID0.SAT
+
+[UFSEL]  (2 variants)
+     192  UFSEL
+       2  UFSEL.FTZ
+
+[UFSET]  (8 variants)
+       2  UFSET.BF.EQ.AND
+     180  UFSET.BF.F.AND
+       2  UFSET.BF.F.FTZ.AND
+       2  UFSET.BF.F.OR
+       2  UFSET.BF.F.XOR
+       2  UFSET.BF.GT.AND
+       2  UFSET.BF.LT.AND
+       2  UFSET.BF.NAN.AND
+
+[UFSETP]  (8 variants)
+       2  UFSETP.EQ.AND
+     180  UFSETP.F.AND
+       2  UFSETP.F.FTZ.AND
+       2  UFSETP.F.OR
+       2  UFSETP.F.XOR
+       2  UFSETP.GT.AND
+       2  UFSETP.LT.AND
+       2  UFSETP.NAN.AND
+
+[UI2F]  (3 variants)
+       1  UI2F.BF16.U8
+       1  UI2F.F16.U8
+       1  UI2F.U8
+
+[UI2FP]  (9 variants)
+       1  UI2FP.F32.INVALID0
+      89  UI2FP.INVALID0.INVALID0
+       1  UI2FP.INVALID0.INVALID0.INVALID1
+       1  UI2FP.INVALID0.INVALID0.INVALID2
+       1  UI2FP.INVALID0.INVALID1
+       1  UI2FP.INVALID0.INVALID2
+       1  UI2FP.INVALID0.U32
+       1  UI2FP.INVALID1.INVALID0
+       1  UI2FP.INVALID4.INVALID0
+
+[UI2I]  (3 variants)
+       2  UI2I.S8.S32.SAT
+       2  UI2I.U16.S32.SAT
+     190  UI2I.U8.S32.SAT
+
+[UI2IP]  (6 variants)
+       2  UI2IP.S8.S32
+       2  UI2IP.U16.S32
+       2  UI2IP.U2.S32
+     184  UI2IP.U8.S32
+       2  UI2IP.U8.S32.RELU
+       2  UI2IP.U8.S32.SAT
+
+[UIABS]  (1 variants)
+     194  UIABS
+
+[UIADD3]  (4 variants)
+     192  UIADD3
+     192  UIADD3.64
+       2  UIADD3.64.X
+       2  UIADD3.X
+
+[UIMAD]  (9 variants)
+       3  UIMAD
+       2  UIMAD.HI
+     190  UIMAD.HI.U32
+       2  UIMAD.HI.U32.X
+     285  UIMAD.U32
+       3  UIMAD.U32.X
+       2  UIMAD.WIDE
+     190  UIMAD.WIDE.U32
+       2  UIMAD.WIDE.U32.X
+
+[UIMNMX]  (3 variants)
+       2  UIMNMX
+     190  UIMNMX.U32
+       2  UIMNMX.U64
+
+[UISETP]  (9 variants)
+       2  UISETP.EQ.U32.AND
+       2  UISETP.F.AND
+     178  UISETP.F.U32.AND
+       2  UISETP.F.U32.AND.EX
+       2  UISETP.F.U32.OR
+       2  UISETP.F.U32.XOR
+       2  UISETP.F.U64.AND
+       2  UISETP.GT.U32.AND
+       2  UISETP.LT.U32.AND
+
+[ULEA]  (3 variants)
+     188  ULEA
+       3  ULEA.HI
+       2  ULEA.X
+
+[ULEPC]  (1 variants)
+     194  ULEPC
+
+[ULOP3]  (2 variants)
+     192  ULOP3.LUT
+       2  ULOP3.LUT.PAND
+
+[UMOV]  (2 variants)
+     193  UMOV
+      98  UMOV.64
+
+[UP2UR]  (3 variants)
+     190  UP2UR
+       2  UP2UR.B1
+       2  UP2UR.B2
+
+[UPLOP3]  (1 variants)
+     399  UPLOP3.LUT
+
+[UPOPC]  (1 variants)
+     194  UPOPC
+
+[UPRMT]  (1 variants)
+     192  UPRMT
+
+[UR2UP]  (1 variants)
+     194  UR2UP
+
+[USEL]  (2 variants)
+     194  USEL
+     194  USEL.64
+
+[USETSHMSZ]  (2 variants)
+     193  USETSHMSZ
+       1  USETSHMSZ.FLUSH
+
+[USGXT]  (3 variants)
+       2  USGXT
+     190  USGXT.U32
+       2  USGXT.W.U32
+
+[USHF]  (6 variants)
+       3  USHF.L.S32
+     276  USHF.L.S64
+       3  USHF.L.S64.HI
+       3  USHF.L.U64
+       3  USHF.L.W.S64
+       3  USHF.R.S64
+
+[UTMACCTL]  (3 variants)
+      96  UTMACCTL.IV
+       4  UTMACCTL.IVALL
+       1  UTMACCTL.PF
+
+[UTMACMDFLUSH]  (1 variants)
+      97  UTMACMDFLUSH
+
+[UTMALDG]  (9 variants)
+     179  UTMALDG.1D
+       2  UTMALDG.1D.GATHER4
+       1  UTMALDG.1D.IM2COL
+       3  UTMALDG.1D.INVALID1
+       2  UTMALDG.1D.INVALID2
+       1  UTMALDG.1D.MULTICAST
+       2  UTMALDG.2D
+       2  UTMALDG.3D
+       2  UTMALDG.5D
+
+[UTMAPF]  (13 variants)
+      91  UTMAPF.L2.1D
+       1  UTMAPF.L2.1D.GATHER4
+       1  UTMAPF.L2.1D.IM2COL
+      91  UTMAPF.L2.1D.INVALID0
+       1  UTMAPF.L2.1D.INVALID1
+       2  UTMAPF.L2.1D.INVALID2
+       1  UTMAPF.L2.1D.INVALID4
+       1  UTMAPF.L2.2D
+       1  UTMAPF.L2.2D.INVALID0
+       1  UTMAPF.L2.3D
+       1  UTMAPF.L2.3D.INVALID0
+       1  UTMAPF.L2.5D
+       1  UTMAPF.L2.5D.INVALID0
+
+[UTMAREDG]  (8 variants)
+      90  UTMAREDG.1D.ADD
+       1  UTMAREDG.1D.DEC
+       1  UTMAREDG.1D.IM2COL.ADD
+       1  UTMAREDG.1D.MAX
+       1  UTMAREDG.1D.MIN
+       1  UTMAREDG.2D.ADD
+       1  UTMAREDG.3D.ADD
+       1  UTMAREDG.5D.ADD
+
+[UTMASTG]  (6 variants)
+      92  UTMASTG.1D
+       1  UTMASTG.1D.IM2COL
+       1  UTMASTG.1D.SCATTER4
+       1  UTMASTG.2D
+       1  UTMASTG.3D
+       1  UTMASTG.5D
+
+[UVIADD]  (3 variants)
+     186  UVIADD.32
+       2  UVIADD.32.ISAT
+       2  UVIADD.S32
+
+[UVIMNMX]  (3 variants)
+       2  UVIMNMX.S32
+     186  UVIMNMX.U32
+       2  UVIMNMX.U32.RELU
+
+[UVIRTCOUNT]  (1 variants)
+     194  UVIRTCOUNT.DEALLOC.SMPOOL
+
+[VIADD]  (5 variants)
+     285  VIADD.32
+       7  VIADD.32.ISAT
+       4  VIADD.INVALID6
+       2  VIADD.INVALID7
+       5  VIADD.S32
+
+[VIMNMX]  (5 variants)
+       4  VIMNMX.INVALID6
+       2  VIMNMX.INVALID7
+       9  VIMNMX.S32
+     285  VIMNMX.U32
+       7  VIMNMX.U32.RELU
+
+[VOTE]  (4 variants)
+      99  VOTE.ALL
+       4  VOTE.ANY
+       2  VOTE.EQ
+       2  VOTE.INVALID3
+
+[VOTEU]  (4 variants)
+      99  VOTEU.ALL
+       4  VOTEU.ANY
+       2  VOTEU.EQ
+       2  VOTEU.INVALID3

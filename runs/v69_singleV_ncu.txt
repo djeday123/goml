@@ -1,0 +1,136 @@
+==PROF== Connected to process 2636445 (/data/lib/podman-data/projects/goml/runs/fa_v69_singleV_fp8)
+==PROF== Profiling "fa69_singleV_kernel": 0%....50%....100% - 31 passes
+=== FA v69_singleV — Door 1: single-buffer V → 2 blocks/SM ===
+GPU: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (188 SMs, 2617 MHz)
+Kernel attrs: numRegs=242  binSize=120  sharedSizeBytes(static)=0
+Dynamic SMEM (hd=128): v69_singleV=49664 B (48.50 KB) vs v68=57856 B (delta=-8192 B)
+2 blocks × 48.50 KB = 97.00 KB ≤ 100 KB cap → 2 blocks/SM (occupancy ×2)
+
+--- Correctness vs CPU FP8-roundtripped reference ---
+  bh=1 sl=64 hd=128 ca=0  max_diff=0.0086 errs=0 → PASS
+  bh=1 sl=128 hd=128 ca=0  max_diff=0.0052 errs=0 → PASS
+  bh=1 sl=256 hd=128 ca=0  max_diff=0.0039 errs=0 → PASS
+  bh=1 sl=512 hd=128 ca=0  max_diff=0.0030 errs=0 → PASS
+  bh=2 sl=256 hd=128 ca=1  max_diff=0.0175 errs=0 → PASS
+
+--- Performance ---
+  bh=4 sl=1024 hd=128  time=0.066 ms  perf=32.4 TFLOPS
+  bh=4 sl=2048 hd=128  time=0.083 ms  perf=103.4 TFLOPS
+  bh=8 sl=2048 hd=128  time=0.085 ms  perf=202.2 TFLOPS
+  bh=4 sl=4096 hd=128  time=34.727 ms  perf=1.0 TFLOPS
+==PROF== Disconnected from process 2636445
+[2636445] fa_v69_singleV_fp8@127.0.0.1
+  fa69_singleV_kernel(const unsigned char *, const unsigned char *, const unsigned char *, __half *, int, int, int, float, float, float) (128, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Memory Workload Analysis Tables
+    WRN   The optional metric inst_executed could not be found. Collecting it as an additional metric could enable the  
+          rule to provide more guidance.                                                                                
+    ----- --------------------------------------------------------------------------------------------------------------
+    OPT   Est. Speedup: 20.11%                                                                                          
+          This workload accesses local memory                                                                           
+          (https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#device-memory-accesses), accounting for     
+          10.02% of all sectors requested in L1TEX. Local memory refers to a memory space that is private to each       
+          thread. Although it is logically distinct, local memory resides in global memory. This can lead to higher     
+          memory latency compared to the usage of registers or shared memory, a decrease in available bandwidth to      
+          global memory, and an increase in executed instructions.                                                      
+          0.00% of all local loads and 74.76% of all local stores spill into the L2 cache, accounting for 0.13% of all  
+          sectors requested in L2.                                                                                      
+          One common reason for the use of local memory is arrays being too large to fit into registers or not being    
+          indexed using compile time constants (see the "Local Memory" section of the CUDA Programming Guide            
+          (https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#device-memory-accesses). For more advice    
+          on how to reduce the usage of local memory refer to the documentation                                         
+          (https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html#metrics-hw-memory).                         
+    ----- --------------------------------------------------------------------------------------------------------------
+    OPT   Est. Speedup: 13.81%                                                                                          
+          The memory access pattern for global stores to L1TEX might not be optimal. On average, only 8.0 of the 32     
+          bytes transmitted per sector are utilized by each thread. This could possibly be caused by a stride between   
+          threads. Check the Source Counters section for uncoalesced global stores.                                     
+    ----- --------------------------------------------------------------------------------------------------------------
+    OPT   Est. Speedup: 17.84%                                                                                          
+          The memory access pattern for local stores to L1TEX might not be optimal. On average, only 1.0 of the 32      
+          bytes transmitted per sector are utilized by each thread. This could possibly be caused by a stride between   
+          threads. Check the Source Counters section for uncoalesced local stores.                                      
+    ----- --------------------------------------------------------------------------------------------------------------
+    OPT   Est. Local Speedup: 33.26%                                                                                    
+          The memory access pattern for shared loads might not be optimal and causes on average a 1.5 - way bank        
+          conflict across all 5259264 shared load requests.This results in 2621440 bank conflicts,  which represent     
+          33.26% of the overall 7880704 wavefronts for shared loads. Check the Source Counters section for uncoalesced  
+          shared loads.                                                                                                 
+    ----- --------------------------------------------------------------------------------------------------------------
+    OPT   Est. Local Speedup: 62.5%                                                                                     
+          The memory access pattern for shared stores might not be optimal and causes on average a 2.7 - way bank       
+          conflict across all 1572864 shared store requests.This results in 2621440 bank conflicts,  which represent    
+          62.50% of the overall 4194304 wavefronts for shared stores. Check the Source Counters section for             
+          uncoalesced shared stores.                                                                                    
+
+    Section: Scheduler Statistics
+    ---------------------------- ----------- ------------
+    Metric Name                  Metric Unit Metric Value
+    ---------------------------- ----------- ------------
+    One or More Eligible                   %        28.89
+    Issued Warp Per Scheduler                        0.29
+    No Eligible                            %        71.11
+    Active Warps Per Scheduler          warp         1.00
+    Eligible Warps Per Scheduler        warp         0.29
+    ---------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 71.11%                                                                                    
+          Every scheduler is capable of issuing one instruction per cycle, but for this workload each scheduler only    
+          issues an instruction every 3.5 cycles. This might leave hardware resources underutilized and may lead to     
+          less optimal performance. Out of the maximum of 12 warps per scheduler, this workload allocates an average    
+          of 1.00 active warps per scheduler, but only an average of 0.29 warps were eligible per cycle. Eligible       
+          warps are the subset of active warps that are ready to issue their next instruction. Every cycle with no      
+          eligible warp results in no instruction being issued and the issue slot remains unused. To increase the       
+          number of eligible warps, reduce the time the active warps are stalled by inspecting the top stall reasons    
+          on the Warp State Statistics and Source Counters sections.                                                    
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         3.47
+    Warp Cycles Per Executed Instruction           cycle         3.47
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    28.93
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+    ----- --------------------------------------------------------------------------------------------------------------
+    OPT   Est. Speedup: 32.26%                                                                                          
+          On average, each warp of this workload spends 1.1 cycles being stalled waiting on a fixed latency execution   
+          dependency. Typically, this stall reason should be very low and only shows up as a top contributor in         
+          already highly optimized kernels. Try to hide the corresponding instruction latencies by increasing the       
+          number of active warps, restructuring the code or unrolling loops. Furthermore, consider switching to         
+          lower-latency instructions, e.g. by making use of fast math compiler options. This stall type represents      
+          about 32.3% of the total average of 3.5 cycles between issuing two instructions.                              
+    ----- --------------------------------------------------------------------------------------------------------------
+    INF   Check the Warp Stall Sampling (All Samples) table for the top stall locations in your source based on         
+          sampling data. The Profiling Guide                                                                            
+          (https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html#metrics-reference) provides more details    
+          on each stall reason.                                                                                         
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            2
+    Block Limit Shared Mem                block            2
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            8
+    Theoretical Occupancy                     %        16.67
+    Achieved Occupancy                        %         8.33
+    Achieved Active Warps Per SM           warp         4.00
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Speedup: 71.11%                                                                                          
+          The 2.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (16.7%) is limited by the number of required      
+          registers, and the required amount of shared memory.                                                          
+
+==WARNING== No metrics to show for section(s): MemoryWorkloadAnalysis_Tables. Use --print-details option to change the part of the section that should be shown.

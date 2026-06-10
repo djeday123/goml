@@ -1,0 +1,1050 @@
+// =============================================================================
+// FlashAttention v83 — FP8 Forward, hd=64 + TMA-K (K-only TMA in kv-loop)
+// =============================================================================
+// v81 base. Replace cp.async.cg for K-loads (preload + per-iter prefetch) with
+// cp.async.bulk.tensor.2d via tensormap. K is loaded N times per block (once per
+// kv-iter) → address arith repeats N times → TMA amortization is real (unlike
+// v82 TMA-Q which was one-shot).
+//
+// Q and V remain cp.async.cg — isolate the TMA-K effect cleanly.
+//
+// Lessons applied from v82:
+//   - __align__(128) on extern __shared__ raw[] (TMA bulk.tensor requires)
+//   - __grid_constant__ for k_tmap (NVCC puts in const memory, not on stack)
+//   - One mbarrier k_bar, re-armed each iter via arrive.expect_tx,
+//     alternating parity 0/1 across iters
+//
+// Two measurable signals (WIN config bh=16 sl=4096 LB=3):
+//   (1) No Eligible % — does it drop from v81's 43% if K addr arith was the stall?
+//   (2) numRegs — does removing K's per-iter IMAD/ULEA chains free regs?
+//
+// Single 8 KB SMEM save vs v68 — by single-buffering V (drop smV[1]) — enables
+// 2 blocks/SM (vs v68's 1). For grids ≥ 188 × 2 = 376 blocks, this halves wave
+// count; for 256+ blocks (where waves go 2→1) gain is +51%; for 512+ (3→2)
+// gain is +15-23%. For small grids (<188 blocks) v69 = v68 paritet (no harm).
+//
+// SMEM layout (48.5 KB):
+//   smQ:    16 KB
+//   smK[2]: 16 KB  (K stays double-buffered)
+//   smV:     8 KB  (was 16 KB = double-buffered)
+//   smV_T:  8.5 KB (padded stride 68 from v68, breaks 32-way write conflict)
+//   smP overlaps smV after transpose_v (cur_V data extracted to smV_T)
+//
+// Sequencing change vs v68: V prefetch moves to END of iter (after smP read).
+// K prefetch stays at MID-iter and still overlaps with compute. Cost: V load
+// loses overlap, but v64 datapoint + v68 NCu (mem busy 22%) prove kernel is
+// NOT memory-bound → V overlap loss ≤ 2% on all measured shapes.
+//
+// Why v69 > v68:
+//   - Occupancy 8.33% (1 block/SM × 4 warps) → 16.67% (2 × 4 = 8 warps/SM)
+//   - Directly hides MMA pipeline latency (was 1.06 cycles/inst floor in v68)
+//   - Wave reduction on large grids (typical for batched LLM inference)
+//
+// Build: nvcc -gencode arch=compute_120a,code=sm_120a
+// History: v66 baseline → v68 conflict fix (smV_T padding) → v69 single-V.
+//          v67 TMA rejected. v69_singleV experiment kept as reference.
+// =============================================================================
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
+#include <utility>
+#include <stdint.h>
+#include <cuda_runtime.h>
+#include <cuda_fp16.h>
+#include <cuda.h>   // CUtensorMap, cuTensorMapEncodeTiled
+
+#define FA_BR 128
+#define FA_BC 64
+#define FA_THREADS 128   // 4 warps × M_TILES=2 × 16 rows = Br=128
+#define FA_STRIDE 64     // hd=64 specialized: smQ/smK/smV row stride = head_dim
+#define FA_HD 64         // hardcoded head_dim
+#define N_TILES_PV 8     // FA_HD / 8 = output N-tile count (was 16 for hd=128)
+#define KS_QK 2          // FA_HD / 32 = QK^T outer ks steps (was 4 for hd=128)
+#define M_TILES 2        // each warp owns 2 m16 sub-tiles in M direction
+#define SMV_T_STRIDE 68  // padded smV_T row stride to break 32-way conflict
+                          // (64 + 4: gcd(17, 32) = 1 → 32 lanes hit 32 banks)
+
+__device__ __forceinline__ void cpa16(void *s, const void *g, int n)
+{
+    uint32_t sa = __cvta_generic_to_shared(s);
+    asm volatile("cp.async.cg.shared.global [%0],[%1],16,%2;" ::"r"(sa), "l"(g), "r"(n));
+}
+__device__ __forceinline__ void cpa_commit() { asm volatile("cp.async.commit_group;"); }
+template <int N>
+__device__ __forceinline__ void cpa_wait() { asm volatile("cp.async.wait_group %0;" ::"n"(N)); }
+
+__device__ __forceinline__ void mma_fp8_f16(
+    uint32_t &d0, uint32_t &d1,
+    uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3,
+    uint32_t b0, uint32_t b1,
+    uint32_t c0, uint32_t c1)
+{
+    asm volatile(
+        "mma.sync.aligned.m16n8k32.row.col.kind::f8f6f4.f16.e4m3.e4m3.f16 "
+        "{%0,%1},{%2,%3,%4,%5},{%6,%7},{%8,%9};\n"
+        : "=r"(d0), "=r"(d1)
+        : "r"(a0), "r"(a1), "r"(a2), "r"(a3),
+          "r"(b0), "r"(b1), "r"(c0), "r"(c1));
+}
+
+__device__ __forceinline__ int swz_byte(int row, int col_bytes)
+{
+    // hd=64: row stride 64 = 4 × 16B chunks → period 4 (was 8 for hd=128)
+    int chunk = col_bytes >> 4;
+    int within = col_bytes & 15;
+    return row * FA_STRIDE + ((chunk ^ (row & 3)) << 4) + within;
+}
+
+// Swizzle for smP (stride = FA_BC = 64 bytes per row).
+// Still used by P quantize writes and P read in P·V loop.
+__device__ __forceinline__ int swz_byte_bc(int row, int col_bytes)
+{
+    int chunk = col_bytes >> 4;
+    int within = col_bytes & 15;
+    return row * FA_BC + ((chunk ^ (row & 3)) << 4) + within;
+}
+
+// v68 padded swizzle for smV_T (stride = SMV_T_STRIDE = 68).
+// Breaks 32-way write conflict in transpose_v: with stride 64 the
+// lane-to-bank period was 128 B → all 32 lanes hit bank 0.
+// With stride 68: lane_stride / 4 = 17, gcd(17, 32) = 1 → 32 distinct banks.
+__device__ __forceinline__ int swz_byte_smvt(int row, int col_bytes)
+{
+    int chunk = col_bytes >> 4;
+    int within = col_bytes & 15;
+    return row * SMV_T_STRIDE + ((chunk ^ (row & 3)) << 4) + within;
+}
+
+__device__ __forceinline__ void load_tile_fp8(
+    uint8_t *dst, const uint8_t *src, int start, int rows,
+    int seq_len, int head_dim)
+{
+    constexpr int CHUNK = 16;
+    int chunks_per_row = head_dim / CHUNK;
+    int total = rows * chunks_per_row;
+#pragma unroll 4
+    for (int c = threadIdx.x; c < total; c += FA_THREADS)
+    {
+        int row = c / chunks_per_row;
+        int col_bytes = (c % chunks_per_row) * CHUNK;
+        int gr = start + row;
+        int dst_off = swz_byte(row, col_bytes);
+        cpa16(&dst[dst_off], &src[gr * head_dim + col_bytes], (gr < seq_len) ? 16 : 0);
+    }
+}
+
+// Hardware FP16x2 → FP8x2 conversion. cvt.rn.satfinite.e4m3x2.f16x2 is
+// available on sm_89+ as a single PTX instruction.
+__device__ __forceinline__ uint16_t fp16x2_to_e4m3x2(uint32_t h2)
+{
+    uint16_t out;
+    asm volatile("cvt.rn.satfinite.e4m3x2.f16x2 %0, %1;"
+                 : "=h"(out) : "r"(h2));
+    return out;
+}
+
+// Transpose smV [seq_k=Bc, head_dim] → smV_T [head_dim, seq_k=Bc].
+// Once per K-block iter. After this, V B-operand reads use the same fast
+// scalar uint32_t pattern as K (no byte-gather).
+//
+// Each thread copies a 4×4 tile: 4 consecutive k-rows × 4 consecutive n-cols.
+// Reads as uint32_t (4 contiguous n-bytes per k-row), reassembles via
+// bytewise shuffle, writes as uint32_t into the transposed layout.
+__device__ __forceinline__ void transpose_v(
+    uint8_t *smV_T, const uint8_t *smV, int head_dim)
+{
+    // Layout: smV[k_row * FA_STRIDE + n_col] (swizzled by swz_byte)
+    //         smV_T[n_row * FA_STRIDE + k_col] (swizzled by swz_byte)
+    // We do 16 4x4 transposes per thread (covers 64 rows × 64 cols = 4096 elems).
+    constexpr int TILE = 4;
+    int tiles_k = FA_BC / TILE;       // 16
+    int tiles_n = head_dim / TILE;     // 32 for hd=128
+    int total = tiles_k * tiles_n;     // 512
+    for (int t = threadIdx.x; t < total; t += FA_THREADS)
+    {
+        int tk = t / tiles_n;          // 0..15
+        int tn = t % tiles_n;          // 0..31
+        int k0 = tk * TILE;
+        int n0 = tn * TILE;
+        // Load 4 uint32_t (one per k-row) = 4x4 fp8 block
+        uint32_t r0 = *(uint32_t *)&smV[swz_byte(k0 + 0, n0)];
+        uint32_t r1 = *(uint32_t *)&smV[swz_byte(k0 + 1, n0)];
+        uint32_t r2 = *(uint32_t *)&smV[swz_byte(k0 + 2, n0)];
+        uint32_t r3 = *(uint32_t *)&smV[swz_byte(k0 + 3, n0)];
+        // Transpose 4x4: write 4 uint32_t (one per n-col, 4 consecutive k bytes)
+        uint32_t c0 = ((r0 >>  0) & 0xff)
+                    | ((r1 <<  8) & 0xff00)
+                    | ((r2 << 16) & 0xff0000)
+                    | ((r3 << 24) & 0xff000000);
+        uint32_t c1 = ((r0 >>  8) & 0xff)
+                    | ((r1 <<  0) & 0xff00)
+                    | ((r2 <<  8) & 0xff0000)
+                    | ((r3 << 16) & 0xff000000);
+        uint32_t c2 = ((r0 >> 16) & 0xff)
+                    | ((r1 >>  8) & 0xff00)
+                    | ((r2 <<  0) & 0xff0000)
+                    | ((r3 <<  8) & 0xff000000);
+        uint32_t c3 = ((r0 >> 24) & 0xff)
+                    | ((r1 >> 16) & 0xff00)
+                    | ((r2 >>  8) & 0xff0000)
+                    | ((r3 <<  0) & 0xff000000);
+        *(uint32_t *)&smV_T[swz_byte_smvt(n0 + 0, k0)] = c0;
+        *(uint32_t *)&smV_T[swz_byte_smvt(n0 + 1, k0)] = c1;
+        *(uint32_t *)&smV_T[swz_byte_smvt(n0 + 2, k0)] = c2;
+        *(uint32_t *)&smV_T[swz_byte_smvt(n0 + 3, k0)] = c3;
+    }
+}
+
+// v83: TMA-K. k_tmap is encoded once on host (2D tensormap [bh×seq_len, FA_HD]).
+// Q stays cp.async.cg (v82 proved Q TMA is wasted). V stays cp.async.cg.
+template <int LB>
+__global__ void __launch_bounds__(FA_THREADS, LB)
+    fa83_kernel(
+        const uint8_t *__restrict__ Q,
+        const __grid_constant__ CUtensorMap k_tmap,
+        const uint8_t *__restrict__ V,
+        __half *__restrict__ O,
+        int seq_len, int head_dim, int causal, float scale,
+        float qk_descale, float v_descale,
+        int window)
+{
+    int nqt = (seq_len + FA_BR - 1) / FA_BR;
+    int bh = blockIdx.x / nqt, qt = blockIdx.x % nqt, qs = qt * FA_BR;
+    if (qs >= seq_len) return;
+    int wid = threadIdx.x / 32, lane = threadIdx.x % 32;
+    int gid = lane / 4, tid = lane % 4;
+    int mrb = wid * 32;  // M_TILES=2 → each warp owns 32 rows
+
+    // v83: __align__(128) required for TMA bulk.tensor destination in SMEM.
+    extern __shared__ __align__(128) uint8_t raw[];
+    uint8_t *smQ = raw;
+    uint8_t *smK[2] = {
+        smQ + FA_BR * FA_STRIDE,
+        smQ + FA_BR * FA_STRIDE + FA_BC * FA_STRIDE,
+    };
+    // v69_singleV: single V buffer (was double). smP overlaps smV after
+    // transpose. V prefetch goes to END of iter (cannot overlap with smP use).
+    uint8_t *smV = smK[1] + FA_BC * FA_STRIDE;
+    uint8_t *smV_T = smV + FA_BC * FA_STRIDE;
+
+    int hs = seq_len * head_dim;
+    const uint8_t *Qh = Q + bh * hs;
+    const uint8_t *Vh = V + bh * hs;
+    __half *Oh = O + bh * hs;
+
+    // v83 TMA-K: single mbarrier reused across kv-iters via alternating parity.
+    // K_TILE_BYTES = FA_BC × FA_HD = 64 × 64 = 4096 (full K-tile per iter).
+    __shared__ alignas(8) uint64_t k_bar;
+    constexpr int K_TILE_BYTES = FA_BC * FA_HD;  // 4096
+    uint32_t k_bar_s = __cvta_generic_to_shared(&k_bar);
+    int k_row_base = bh * seq_len;   // row coord = k_row_base + kv * FA_BC
+
+    auto issue_tma_k = [&](int kv_idx, uint8_t *dst) {
+        uint32_t dst_s = __cvta_generic_to_shared(dst);
+        int row_coord = k_row_base + kv_idx * FA_BC;
+        asm volatile(
+            "mbarrier.arrive.expect_tx.shared.b64 _, [%0], %1;"
+            :: "r"(k_bar_s), "n"(K_TILE_BYTES));
+        asm volatile(
+            "cp.async.bulk.tensor.2d.shared::cluster.global.tile.mbarrier::complete_tx::bytes "
+            "[%0], [%1, {%2, %3}], [%4];"
+            :: "r"(dst_s), "l"(&k_tmap), "r"(0), "r"(row_coord), "r"(k_bar_s));
+    };
+
+    auto wait_k = [&](uint32_t phase) {
+        asm volatile(
+            "{ .reg .pred P;\n"
+            "  WAITK: mbarrier.try_wait.parity.shared.b64 P, [%0], %1;\n"
+            "  @P bra DONEK;\n"
+            "  bra WAITK;\n"
+            "  DONEK: }\n"
+            :: "r"(k_bar_s), "r"(phase));
+    };
+
+    load_tile_fp8(smQ, Qh, qs, FA_BR, seq_len, head_dim);
+    cpa_commit();
+    cpa_wait<0>();
+    __syncthreads();
+
+    // Qr[ks][mi][r] — KS_QK k-steps × 2 M-tiles × 4 uint32 (m16k32 A operand)
+    uint32_t Qr[KS_QK][M_TILES][4];
+#pragma unroll
+    for (int ks = 0; ks < KS_QK; ks++)
+    {
+        int k_off = ks * 32;
+        int cl = k_off + tid * 4;
+        int ch = cl + 16;
+#pragma unroll
+        for (int mi = 0; mi < M_TILES; mi++)
+        {
+            int mr = mrb + mi * 16;
+            int g0 = mr + gid, g8 = g0 + 8;
+            Qr[ks][mi][0] = *(uint32_t *)&smQ[swz_byte(g0, cl)];
+            Qr[ks][mi][1] = *(uint32_t *)&smQ[swz_byte(g8, cl)];
+            Qr[ks][mi][2] = *(uint32_t *)&smQ[swz_byte(g0, ch)];
+            Qr[ks][mi][3] = *(uint32_t *)&smQ[swz_byte(g8, ch)];
+        }
+    }
+
+    // Or_p[nt][mi][r] — N_TILES_PV N-tiles × 2 M-tiles × 2 packed uint32 (m16n8 D)
+    uint32_t Or_p[N_TILES_PV][M_TILES][2];
+#pragma unroll
+    for (int t = 0; t < N_TILES_PV; t++)
+#pragma unroll
+        for (int mi = 0; mi < M_TILES; mi++)
+            Or_p[t][mi][0] = Or_p[t][mi][1] = 0u;
+
+    // Per-row state: [mi][side] where side=0 is gid row, side=1 is gid+8 row
+    float rmax[M_TILES][2] = {{-1e30f, -1e30f}, {-1e30f, -1e30f}};
+    float rsexp[M_TILES][2] = {{0.0f, 0.0f}, {0.0f, 0.0f}};
+    int nkv = (seq_len + FA_BC - 1) / FA_BC;
+    int kv_max_blocks = causal ? ((qs + FA_BR - 1) / FA_BC + 1) : nkv;
+    if (kv_max_blocks > nkv) kv_max_blocks = nkv;
+    // v69+window: sliding-window lower bound. For causal sliding window, Q-row q
+    // attends to K in [max(0, q - window + 1), q]. Q-block covers qs..qs+Br-1;
+    // earliest K needed = max(0, qs - window + 1). Skip K-blocks below that.
+    int kv_min_blocks = 0;
+    if (window > 0 && qs + 1 > window) {
+        kv_min_blocks = (qs - window + 1) / FA_BC;  // floor
+    }
+
+    // Pre-load iter kv_min_blocks: K via TMA, V via cp.async.cg.
+    // v83 TMA-K: init mbarrier once, then arrive.expect_tx + TMA issue per K-tile.
+    if (threadIdx.x == 0) {
+        asm volatile("mbarrier.init.shared.b64 [%0], 1;" :: "r"(k_bar_s));
+        issue_tma_k(kv_min_blocks, smK[kv_min_blocks & 1]);
+    }
+    load_tile_fp8(smV, Vh, kv_min_blocks * FA_BC, FA_BC, seq_len, head_dim);
+    cpa_commit();
+    uint32_t k_phase = 0;  // wait-parity to expect on first K[kv_min]
+
+    // v78: V buffer alternates location. Iter kv_min reads V from smV (pre-loop).
+    // Iter kv_min+N (N≥1) reads V from smK[buf_prev] (loaded by prev iter's mid-iter cp.async).
+    uint8_t *prev_V_slot = smV;
+
+    for (int kv = kv_min_blocks; kv < kv_max_blocks; kv++)
+    {
+        int kvs = kv * FA_BC;
+        int buf = kv & 1;
+        uint8_t *cur_K = smK[buf];
+        uint8_t *nxt_K = smK[buf ^ 1];
+
+        // v83: wait K[kv] via mbarrier (TMA), wait V via cp.async.
+        wait_k(k_phase);
+        k_phase ^= 1;
+        cpa_wait<0>();
+        __syncthreads();
+
+        // v78: read V from wherever prev iter's mid-iter cp.async put it.
+        // NOTE on Lever 1 (K-before-transpose) — IT IS UNSAFE in this scheme.
+        // prev_V_slot == nxt_K in iter ≥ 1 (V[N+1] and K[N+2] alias the same smK slot).
+        // Transpose must complete before next K TMA writes that slot.
+        transpose_v(smV_T, prev_V_slot, head_dim);
+        __syncthreads();
+
+        // v81 hd=64 fix: smP needs Br×Bc = 128×64 = 8KB but smV is only 4KB (FA_STRIDE=64).
+        // smQ is 8KB and DEAD after register-load of Qr[][][] before the kv loop → reuse.
+        uint8_t *smP = smQ;
+
+        // v83: K[kv+1] via TMA. Issued AFTER transpose_v so the slot smK[buf^1]
+        // (just used as prev_V_slot for transpose) is safe to overwrite.
+        // Skip on last iter (no K[kv+1] needed).
+        int kv_p = kv + 1;
+        if (kv_p < kv_max_blocks && threadIdx.x == 0) {
+            issue_tma_k(kv_p, nxt_K);
+        }
+
+        // S = Q · Kᵀ — K B-operand loaded once per (nt, ks), reused across mi.
+        uint32_t Sr_p[8][M_TILES][2];
+#pragma unroll
+        for (int nt = 0; nt < 8; nt++)
+#pragma unroll
+            for (int mi = 0; mi < M_TILES; mi++)
+                Sr_p[nt][mi][0] = Sr_p[nt][mi][1] = 0u;
+#pragma unroll
+        for (int ks = 0; ks < KS_QK; ks++)
+        {
+            int k_off = ks * 32;
+            int cl = k_off + tid * 4, ch = cl + 16;
+#pragma unroll
+            for (int nt = 0; nt < 8; nt++)
+            {
+                int br = nt * 8;
+                // v83: TMA wrote K row-major plain (SWIZZLE_NONE) → direct addressing.
+                // Tradeoff: ~4-way bank conflict in K reads vs swizzled v81. Measured below.
+                uint32_t b0 = *(uint32_t *)&cur_K[(br + gid) * FA_HD + cl];
+                uint32_t b1 = *(uint32_t *)&cur_K[(br + gid) * FA_HD + ch];
+#pragma unroll
+                for (int mi = 0; mi < M_TILES; mi++)
+                {
+                    mma_fp8_f16(Sr_p[nt][mi][0], Sr_p[nt][mi][1],
+                                Qr[ks][mi][0], Qr[ks][mi][1],
+                                Qr[ks][mi][2], Qr[ks][mi][3],
+                                b0, b1, Sr_p[nt][mi][0], Sr_p[nt][mi][1]);
+                }
+            }
+        }
+
+        // v78: V[kv+1] cp.async → smK[buf] (dead after QK MMA finished). Overlaps
+        // with softmax + smP STS + PV MMA (~60% of iter time).
+        // v79 lever 3: branch-free. rows_v=0 on last iter → load_tile_fp8 inner loop is no-op.
+        // prev_V_slot is unconditionally set to smK[buf]; on the last iter it'll never be
+        // read (we exit the loop), so no harm.
+        int rows_v = (kv + 1 < kv_max_blocks) ? FA_BC : 0;
+        load_tile_fp8(smK[buf], Vh, (kv + 1) * FA_BC, rows_v, seq_len, head_dim);
+        prev_V_slot = smK[buf];
+        cpa_commit();
+
+        // Sr[nt][mi][r] — float for softmax math
+        float Sr[8][M_TILES][4];
+#pragma unroll
+        for (int nt = 0; nt < 8; nt++)
+        {
+            // v79 lever 4: pre-multiply scale by log2(e). Sr now in LOG2 space.
+            // This lets the softmax exp use ex2.approx.f16x2 (2× throughput of ex2.f32).
+            // rmax, nm, rsc all flow in log2 space — exp2f replaces __expf below.
+            float fs = scale * qk_descale * 1.4426950408889634f;
+#pragma unroll
+            for (int mi = 0; mi < M_TILES; mi++)
+            {
+                __half2 v0 = *reinterpret_cast<__half2 *>(&Sr_p[nt][mi][0]);
+                __half2 v1 = *reinterpret_cast<__half2 *>(&Sr_p[nt][mi][1]);
+                Sr[nt][mi][0] = __half2float(__low2half(v0)) * fs;
+                Sr[nt][mi][1] = __half2float(__high2half(v0)) * fs;
+                Sr[nt][mi][2] = __half2float(__low2half(v1)) * fs;
+                Sr[nt][mi][3] = __half2float(__high2half(v1)) * fs;
+            }
+        }
+
+        if (causal)
+        {
+#pragma unroll
+            for (int mi = 0; mi < M_TILES; mi++)
+            {
+                int gq0 = qs + mrb + mi * 16 + gid, gq8 = gq0 + 8;
+                // v69+window: sliding-window lower bounds per row.
+                int kmin0 = (window > 0 && gq0 + 1 > window) ? (gq0 - window + 1) : 0;
+                int kmin8 = (window > 0 && gq8 + 1 > window) ? (gq8 - window + 1) : 0;
+#pragma unroll
+                for (int nt = 0; nt < 8; nt++)
+                {
+                    int gk0 = kvs + nt * 8 + tid * 2, gk1 = gk0 + 1;
+                    if (gk0 > gq0) Sr[nt][mi][0] = -1e30f;
+                    if (gk1 > gq0) Sr[nt][mi][1] = -1e30f;
+                    if (gk0 > gq8) Sr[nt][mi][2] = -1e30f;
+                    if (gk1 > gq8) Sr[nt][mi][3] = -1e30f;
+                    // Sliding window: mask K below row's lower bound.
+                    if (gk0 < kmin0) Sr[nt][mi][0] = -1e30f;
+                    if (gk1 < kmin0) Sr[nt][mi][1] = -1e30f;
+                    if (gk0 < kmin8) Sr[nt][mi][2] = -1e30f;
+                    if (gk1 < kmin8) Sr[nt][mi][3] = -1e30f;
+                    if (gq0 >= seq_len) Sr[nt][mi][0] = Sr[nt][mi][1] = -1e30f;
+                    if (gq8 >= seq_len) Sr[nt][mi][2] = Sr[nt][mi][3] = -1e30f;
+                    if (gk0 >= seq_len) Sr[nt][mi][0] = Sr[nt][mi][2] = -1e30f;
+                    if (gk1 >= seq_len) Sr[nt][mi][1] = Sr[nt][mi][3] = -1e30f;
+                }
+            }
+        }
+
+        // Per-tile softmax: max, rescale Or, exp+sum.
+        float nm[M_TILES][2];
+        float rsc[M_TILES][2];
+#pragma unroll
+        for (int mi = 0; mi < M_TILES; mi++)
+        {
+            nm[mi][0] = -1e30f; nm[mi][1] = -1e30f;
+#pragma unroll
+            for (int nt = 0; nt < 8; nt++)
+            {
+                nm[mi][0] = fmaxf(nm[mi][0], fmaxf(Sr[nt][mi][0], Sr[nt][mi][1]));
+                nm[mi][1] = fmaxf(nm[mi][1], fmaxf(Sr[nt][mi][2], Sr[nt][mi][3]));
+            }
+            nm[mi][0] = fmaxf(nm[mi][0], __shfl_xor_sync(0xffffffff, nm[mi][0], 1));
+            nm[mi][0] = fmaxf(nm[mi][0], __shfl_xor_sync(0xffffffff, nm[mi][0], 2));
+            nm[mi][1] = fmaxf(nm[mi][1], __shfl_xor_sync(0xffffffff, nm[mi][1], 1));
+            nm[mi][1] = fmaxf(nm[mi][1], __shfl_xor_sync(0xffffffff, nm[mi][1], 2));
+            nm[mi][0] = fmaxf(nm[mi][0], rmax[mi][0]);
+            nm[mi][1] = fmaxf(nm[mi][1], rmax[mi][1]);
+            // v79 lever 4: log2-space → exp2f instead of __expf.
+            rsc[mi][0] = exp2f(rmax[mi][0] - nm[mi][0]);
+            rsc[mi][1] = exp2f(rmax[mi][1] - nm[mi][1]);
+        }
+
+        // Rescale Or by per-(mi,side) factor.
+#pragma unroll
+        for (int mi = 0; mi < M_TILES; mi++)
+        {
+            __half2 h2_rsc0 = __float2half2_rn(rsc[mi][0]);
+            __half2 h2_rsc1 = __float2half2_rn(rsc[mi][1]);
+#pragma unroll
+            for (int t = 0; t < N_TILES_PV; t++)
+            {
+                __half2 v0 = *reinterpret_cast<__half2 *>(&Or_p[t][mi][0]);
+                __half2 v1 = *reinterpret_cast<__half2 *>(&Or_p[t][mi][1]);
+                v0 = __hmul2(v0, h2_rsc0);
+                v1 = __hmul2(v1, h2_rsc1);
+                Or_p[t][mi][0] = *reinterpret_cast<uint32_t *>(&v0);
+                Or_p[t][mi][1] = *reinterpret_cast<uint32_t *>(&v1);
+            }
+        }
+#pragma unroll
+        for (int mi = 0; mi < M_TILES; mi++) {
+            rmax[mi][0] = nm[mi][0];
+            rmax[mi][1] = nm[mi][1];
+        }
+
+        // v79b: P stored as __half2 (16 b32 regs total vs v79's 64 FP32 = save ~48 regs).
+        // ns sum stays FP32 to avoid f16 accumulator drift on 32-element row sums.
+        float ns[M_TILES][2] = {{0.0f, 0.0f}, {0.0f, 0.0f}};
+        __half2 P_top[8][M_TILES], P_bot[8][M_TILES];
+#pragma unroll
+        for (int nt = 0; nt < 8; nt++)
+        {
+#pragma unroll
+            for (int mi = 0; mi < M_TILES; mi++)
+            {
+                float d0 = Sr[nt][mi][0] - rmax[mi][0], d1 = Sr[nt][mi][1] - rmax[mi][0];
+                float d2 = Sr[nt][mi][2] - rmax[mi][1], d3 = Sr[nt][mi][3] - rmax[mi][1];
+                __half2 d_top = __floats2half2_rn(d0, d1);
+                __half2 d_bot = __floats2half2_rn(d2, d3);
+                uint32_t p_top_u, p_bot_u;
+                asm("ex2.approx.f16x2 %0, %1;"
+                    : "=r"(p_top_u) : "r"(*reinterpret_cast<uint32_t *>(&d_top)));
+                asm("ex2.approx.f16x2 %0, %1;"
+                    : "=r"(p_bot_u) : "r"(*reinterpret_cast<uint32_t *>(&d_bot)));
+                P_top[nt][mi] = *reinterpret_cast<__half2 *>(&p_top_u);
+                P_bot[nt][mi] = *reinterpret_cast<__half2 *>(&p_bot_u);
+                ns[mi][0] += __low2float(P_top[nt][mi]) + __high2float(P_top[nt][mi]);
+                ns[mi][1] += __low2float(P_bot[nt][mi]) + __high2float(P_bot[nt][mi]);
+            }
+        }
+#pragma unroll
+        for (int mi = 0; mi < M_TILES; mi++)
+        {
+            ns[mi][0] += __shfl_xor_sync(0xffffffff, ns[mi][0], 1);
+            ns[mi][0] += __shfl_xor_sync(0xffffffff, ns[mi][0], 2);
+            ns[mi][1] += __shfl_xor_sync(0xffffffff, ns[mi][1], 1);
+            ns[mi][1] += __shfl_xor_sync(0xffffffff, ns[mi][1], 2);
+            rsexp[mi][0] = rsexp[mi][0] * rsc[mi][0] + ns[mi][0];
+            rsexp[mi][1] = rsexp[mi][1] * rsc[mi][1] + ns[mi][1];
+        }
+
+        __syncthreads();
+
+        // Quantize P → smP for both M-tiles.
+#pragma unroll
+        for (int nt = 0; nt < 8; nt++)
+        {
+            int col0 = nt * 8 + tid * 2, col1 = col0 + 1;
+#pragma unroll
+            for (int mi = 0; mi < M_TILES; mi++)
+            {
+                int mr = mrb + mi * 16;
+                int row0 = mr + gid, row8 = mr + gid + 8;
+                // v79b: P_top/P_bot already __half2 — no float→half conversion needed.
+                uint16_t fp8x2_top = fp16x2_to_e4m3x2(*reinterpret_cast<uint32_t *>(&P_top[nt][mi]));
+                uint16_t fp8x2_bot = fp16x2_to_e4m3x2(*reinterpret_cast<uint32_t *>(&P_bot[nt][mi]));
+                *(uint16_t *)&smP[swz_byte_bc(row0, col0)] = fp8x2_top;
+                *(uint16_t *)&smP[swz_byte_bc(row8, col0)] = fp8x2_bot;
+            }
+        }
+        __syncthreads();
+
+        // O += P · V — V B-operand loaded once per (nt, ks), reused across mi.
+#pragma unroll
+        for (int ks = 0; ks < 2; ks++)
+        {
+            int k_off = ks * 32;
+            int cl = k_off + tid * 4, ch = cl + 16;
+            // Load P A-operand for both M-tiles.
+            uint32_t Pr[M_TILES][4];
+#pragma unroll
+            for (int mi = 0; mi < M_TILES; mi++)
+            {
+                int mr = mrb + mi * 16;
+                int g0 = mr + gid, g8 = g0 + 8;
+                Pr[mi][0] = *(uint32_t *)&smP[swz_byte_bc(g0, cl)];
+                Pr[mi][1] = *(uint32_t *)&smP[swz_byte_bc(g8, cl)];
+                Pr[mi][2] = *(uint32_t *)&smP[swz_byte_bc(g0, ch)];
+                Pr[mi][3] = *(uint32_t *)&smP[swz_byte_bc(g8, ch)];
+            }
+#pragma unroll
+            for (int nt = 0; nt < N_TILES_PV; nt++)
+            {
+                int br = nt * 8;
+                uint32_t b0 = *(uint32_t *)&smV_T[swz_byte_smvt(br + gid, cl)];
+                uint32_t b1 = *(uint32_t *)&smV_T[swz_byte_smvt(br + gid, ch)];
+#pragma unroll
+                for (int mi = 0; mi < M_TILES; mi++)
+                {
+                    mma_fp8_f16(Or_p[nt][mi][0], Or_p[nt][mi][1],
+                                Pr[mi][0], Pr[mi][1], Pr[mi][2], Pr[mi][3],
+                                b0, b1, Or_p[nt][mi][0], Or_p[nt][mi][1]);
+                }
+            }
+        }
+        // v79 lever 2: end-of-iter __syncthreads removed. Was needed in v69 to gate the
+        // end-of-iter V cp.async vs PV's smP reads, but v78 moved V cp.async to mid-iter
+        // → no SMEM writes after PV in this iter. Next iter's cpa_wait + sync at line 278-279
+        // synchronizes all warps before transpose_v writes smV_T.
+    }
+
+#pragma unroll
+    for (int mi = 0; mi < M_TILES; mi++)
+    {
+        float li0 = (rsexp[mi][0] > 0) ? v_descale / rsexp[mi][0] : 0.0f;
+        float li1 = (rsexp[mi][1] > 0) ? v_descale / rsexp[mi][1] : 0.0f;
+        int mr = mrb + mi * 16;
+        int gr0 = qs + mr + gid, gr8 = gr0 + 8;
+#pragma unroll
+        for (int nt = 0; nt < N_TILES_PV; nt++)
+        {
+            int c0 = nt * 8 + tid * 2, c1 = c0 + 1;
+            __half2 v0 = *reinterpret_cast<__half2 *>(&Or_p[nt][mi][0]);
+            __half2 v1 = *reinterpret_cast<__half2 *>(&Or_p[nt][mi][1]);
+            float O0 = __half2float(__low2half(v0)) * li0;
+            float O1 = __half2float(__high2half(v0)) * li0;
+            float O2 = __half2float(__low2half(v1)) * li1;
+            float O3 = __half2float(__high2half(v1)) * li1;
+            if (gr0 < seq_len && c0 < head_dim) Oh[gr0 * head_dim + c0] = __float2half(O0);
+            if (gr0 < seq_len && c1 < head_dim) Oh[gr0 * head_dim + c1] = __float2half(O1);
+            if (gr8 < seq_len && c0 < head_dim) Oh[gr8 * head_dim + c0] = __float2half(O2);
+            if (gr8 < seq_len && c1 < head_dim) Oh[gr8 * head_dim + c1] = __float2half(O3);
+        }
+    }
+}
+
+#define CK(c) do { cudaError_t e = (c); if (e != cudaSuccess) { \
+    fprintf(stderr, "CUDA %s:%d: %s\n", __FILE__, __LINE__, cudaGetErrorString(e)); exit(1); }} while(0)
+
+static inline uint8_t float_to_e4m3(float f)
+{
+    if (f != f) return 0x7Fu;
+    int sign = (f < 0.0f) ? 1 : 0;
+    float af = fabsf(f);
+    if (af > 448.0f) return sign ? 0xFEu : 0x7Eu;
+    if (af < 1.953125e-3f) return sign ? 0x80u : 0x00u;
+    int eu = (int)floorf(log2f(af));
+    float mf = af / ldexpf(1.0f, eu) - 1.0f;
+    int m3 = (int)(mf * 8.0f + 0.5f);
+    if (m3 >= 8) { m3 = 0; eu++; }
+    int eb = eu + 7;
+    if (eb < 1) {
+        int ms = (int)(af / ldexpf(1.0f, -9) + 0.5f);
+        if (ms > 7) ms = 7;
+        return (uint8_t)((sign << 7) | (ms & 7));
+    }
+    if (eb > 15) eb = 15;
+    return (uint8_t)((sign << 7) | (eb << 3) | (m3 & 7));
+}
+static inline float e4m3_to_float(uint8_t v)
+{
+    int s = (v >> 7) & 1, e = (v >> 3) & 0xF, m = v & 7;
+    if (e == 0xF && m == 7) return nanf("");
+    float r = (e == 0) ? ldexpf((float)m, -9) : ldexpf(1.0f + m / 8.0f, e - 7);
+    return s ? -r : r;
+}
+static inline float fp16f(uint16_t h)
+{
+    __half hv; memcpy(&hv, &h, 2); return __half2float(hv);
+}
+
+void cpu_attention_fp8(
+    const uint8_t *Q, const uint8_t *K, const uint8_t *V,
+    float *O_out, int bh, int sl, int hd, int causal, int window = 0)
+{
+    float scale = 1.0f / sqrtf((float)hd);
+    int hs = sl * hd;
+    for (int h = 0; h < bh; h++)
+    {
+        const uint8_t *Qh = Q + h * hs;
+        const uint8_t *Kh = K + h * hs;
+        const uint8_t *Vh = V + h * hs;
+        float *Oh = O_out + h * hs;
+        for (int q = 0; q < sl; q++)
+        {
+            int kv_max = causal ? (q + 1) : sl;
+            // Sliding window: K range = [max(0, q - window + 1), q] for causal.
+            int kv_min = (window > 0 && q + 1 > window) ? (q - window + 1) : 0;
+            float *P = (float *)malloc(sizeof(float) * sl);
+            float rmax = -1e30f;
+            for (int k = kv_min; k < kv_max; k++)
+            {
+                float s = 0;
+                for (int d = 0; d < hd; d++)
+                    s += e4m3_to_float(Qh[q * hd + d]) * e4m3_to_float(Kh[k * hd + d]);
+                P[k] = s * scale;
+                if (P[k] > rmax) rmax = P[k];
+            }
+            float rsum = 0;
+            for (int k = kv_min; k < kv_max; k++)
+            {
+                P[k] = expf(P[k] - rmax);
+                rsum += P[k];
+            }
+            for (int k = kv_min; k < kv_max; k++) P[k] /= rsum;
+            for (int d = 0; d < hd; d++)
+            {
+                float o = 0;
+                for (int k = kv_min; k < kv_max; k++)
+                    o += P[k] * e4m3_to_float(Vh[k * hd + d]);
+                Oh[q * hd + d] = o;
+            }
+            free(P);
+        }
+    }
+}
+
+// v83: encode 2D tensormap over K [bh*seq_len, FA_HD]. One tmap per (K_base, bh, sl).
+static void encode_k_tmap(CUtensorMap *tmap, uint8_t *K_base, int bh, int seq_len, int hd)
+{
+    cuuint64_t globalDim[2]    = {(cuuint64_t)hd, (cuuint64_t)bh * seq_len};
+    cuuint64_t globalStride[1] = {(cuuint64_t)hd};  // bytes between rows
+    cuuint32_t boxDim[2]       = {(cuuint32_t)hd, (cuuint32_t)FA_BC};  // FA_BC=64 K-rows per tile
+    cuuint32_t elementStride[2]= {1, 1};
+    CUresult res = cuTensorMapEncodeTiled(
+        tmap, CU_TENSOR_MAP_DATA_TYPE_UINT8, 2,
+        K_base, globalDim, globalStride, boxDim, elementStride,
+        CU_TENSOR_MAP_INTERLEAVE_NONE,
+        CU_TENSOR_MAP_SWIZZLE_NONE,
+        CU_TENSOR_MAP_L2_PROMOTION_NONE,
+        CU_TENSOR_MAP_FLOAT_OOB_FILL_NONE);
+    if (res != CUDA_SUCCESS) {
+        const char *err = nullptr; cuGetErrorString(res, &err);
+        fprintf(stderr, "cuTensorMapEncodeTiled (K) failed: %s\n", err ? err : "?");
+        exit(1);
+    }
+}
+
+static void report_attrs(const char *label, cudaFuncAttributes &attr, int smem_bytes)
+{
+    int reg_blocks = 65536 / (attr.numRegs * FA_THREADS);
+    if (reg_blocks > 16) reg_blocks = 16;
+    int smem_blocks = (smem_bytes > 0) ? (100 * 1024 / smem_bytes) : 16;
+    int real_blocks = (reg_blocks < smem_blocks) ? reg_blocks : smem_blocks;
+    printf("  %s  numRegs=%d  localSpill=%zu B  staticSmem=%zu B\n",
+           label, attr.numRegs, attr.localSizeBytes, attr.sharedSizeBytes);
+    printf("    reg-bound blocks/SM = %d   smem-bound = %d   ACTUAL = %d\n",
+           reg_blocks, smem_blocks, real_blocks);
+}
+
+// NCu-friendly launcher: ./fa_v81_hd64_fp8 --ncu <cfg_idx> <LB>
+// Runs ONE warmup + ONE measured launch of fa83_kernel<LB> on bench_configs[cfg_idx].
+// NCu profiles only the measured launch (use --launch-skip 1 --launch-count 1).
+static int ncu_mode(int cfg_idx, int LB)
+{
+    int bench_configs[][4] = {
+        {4, 1024, 64, 0},   {4, 2048, 64, 0},   {8, 2048, 64, 0},
+        {4, 4096, 64, 0},   {8, 4096, 64, 0},   {16, 2048, 64, 0},
+        {16, 4096, 64, 0},  {32, 2048, 64, 0},
+        {4, 8192, 64, 1024}, {4, 4096, 64, 1024}, {8, 8192, 64, 1024},
+    };
+    int n_bench = sizeof(bench_configs) / sizeof(bench_configs[0]);
+    if (cfg_idx < 0 || cfg_idx >= n_bench) {
+        fprintf(stderr, "cfg_idx %d out of range [0, %d)\n", cfg_idx, n_bench);
+        return 1;
+    }
+    if (LB != 2 && LB != 3) {
+        fprintf(stderr, "LB must be 2 or 3\n");
+        return 1;
+    }
+    int bh = bench_configs[cfg_idx][0], sl = bench_configs[cfg_idx][1];
+    int hd = bench_configs[cfg_idx][2], wnd = bench_configs[cfg_idx][3];
+    int ca = (wnd > 0) ? 1 : 0;
+    size_t n_elems = (size_t)bh * sl * hd;
+
+    uint8_t *Q_d, *K_d, *V_d;
+    __half *O_d;
+    CK(cudaMalloc(&Q_d, n_elems));
+    CK(cudaMalloc(&K_d, n_elems));
+    CK(cudaMalloc(&V_d, n_elems));
+    CK(cudaMalloc(&O_d, n_elems * 2));
+    CK(cudaMemset(Q_d, 0x38, n_elems));
+    CK(cudaMemset(K_d, 0x38, n_elems));
+    CK(cudaMemset(V_d, 0x38, n_elems));
+
+    int smem = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE
+             + hd * SMV_T_STRIDE;
+    int nqt = (sl + FA_BR - 1) / FA_BR;
+    int grid = bh * nqt;
+    float scale = 1.0f / sqrtf((float)hd);
+
+    fprintf(stderr, "NCu config: bh=%d sl=%d hd=%d wnd=%d grid=%d LB=%d\n",
+            bh, sl, hd, wnd, grid, LB);
+
+    CUtensorMap k_tmap;
+    encode_k_tmap(&k_tmap, K_d, bh, sl, hd);
+
+    if (LB == 2) {
+        CK(cudaFuncSetAttribute(fa83_kernel<2>,
+                                cudaFuncAttributeMaxDynamicSharedMemorySize, smem));
+        fa83_kernel<2><<<grid, FA_THREADS, smem>>>(Q_d, k_tmap, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
+        CK(cudaDeviceSynchronize());
+        fa83_kernel<2><<<grid, FA_THREADS, smem>>>(Q_d, k_tmap, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
+    } else {
+        CK(cudaFuncSetAttribute(fa83_kernel<3>,
+                                cudaFuncAttributeMaxDynamicSharedMemorySize, smem));
+        fa83_kernel<3><<<grid, FA_THREADS, smem>>>(Q_d, k_tmap, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
+        CK(cudaDeviceSynchronize());
+        fa83_kernel<3><<<grid, FA_THREADS, smem>>>(Q_d, k_tmap, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
+    }
+    CK(cudaDeviceSynchronize());
+
+    cudaFree(Q_d); cudaFree(K_d); cudaFree(V_d); cudaFree(O_d);
+    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    if (argc >= 4 && strcmp(argv[1], "--ncu") == 0) {
+        return ncu_mode(atoi(argv[2]), atoi(argv[3]));
+    }
+    cudaDeviceProp p; CK(cudaGetDeviceProperties(&p, 0));
+    printf("=== FA v83 hd=64 + TMA-K (K in kv-loop) — perf/regs/No Eligible vs v81 ===\n");
+    printf("GPU: %s (%d SMs)\n", p.name, p.multiProcessorCount);
+
+    int smem_hd64 = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE
+                  + FA_HD * SMV_T_STRIDE;
+    printf("\nSMEM/block (hd=64): %d B (%.2f KB) — SMEM allows %d blocks/SM (≤ 100 KB cap)\n",
+           smem_hd64, smem_hd64 / 1024.0, 100 * 1024 / smem_hd64);
+    printf("v79b baseline @ hd=128: 249 regs/thread → reg-bound 2 blocks/SM\n");
+    printf("Need ≤ 170 regs/thread for 3 blocks. Expected v81 from arithmetic: ~217 regs (still over)\n\n");
+
+    cudaFuncAttributes a2, a3;
+    CK(cudaFuncGetAttributes(&a2, fa83_kernel<2>));
+    CK(cudaFuncGetAttributes(&a3, fa83_kernel<3>));
+    printf("--- Kernel attrs ---\n");
+    report_attrs("LB=2 (natural)  ", a2, smem_hd64);
+    report_attrs("LB=3 (forced)   ", a3, smem_hd64);
+
+    // -------------------------------------------------------------------------
+    // Phase 1: Full correctness on BOTH LB=2 and LB=3 kernels.
+    // Edge cases that v79b's bench covered: causal, sliding window aligned/unaligned,
+    // sl-not-multiple-of-Br. Same dataset feeds both kernels → byte-identical Q/K/V.
+    // -------------------------------------------------------------------------
+    printf("\n--- Phase 1: Correctness on hd=64 (all forms × both LB) ---\n");
+    int configs[][5] = {
+        {1, 64,  64, 0, 0},     // small full attn
+        {1, 128, 64, 0, 0},
+        {1, 256, 64, 0, 0},
+        {1, 512, 64, 0, 0},
+        {2, 256, 64, 1, 0},     // causal no-window
+        {1, 256, 64, 1, 64},    // sliding window aligned to FA_BC
+        {1, 256, 64, 1, 100},   // window NOT multiple of FA_BC
+        {1, 300, 64, 1, 96},    // window mid-block, sl not multiple of FA_BR
+    };
+    int total_configs = sizeof(configs) / sizeof(configs[0]);
+    int pass_lb2 = 0, pass_lb3 = 0;
+    for (auto &c : configs)
+    {
+        int bh = c[0], sl = c[1], hd = c[2], ca = c[3], wnd = c[4];
+        size_t n_elems = (size_t)bh * sl * hd;
+
+        float *Qf = (float *)malloc(sizeof(float) * n_elems);
+        float *Kf = (float *)malloc(sizeof(float) * n_elems);
+        float *Vf = (float *)malloc(sizeof(float) * n_elems);
+        srand(42);
+        for (size_t i = 0; i < n_elems; i++) {
+            Qf[i] = ((float)(rand() % 16) - 8.0f) * 0.125f;
+            Kf[i] = ((float)(rand() % 16) - 8.0f) * 0.125f;
+            Vf[i] = ((float)(rand() % 16) - 8.0f) * 0.125f;
+        }
+        uint8_t *Qq = (uint8_t *)malloc(n_elems);
+        uint8_t *Kq = (uint8_t *)malloc(n_elems);
+        uint8_t *Vq = (uint8_t *)malloc(n_elems);
+        for (size_t i = 0; i < n_elems; i++) {
+            Qq[i] = float_to_e4m3(Qf[i]);
+            Kq[i] = float_to_e4m3(Kf[i]);
+            Vq[i] = float_to_e4m3(Vf[i]);
+        }
+        float *O_ref = (float *)malloc(sizeof(float) * n_elems);
+        cpu_attention_fp8(Qq, Kq, Vq, O_ref, bh, sl, hd, ca, wnd);
+
+        uint8_t *Q_d, *K_d, *V_d;
+        __half *O_d;
+        CK(cudaMalloc(&Q_d, n_elems));
+        CK(cudaMalloc(&K_d, n_elems));
+        CK(cudaMalloc(&V_d, n_elems));
+        CK(cudaMalloc(&O_d, n_elems * 2));
+        CK(cudaMemcpy(Q_d, Qq, n_elems, cudaMemcpyHostToDevice));
+        CK(cudaMemcpy(K_d, Kq, n_elems, cudaMemcpyHostToDevice));
+        CK(cudaMemcpy(V_d, Vq, n_elems, cudaMemcpyHostToDevice));
+
+        int smem = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE
+                 + hd * SMV_T_STRIDE;
+        int nqt = (sl + FA_BR - 1) / FA_BR;
+        float scale = 1.0f / sqrtf((float)hd);
+        uint16_t *O_cpu = (uint16_t *)malloc(n_elems * 2);
+
+        // v83: encode K tmap once per config.
+        CUtensorMap k_tmap;
+        encode_k_tmap(&k_tmap, K_d, bh, sl, hd);
+
+        // LB=2 run
+        CK(cudaFuncSetAttribute(fa83_kernel<2>,
+                                cudaFuncAttributeMaxDynamicSharedMemorySize, smem));
+        CK(cudaMemset(O_d, 0, n_elems * 2));
+        fa83_kernel<2><<<bh * nqt, FA_THREADS, smem>>>(
+            Q_d, k_tmap, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
+        CK(cudaDeviceSynchronize());
+        CK(cudaMemcpy(O_cpu, O_d, n_elems * 2, cudaMemcpyDeviceToHost));
+        float mx2 = 0; int errs2 = 0;
+        for (size_t i = 0; i < n_elems; i++) {
+            float gpu = fp16f(O_cpu[i]); float ref = O_ref[i];
+            float ae = fabsf(gpu - ref);
+            if (ae > mx2) mx2 = ae;
+            if (ae > fmaxf(0.05f, fabsf(ref) * 0.1f)) errs2++;
+        }
+        if (errs2 == 0) pass_lb2++;
+
+        // LB=3 run
+        CK(cudaFuncSetAttribute(fa83_kernel<3>,
+                                cudaFuncAttributeMaxDynamicSharedMemorySize, smem));
+        CK(cudaMemset(O_d, 0, n_elems * 2));
+        fa83_kernel<3><<<bh * nqt, FA_THREADS, smem>>>(
+            Q_d, k_tmap, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
+        CK(cudaDeviceSynchronize());
+        CK(cudaMemcpy(O_cpu, O_d, n_elems * 2, cudaMemcpyDeviceToHost));
+        float mx3 = 0; int errs3 = 0;
+        for (size_t i = 0; i < n_elems; i++) {
+            float gpu = fp16f(O_cpu[i]); float ref = O_ref[i];
+            float ae = fabsf(gpu - ref);
+            if (ae > mx3) mx3 = ae;
+            if (ae > fmaxf(0.05f, fabsf(ref) * 0.1f)) errs3++;
+        }
+        if (errs3 == 0) pass_lb3++;
+
+        printf("  bh=%d sl=%d hd=%d ca=%d wnd=%-4d  LB2: diff=%.4f errs=%d %s | LB3: diff=%.4f errs=%d %s\n",
+               bh, sl, hd, ca, wnd,
+               mx2, errs2, errs2 == 0 ? "PASS" : "FAIL",
+               mx3, errs3, errs3 == 0 ? "PASS" : "FAIL");
+
+        free(Qf); free(Kf); free(Vf);
+        free(Qq); free(Kq); free(Vq);
+        free(O_ref); free(O_cpu);
+        cudaFree(Q_d); cudaFree(K_d); cudaFree(V_d); cudaFree(O_d);
+    }
+    printf("  → LB=2: %d/%d PASS   LB=3: %d/%d PASS\n",
+           pass_lb2, total_configs, pass_lb3, total_configs);
+
+    // -------------------------------------------------------------------------
+    // Phase 2: A/B perf bench — LB=2 (2 blocks/SM) vs LB=3 (3 blocks/SM)
+    // on the SAME hd=64 kernel, SAME inputs, SAME shapes. Isolates pure
+    // occupancy effect. Variance ×3 (best/median/worst per LB×config).
+    // -------------------------------------------------------------------------
+    printf("\n--- Phase 2: A/B perf — LB=2 vs LB=3 on hd=64 (variance ×3) ---\n");
+    int bench_configs[][4] = {
+        // Full-attention configs (window=0, causal=0):
+        {4, 1024, 64, 0},
+        {4, 2048, 64, 0},
+        {8, 2048, 64, 0},
+        {4, 4096, 64, 0},
+        {8, 4096, 64, 0},
+        {16, 2048, 64, 0},
+        {16, 4096, 64, 0},
+        {32, 2048, 64, 0},
+        // Sliding-window configs (causal=1):
+        {4, 8192, 64, 1024},
+        {4, 4096, 64, 1024},
+        {8, 8192, 64, 1024},
+    };
+    int n_bench = sizeof(bench_configs) / sizeof(bench_configs[0]);
+    const int VARIANCE_RUNS = 3;
+    const int WARMUP = 5;
+    const int ITERS = 50;
+
+    printf("  %-26s | LB=2 (best/med/worst)        | LB=3 (best/med/worst)        | LB3/LB2\n",
+           "config");
+    printf("  --------------------------|-------------------------------|-------------------------------|--------\n");
+    for (int ci = 0; ci < n_bench; ci++)
+    {
+        int bh = bench_configs[ci][0], sl = bench_configs[ci][1];
+        int hd = bench_configs[ci][2], wnd = bench_configs[ci][3];
+        int ca_bench = (wnd > 0) ? 1 : 0;
+        size_t n_elems = (size_t)bh * sl * hd;
+
+        uint8_t *Q_d, *K_d, *V_d;
+        __half *O_d;
+        CK(cudaMalloc(&Q_d, n_elems));
+        CK(cudaMalloc(&K_d, n_elems));
+        CK(cudaMalloc(&V_d, n_elems));
+        CK(cudaMalloc(&O_d, n_elems * 2));
+        CK(cudaMemset(Q_d, 0x38, n_elems));
+        CK(cudaMemset(K_d, 0x38, n_elems));
+        CK(cudaMemset(V_d, 0x38, n_elems));
+
+        int smem = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE
+                 + hd * SMV_T_STRIDE;
+        CK(cudaFuncSetAttribute(fa83_kernel<2>,
+                                cudaFuncAttributeMaxDynamicSharedMemorySize, smem));
+        CK(cudaFuncSetAttribute(fa83_kernel<3>,
+                                cudaFuncAttributeMaxDynamicSharedMemorySize, smem));
+        int nqt = (sl + FA_BR - 1) / FA_BR;
+        float scale = 1.0f / sqrtf((float)hd);
+        int grid = bh * nqt;
+
+        double sl_eff = (wnd > 0) ? (double)wnd : (double)sl;
+        if (ca_bench && wnd == 0) sl_eff = (double)sl / 2.0;
+        double flops = 4.0 * (double)bh * (double)sl * sl_eff * (double)hd;
+
+        // v83: encode K tmap once per config.
+        CUtensorMap k_tmap;
+        encode_k_tmap(&k_tmap, K_d, bh, sl, hd);
+
+        cudaEvent_t t0, t1; cudaEventCreate(&t0); cudaEventCreate(&t1);
+
+        auto measure = [&](auto kernel_ptr) -> double {
+            for (int i = 0; i < WARMUP; i++)
+                kernel_ptr<<<grid, FA_THREADS, smem>>>(Q_d, k_tmap, V_d, O_d, sl, hd, ca_bench, scale, 1.0f, 1.0f, wnd);
+            CK(cudaDeviceSynchronize());
+            cudaEventRecord(t0);
+            for (int i = 0; i < ITERS; i++)
+                kernel_ptr<<<grid, FA_THREADS, smem>>>(Q_d, k_tmap, V_d, O_d, sl, hd, ca_bench, scale, 1.0f, 1.0f, wnd);
+            cudaEventRecord(t1);
+            cudaEventSynchronize(t1);
+            float ms; cudaEventElapsedTime(&ms, t0, t1);
+            return ms / ITERS;
+        };
+
+        double r2[VARIANCE_RUNS], r3[VARIANCE_RUNS];
+        for (int v = 0; v < VARIANCE_RUNS; v++) {
+            r2[v] = measure(fa83_kernel<2>);
+            r3[v] = measure(fa83_kernel<3>);
+        }
+        // sort each
+        auto sort3 = [](double *a) {
+            if (a[0] > a[1]) std::swap(a[0], a[1]);
+            if (a[1] > a[2]) std::swap(a[1], a[2]);
+            if (a[0] > a[1]) std::swap(a[0], a[1]);
+        };
+        sort3(r2); sort3(r3);
+
+        double tf2_best = flops / (r2[0] / 1000.0) / 1e12;
+        double tf2_med  = flops / (r2[1] / 1000.0) / 1e12;
+        double tf2_worst= flops / (r2[2] / 1000.0) / 1e12;
+        double tf3_best = flops / (r3[0] / 1000.0) / 1e12;
+        double tf3_med  = flops / (r3[1] / 1000.0) / 1e12;
+        double tf3_worst= flops / (r3[2] / 1000.0) / 1e12;
+        double ratio    = tf3_med / tf2_med;
+
+        char cfg[32];
+        snprintf(cfg, sizeof(cfg), "bh=%d sl=%d wnd=%d", bh, sl, wnd);
+        printf("  %-26s | %5.1f / %5.1f / %5.1f T  | %5.1f / %5.1f / %5.1f T  | %5.3f%s\n",
+               cfg, tf2_best, tf2_med, tf2_worst,
+               tf3_best, tf3_med, tf3_worst, ratio,
+               ratio >= 1.02 ? "  ✓" : (ratio <= 0.98 ? "  ✗" : "  ="));
+
+        cudaEventDestroy(t0); cudaEventDestroy(t1);
+        cudaFree(Q_d); cudaFree(K_d); cudaFree(V_d); cudaFree(O_d);
+    }
+
+    printf("\n=== Verdict ===\n");
+    printf("LB=2 (226 regs, 2 blocks/SM) vs LB=3 (168 regs, 3 blocks/SM) — same hd=64 kernel.\n");
+    printf("ratio > 1.02 → 3rd block buys speed (occupancy hides latency)\n");
+    printf("ratio ≈ 1.00 → 3rd block neutral (occupancy not the bottleneck)\n");
+    printf("ratio < 0.98 → 3rd block hurts (e.g. extra resched cost, cache pressure)\n");
+
+    return 0;
+}

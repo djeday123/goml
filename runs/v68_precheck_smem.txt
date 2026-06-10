@@ -1,0 +1,21 @@
+Device: NVIDIA RTX PRO 6000 Blackwell Workstation Edition  compute 12.0  SMs=188
+
+Shared memory limits:
+  Default per-block max:        48 KB
+  Opt-in per-block max:         99 KB
+  Per-SM total:                 100 KB
+  Reserved (driver) per block:  1024 B
+
+Projections for v68:
+  v66 dynamic SMEM (measured):  57344 B = 56.0 KB
+  v68 projected (- smV_T 8KB):  49152 B = 48.0 KB
+  Two blocks/SM need:           98304 B = 96.0 KB
+  Per-SM cap:                   102400 B = 100.0 KB
+
+Verdict:
+  Per-SM capacity for 2 blocks:    YES
+  v68 per-block above default:     NO (needs opt-in if YES)
+  v68 per-block within opt-in cap: YES
+
+  → GO: cudaFuncSetAttribute(MaxDynamicSharedMemorySize, 49152)
+  → Expected occupancy: 2 blocks/SM × 4 warps = 8 warps/SM (16.67%)
