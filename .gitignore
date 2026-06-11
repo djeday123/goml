@@ -1,14 +1,16 @@
 .env
 data
 
-# Compiled CUDA libraries — built per-architecture by `make cuda`.
-# Don't commit these (fat-binary outputs can be hundreds of MB and are
-# architecture-specific; users should build them locally).
-libs/*.so
+# Built artifacts — pre-built для sm_120a (RTX PRO 6000 Blackwell).
+# Включены в репо чтобы пользователи могли запускать сразу без сборки.
+# Для других архитектур — пересобрать через runs/_build_*.sh скрипты.
+#libs/*.so       — commit (sm_120a pre-built libs)
+#fa_v*           — commit (sm_120a pre-built bench binaries)
+#runs/fa_*       — commit
 
-# Test binaries
-fa_v*
-runs/fa_*
+# НЕ комитим: профили NCu (330 MB), интермедиаты, кеши.
+*.ncu-rep
+runs/*.cubin
 /tmp/goml-*
 
 ./data/arxiv_150.txt
