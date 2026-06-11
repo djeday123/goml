@@ -118,7 +118,6 @@
 #include <stdint.h>
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
-#include <unistd.h>
 
 // v110 warp-spec step 3 constants — 1 producer + 3 consumer, Br=96
 #define FA_BR 96         // 3 consumer × M_TILES=2 × 16 = 96 ✓
@@ -141,55 +140,6 @@ __device__ __forceinline__ void cpa16(void *s, const void *g, int n)
 __device__ __forceinline__ void cpa_commit() { asm volatile("cp.async.commit_group;"); }
 template <int N>
 __device__ __forceinline__ void cpa_wait() { asm volatile("cp.async.wait_group %0;" ::"n"(N)); }
-
-// v111: mbarrier helpers (PTX).
-// mbarrier.init: sets expected arrival count, parity = 0.
-// cp.async.mbarrier.arrive: arrives at mbarrier when THIS thread's cp.async ops done.
-// mbarrier.try_wait.parity: waits until barrier's parity matches the supplied bit.
-__device__ __forceinline__ void mbar_init(uint64_t *bar, uint32_t count) {
-    uint32_t sa = __cvta_generic_to_shared(bar);
-    asm volatile("mbarrier.init.shared.b64 [%0], %1;" :: "r"(sa), "r"(count));
-}
-
-__device__ __forceinline__ void cpa_mbar_arrive(uint64_t *bar) {
-    uint32_t sa = __cvta_generic_to_shared(bar);
-    asm volatile("cp.async.mbarrier.arrive.shared.b64 [%0];" :: "r"(sa));
-}
-
-// v111: regular mbarrier.arrive with output token + memory clobber to prevent DCE.
-// PTX has no .noret variant for plain mbarrier.arrive (only for arrive_drop in PTX 8+).
-__device__ __forceinline__ void mbar_arrive(uint64_t *bar) {
-    uint32_t sa = __cvta_generic_to_shared(bar);
-    uint64_t token;
-    asm volatile("mbarrier.arrive.shared.b64 %0, [%1];"
-                 : "=l"(token) : "r"(sa) : "memory");
-    (void)token;  // unused, but asm volatile + memory clobber keeps instruction
-}
-
-// v111-fix: use mbarrier.test_wait (single non-blocking check) + C++ loop.
-// Avoids PTX label scope issues with %= substitution in CUDA inline asm.
-__device__ __forceinline__ bool mbar_test_wait(uint64_t *bar, uint32_t phase) {
-    uint32_t sa = __cvta_generic_to_shared(bar);
-    uint32_t result;
-    asm volatile(
-        "{ .reg .pred P1;\n"
-        "  mbarrier.test_wait.parity.shared.b64 P1, [%1], %2;\n"
-        "  selp.b32 %0, 1, 0, P1;\n"
-        "}"
-        : "=r"(result)
-        : "r"(sa), "r"(phase)
-    );
-    return result != 0;
-}
-
-__device__ __forceinline__ void mbar_wait(uint64_t *bar, uint32_t phase) {
-    // Spin until parity matches. With working mbar_arrive (regular form), this
-    // should pass within microseconds. No timeout — true infinite wait means
-    // an actual bug, surface it as a hang.
-    while (!mbar_test_wait(bar, phase)) {
-        __nanosleep(20);
-    }
-}
 
 __device__ __forceinline__ void mma_fp8_f16(
     uint32_t &d0, uint32_t &d1,
@@ -288,6 +238,52 @@ __device__ __forceinline__ uint16_t fp16x2_to_e4m3x2(uint32_t h2)
 // Each thread copies a 4×4 tile: 4 consecutive k-rows × 4 consecutive n-cols.
 // Reads as uint32_t (4 contiguous n-bytes per k-row), reassembles via
 // bytewise shuffle, writes as uint32_t into the transposed layout.
+// v111: producer-skip transpose — only consumer warps (96 threads, offset 32).
+// Producer warp doesn't participate → producer doesn't wait at post-transpose sync.
+// Stride = FA_CONSUMERS * 32 = 96 threads. Local thread id = threadIdx.x - 32.
+__device__ __forceinline__ void transpose_v_consumer(
+    uint8_t *smV_T, const uint8_t *smV, int head_dim)
+{
+    constexpr int TILE = 4;
+    int tiles_k = FA_BC / TILE;       // 16
+    int tiles_n = head_dim / TILE;     // 32 for hd=128
+    int total = tiles_k * tiles_n;     // 512
+    constexpr int CONSUMER_THREADS = FA_CONSUMERS * 32;  // 96
+    constexpr int PRODUCER_THREADS = FA_PRODUCERS * 32;  // 32
+    int t_local = threadIdx.x - PRODUCER_THREADS;  // 0..95 for consumer threads
+    for (int t = t_local; t < total; t += CONSUMER_THREADS)
+    {
+        int tk = t / tiles_n;
+        int tn = t % tiles_n;
+        int k0 = tk * TILE;
+        int n0 = tn * TILE;
+        uint32_t r0 = *(uint32_t *)&smV[swz_byte(k0 + 0, n0)];
+        uint32_t r1 = *(uint32_t *)&smV[swz_byte(k0 + 1, n0)];
+        uint32_t r2 = *(uint32_t *)&smV[swz_byte(k0 + 2, n0)];
+        uint32_t r3 = *(uint32_t *)&smV[swz_byte(k0 + 3, n0)];
+        uint32_t c0 = ((r0 >>  0) & 0xff)
+                    | ((r1 <<  8) & 0xff00)
+                    | ((r2 << 16) & 0xff0000)
+                    | ((r3 << 24) & 0xff000000);
+        uint32_t c1 = ((r0 >>  8) & 0xff)
+                    | ((r1 <<  0) & 0xff00)
+                    | ((r2 <<  8) & 0xff0000)
+                    | ((r3 << 16) & 0xff000000);
+        uint32_t c2 = ((r0 >> 16) & 0xff)
+                    | ((r1 >>  8) & 0xff00)
+                    | ((r2 <<  0) & 0xff0000)
+                    | ((r3 <<  8) & 0xff000000);
+        uint32_t c3 = ((r0 >> 24) & 0xff)
+                    | ((r1 >> 16) & 0xff00)
+                    | ((r2 >>  8) & 0xff0000)
+                    | ((r3 <<  0) & 0xff000000);
+        *(uint32_t *)&smV_T[swz_byte_smvt(n0 + 0, k0)] = c0;
+        *(uint32_t *)&smV_T[swz_byte_smvt(n0 + 1, k0)] = c1;
+        *(uint32_t *)&smV_T[swz_byte_smvt(n0 + 2, k0)] = c2;
+        *(uint32_t *)&smV_T[swz_byte_smvt(n0 + 3, k0)] = c3;
+    }
+}
+
 __device__ __forceinline__ void transpose_v(
     uint8_t *smV_T, const uint8_t *smV, int head_dim)
 {
@@ -334,7 +330,7 @@ __device__ __forceinline__ void transpose_v(
 }
 
 __global__ void __launch_bounds__(FA_THREADS, 2)
-    fa111_kernel(
+    fa113b_kernel(
         const uint8_t *__restrict__ Q,
         const uint8_t *__restrict__ K,
         const uint8_t *__restrict__ V,
@@ -355,24 +351,16 @@ __global__ void __launch_bounds__(FA_THREADS, 2)
 
     extern __shared__ uint8_t raw[];
     uint8_t *smQ = raw;
-    // v111 SMEM layout: smQ + 2×smK + 1×smV + smV_T + 2×mbar(8B) = 44.5K + 16B
-    uint8_t *smK[K_STAGES] = {
-        smQ + FA_BR * FA_STRIDE,
-        smQ + FA_BR * FA_STRIDE + FA_BC * FA_STRIDE,
-    };
-    uint8_t *smV = smK[1] + FA_BC * FA_STRIDE;
+    // v113b LOCAL-MEM FIX (same as v96b/v118): replace `uint8_t *smK[K_STAGES]`
+    // (16-byte stack frame + LDL.64 on dynamic index) with base+arithmetic.
+    constexpr int K_STRIDE_BYTES = FA_BC * FA_STRIDE;
+    uint8_t *smK_base = smQ + FA_BR * FA_STRIDE;
+    // v110: single V buffer (V_STAGES=1).
+    uint8_t *smV = smK_base + 2 * K_STRIDE_BYTES;   // was smK[1] + FA_BC * FA_STRIDE
     uint8_t *smV_T = smV + FA_BC * FA_STRIDE;
+    // smP scratchpad reuses smQ (Qr lives in regs after pre-loop → smQ is free
+    // for softmax output). smP layout = FA_BR × FA_BC = 96 × 64 = 6 KB ≤ smQ's 12 KB.
     uint8_t *smP = smQ;
-    // v111: mbarrier slots — 2 mbarriers (one per K stage). Each 8 bytes.
-    // Aligned by uint64_t.
-    uint64_t *bar_ready = (uint64_t *)(smV_T + ((128 * SMV_T_STRIDE + 7) & ~7));
-
-    // v111: init mbarriers. Each waits for 32 producer threads (1 warp).
-    if (threadIdx.x == 0) {
-        mbar_init(&bar_ready[0], 32);
-        mbar_init(&bar_ready[1], 32);
-    }
-    __syncthreads();
 
     int hs = seq_len * head_dim;
     const uint8_t *Qh = Q + bh * hs;
@@ -427,65 +415,60 @@ __global__ void __launch_bounds__(FA_THREADS, 2)
         kv_min_blocks = (qs - window + 1) / FA_BC;  // floor
     }
 
-    // v111-debug: PRE-LOAD via producer warp + SYNCHRONOUS arrive (cpa_wait then arrive).
-    // Producer blocks on its own cp.async (synchronous, losing async benefit), then
-    // does regular mbarrier.arrive. Isolates mbarrier mechanism from cp.async.mbarrier.arrive.
+    // v110: PRE-LOAD via single producer warp (wid=0). Issues K and V cp.async
+    // sequentially within the same warp. cp.async runs async — the issues queue up.
     if (wid == 0) {
-        load_tile_fp8_warp(smK[kv_min_blocks & 1], Kh, kv_min_blocks * FA_BC, FA_BC,
+        load_tile_fp8_warp(smK_base + (kv_min_blocks & 1) * K_STRIDE_BYTES,
+                           Kh, kv_min_blocks * FA_BC, FA_BC,
                            seq_len, head_dim, lane);
         load_tile_fp8_warp(smV, Vh, kv_min_blocks * FA_BC, FA_BC,
                            seq_len, head_dim, lane);
-        cpa_commit();
-        cpa_wait<0>();                            // wait for own cp.async (sync)
-        mbar_arrive(&bar_ready[kv_min_blocks & 1]);  // regular arrive (decrement pending)
     }
-
-    // M7 fix: sm_120a SYNCS.PHASECHK реализует "pass if current_parity != arg".
-    // Свежеинициализированный bar имеет parity=0; первый wait должен быть с arg=0
-    // (блокирует до flip 0→1 после 32 arrives). XOR-flip после каждого wait.
-    uint32_t expected_phase[K_STAGES] = {0, 0};
+    cpa_commit();
 
     for (int kv = kv_min_blocks; kv < kv_max_blocks; kv++)
     {
         int kvs = kv * FA_BC;
         int buf = kv & 1;
         int nxt_buf = (kv + 1) & 1;
-        uint8_t *cur_K = smK[buf];
+        // v113b: smK[buf] → arithmetic. buf uniform per-iter → single IMAD.
+        uint8_t *cur_K = smK_base + buf * K_STRIDE_BYTES;
 
-        // v111: replace top-of-iter block-wide sync with consumer-only mbarrier.wait.
-        // Producer skips this — its cp.async.mbarrier.arrive (issued at prev iter's
-        // mid-load) handshakes async without producer thread blocking.
-        // Consumer waits until producer arrived (data ready).
-        if (!is_producer) {
-            mbar_wait(&bar_ready[buf], expected_phase[buf]);
-            expected_phase[buf] ^= 1u;  // next time we wait this slot, expect flipped parity
+        // v113: BAR.ARRIVE + BAR.SYNC pattern for top-of-iter sync.
+        // Producer (32 threads) does cpa_wait + bar.arrive 6, 128 (non-blocking, just records arrival).
+        // Consumer (96 threads) does cpa_wait (no-op) + bar.sync 6, 128 (blocks until 32+96=128).
+        // Producer doesn't wait → races to mid-iter cp.async.
+        // Consumer waits guarantees producer's cp.async lands AND visibility.
+        cpa_wait<0>();
+        if (is_producer) {
+            asm volatile("bar.arrive 6, 128;");  // non-blocking arrival
+        } else {
+            asm volatile("bar.sync 6, 128;");    // wait for 32 + 96 = 128 arrivals
         }
-        // Cross-warp sync needed: consumer warps must converge (PV from PREV iter
-        // done in this warp before transpose writes smV_T) + producer must also
-        // be at this point to participate in transpose.
-        __syncthreads();
 
-        // v110: transpose_v reads smV (single buffer) → smV_T (consumer reads in PV).
-        // ALL warps participate (transpose_v uses FA_THREADS stride).
-        // After this point smV is dead — producer can overwrite it for V[kv+1].
-        transpose_v(smV_T, smV, head_dim);
-        __syncthreads();
+        // v113: split mid-iter — K immediate (safe — different smK slot), V gated
+        // on consumer transpose-done via block-wide bar.sync 7, 128.
+        if (!is_producer) {
+            transpose_v_consumer(smV_T, smV, head_dim);
+            asm volatile("bar.sync 3, 96;");  // consumer-only post-transpose
+        }
 
-        // v111-debug: producer-only mid-iter prefetch + SYNCHRONOUS arrive.
-        // Lose async benefit but isolates correctness of the mbarrier path.
         int kv_p = kv + 1;
         int rows_p = (kv_p < kv_max_blocks) ? FA_BC : 0;
         if (wid == 0) {
-            load_tile_fp8_warp(smK[nxt_buf], Kh, kv_p * FA_BC, rows_p,
+            // K cp.async immediately — safe (different smK slot from cur_K).
+            load_tile_fp8_warp(smK_base + nxt_buf * K_STRIDE_BYTES,
+                               Kh, kv_p * FA_BC, rows_p,
                                seq_len, head_dim, lane);
+        }
+        // Block-wide sync: gates V cp.async on consumer transpose-done.
+        // ALL 128 threads arrive here (producer + consumer). Both wait until all.
+        asm volatile("bar.sync 7, 128;");
+        if (wid == 0) {
             load_tile_fp8_warp(smV, Vh, kv_p * FA_BC, rows_p,
                                seq_len, head_dim, lane);
-            cpa_commit();
-            cpa_wait<0>();                       // wait for own cp.async (sync)
-            mbar_arrive(&bar_ready[nxt_buf]);  // regular arrive
-        } else {
-            cpa_commit();
         }
+        cpa_commit();
 
         // ===== QK + softmax: CONSUMER WARPS ONLY =====
         // Producers fall through to the smP barrier below (must reach __syncthreads).
@@ -927,7 +910,7 @@ void cpu_attention_fp8(
 }
 
 // NCu-friendly launcher: ./fa_v96_ksbatched --ncu <cfg_idx>
-// Runs ONE warmup + ONE measured launch of fa111_kernel on bench_configs[cfg_idx].
+// Runs ONE warmup + ONE measured launch of fa113b_kernel on bench_configs[cfg_idx].
 // NCu profiles only the measured launch (use --launch-skip 1 --launch-count 1).
 static int ncu_mode(int cfg_idx)
 {
@@ -958,18 +941,18 @@ static int ncu_mode(int cfg_idx)
     CK(cudaMemset(Q_d, 0x38, n_elems));
     CK(cudaMemset(K_d, 0x38, n_elems));
     CK(cudaMemset(V_d, 0x38, n_elems));
-    int smem = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE + 16 /* mbar */
+    int smem = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE
              + hd * SMV_T_STRIDE;
     int nqt = (sl + FA_BR - 1) / FA_BR;
     int grid = bh * nqt;
     float scale = 1.0f / sqrtf((float)hd);
     fprintf(stderr, "NCu config: bh=%d sl=%d hd=%d wnd=%d grid=%d\n",
             bh, sl, hd, wnd, grid);
-    CK(cudaFuncSetAttribute(fa111_kernel,
+    CK(cudaFuncSetAttribute(fa113b_kernel,
                             cudaFuncAttributeMaxDynamicSharedMemorySize, smem));
-    fa111_kernel<<<grid, FA_THREADS, smem>>>(Q_d, K_d, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
+    fa113b_kernel<<<grid, FA_THREADS, smem>>>(Q_d, K_d, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
     CK(cudaDeviceSynchronize());
-    fa111_kernel<<<grid, FA_THREADS, smem>>>(Q_d, K_d, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
+    fa113b_kernel<<<grid, FA_THREADS, smem>>>(Q_d, K_d, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
     CK(cudaDeviceSynchronize());
     cudaFree(Q_d); cudaFree(K_d); cudaFree(V_d); cudaFree(O_d);
     return 0;
@@ -1002,12 +985,12 @@ static int loop_mode(int cfg_idx, int seconds)
     CK(cudaMalloc(&V_d, n_elems)); CK(cudaMalloc(&O_d, n_elems * 2));
     CK(cudaMemset(Q_d, 0x38, n_elems)); CK(cudaMemset(K_d, 0x38, n_elems));
     CK(cudaMemset(V_d, 0x38, n_elems));
-    int smem = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE + 16 /* mbar */
+    int smem = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE
              + hd * SMV_T_STRIDE;
     int nqt = (sl + FA_BR - 1) / FA_BR;
     int grid = bh * nqt;
     float scale = 1.0f / sqrtf((float)hd);
-    CK(cudaFuncSetAttribute(fa111_kernel,
+    CK(cudaFuncSetAttribute(fa113b_kernel,
                             cudaFuncAttributeMaxDynamicSharedMemorySize, smem));
     fprintf(stderr, "Loop: cfg=%d bh=%d sl=%d wnd=%d grid=%d, running for %d sec\n",
             cfg_idx, bh, sl, wnd, grid, seconds);
@@ -1020,7 +1003,7 @@ static int loop_mode(int cfg_idx, int seconds)
     cudaEventRecord(t0);
     int probe = 50;
     for (int i = 0; i < probe; i++)
-        fa111_kernel<<<grid, FA_THREADS, smem>>>(Q_d, K_d, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
+        fa113b_kernel<<<grid, FA_THREADS, smem>>>(Q_d, K_d, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
     cudaEventRecord(t1);
     cudaEventSynchronize(t1);
     float ms; cudaEventElapsedTime(&ms, t0, t1);
@@ -1033,7 +1016,7 @@ static int loop_mode(int cfg_idx, int seconds)
     long long launched = 0;
     while (launched < total_launches) {
         for (long long i = 0; i < batch && launched < total_launches; i++, launched++)
-            fa111_kernel<<<grid, FA_THREADS, smem>>>(Q_d, K_d, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
+            fa113b_kernel<<<grid, FA_THREADS, smem>>>(Q_d, K_d, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
         CK(cudaDeviceSynchronize());
         auto t_now = std::chrono::steady_clock::now();
         double elapsed_s = std::chrono::duration<double>(t_now - t_start).count();
@@ -1048,54 +1031,6 @@ static int loop_mode(int cfg_idx, int seconds)
     return 0;
 }
 
-// M8 smoke: relaunch kernel N times with 8s timeout per launch — приёмка фикса M7.
-static int smoke_mode(int bh, int sl, int wnd, int N)
-{
-    int hd = 128;
-    int ca = (wnd > 0) ? 1 : 0;
-    size_t n_elems = (size_t)bh * sl * hd;
-    uint8_t *Q_d, *K_d, *V_d; __half *O_d;
-    CK(cudaMalloc(&Q_d, n_elems)); CK(cudaMalloc(&K_d, n_elems));
-    CK(cudaMalloc(&V_d, n_elems)); CK(cudaMalloc(&O_d, n_elems * 2));
-    CK(cudaMemset(Q_d, 0x38, n_elems)); CK(cudaMemset(K_d, 0x38, n_elems));
-    CK(cudaMemset(V_d, 0x38, n_elems));
-    int smem = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE + 16
-             + hd * SMV_T_STRIDE;
-    int nqt = (sl + FA_BR - 1) / FA_BR;
-    int grid = bh * nqt;
-    float scale = 1.0f / sqrtf((float)hd);
-    CK(cudaFuncSetAttribute(fa111_kernel,
-                            cudaFuncAttributeMaxDynamicSharedMemorySize, smem));
-    printf("=== smoke: bh=%d sl=%d wnd=%d grid=%d × %d launches ===\n",
-           bh, sl, wnd, grid, N);
-    int n_hang = 0, n_ok = 0;
-    for (int i = 0; i < N; i++) {
-        auto t0 = std::chrono::steady_clock::now();
-        fa111_kernel<<<grid, FA_THREADS, smem>>>(
-            Q_d, K_d, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
-        bool hung = false;
-        while (true) {
-            cudaError_t e = cudaStreamQuery(0);
-            if (e == cudaSuccess) break;
-            if (e != cudaErrorNotReady) { hung = true; break; }
-            auto t1 = std::chrono::steady_clock::now();
-            if (std::chrono::duration<double>(t1 - t0).count() > 8.0) {
-                hung = true; break;
-            }
-            usleep(2000);
-        }
-        if (hung) { n_hang++; printf("  run %3d: HANG\n", i+1); break; }
-        else      { n_ok++; }
-        if (((i+1) % 10) == 0) {
-            printf("  run %3d/%d: OK=%d HANG=%d\n", i+1, N, n_ok, n_hang);
-            fflush(stdout);
-        }
-    }
-    printf("=== smoke summary: %d OK / %d HANG / %d ===\n", n_ok, n_hang, N);
-    cudaFree(Q_d); cudaFree(K_d); cudaFree(V_d); cudaFree(O_d);
-    return n_hang > 0 ? 1 : 0;
-}
-
 int main(int argc, char **argv)
 {
     if (argc >= 3 && strcmp(argv[1], "--ncu") == 0) {
@@ -1104,20 +1039,17 @@ int main(int argc, char **argv)
     if (argc >= 4 && strcmp(argv[1], "--loop") == 0) {
         return loop_mode(atoi(argv[2]), atoi(argv[3]));
     }
-    if (argc >= 6 && strcmp(argv[1], "--smoke") == 0) {
-        return smoke_mode(atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]));
-    }
     cudaDeviceProp p; CK(cudaGetDeviceProperties(&p, 0));
     int clk = 0; cudaDeviceGetAttribute(&clk, cudaDevAttrClockRate, 0);
-    printf("=== FA v111 STEP 4 hd=128 warp-spec 1P+3C + real mbarrier (cpa_wait → mbar) ===\n");
+    printf("=== FA v113 PRODUCER-SKIP top via bar.arrive (non-blocking) + bar.sync 6,128 ===\n");
     printf("GPU: %s (%d SMs, %d MHz)\n", p.name, p.multiProcessorCount, clk / 1000);
 
     // Report actual kernel attributes (real SMEM use + reg count).
     cudaFuncAttributes attr;
-    CK(cudaFuncGetAttributes(&attr, fa111_kernel));
+    CK(cudaFuncGetAttributes(&attr, fa113b_kernel));
     printf("Kernel attrs: numRegs=%d  binSize=%d  sharedSizeBytes(static)=%zu\n",
            attr.numRegs, attr.binaryVersion, attr.sharedSizeBytes);
-    int smem_hd128 = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE + 16 /* mbar */
+    int smem_hd128 = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE
                    + 128 * SMV_T_STRIDE;
     int smem_v68   = (FA_BR + 2 * FA_BC + 2 * FA_BC) * FA_STRIDE + 128 * SMV_T_STRIDE;
     printf("Dynamic SMEM (hd=128): v69_singleV=%d B (%.2f KB) vs v68=%d B (delta=%+d B)\n",
@@ -1179,13 +1111,13 @@ int main(int argc, char **argv)
         // v69_singleV: smQ + 2×smK + 1×smV + smV_T(padded).
         // = 16384 + 16384 + 8192 + 128*68(=8704) = 49664 B = 48.5 KB.
         // 2 blocks × 48.5 = 97 KB ≤ 100 KB cap → 2 blocks/SM.
-        int smem = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE + 16 /* mbar */
+        int smem = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE
                  + hd * SMV_T_STRIDE;
-        CK(cudaFuncSetAttribute(fa111_kernel,
+        CK(cudaFuncSetAttribute(fa113b_kernel,
                                 cudaFuncAttributeMaxDynamicSharedMemorySize, smem));
         int nqt = (sl + FA_BR - 1) / FA_BR;
         float scale = 1.0f / sqrtf((float)hd);
-        fa111_kernel<<<bh * nqt, FA_THREADS, smem>>>(
+        fa113b_kernel<<<bh * nqt, FA_THREADS, smem>>>(
             Q_d, K_d, V_d, O_d, sl, hd, ca, scale, 1.0f, 1.0f, wnd);
         CK(cudaDeviceSynchronize());
 
@@ -1261,13 +1193,13 @@ int main(int argc, char **argv)
         // v69_singleV: smQ + 2×smK + 1×smV + smV_T(padded).
         // = 16384 + 16384 + 8192 + 128*68(=8704) = 49664 B = 48.5 KB.
         // 2 blocks × 48.5 = 97 KB ≤ 100 KB cap → 2 blocks/SM.
-        int smem = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE + 16 /* mbar */
+        int smem = FA_BR * FA_STRIDE + 2 * FA_BC * FA_STRIDE + FA_BC * FA_STRIDE
                  + hd * SMV_T_STRIDE;
         int nqt = (sl + FA_BR - 1) / FA_BR;
         float scale = 1.0f / sqrtf((float)hd);
 
         for (int i = 0; i < 5; i++)
-            fa111_kernel<<<bh * nqt, FA_THREADS, smem>>>(
+            fa113b_kernel<<<bh * nqt, FA_THREADS, smem>>>(
                 Q_d, K_d, V_d, O_d, sl, hd, ca_bench, scale, 1.0f, 1.0f, wnd);
         CK(cudaDeviceSynchronize());
 
@@ -1279,7 +1211,7 @@ int main(int argc, char **argv)
             cudaEvent_t t0, t1; cudaEventCreate(&t0); cudaEventCreate(&t1);
             cudaEventRecord(t0);
             for (int i = 0; i < it; i++)
-                fa111_kernel<<<bh * nqt, FA_THREADS, smem>>>(
+                fa113b_kernel<<<bh * nqt, FA_THREADS, smem>>>(
                     Q_d, K_d, V_d, O_d, sl, hd, ca_bench, scale, 1.0f, 1.0f, wnd);
             cudaEventRecord(t1);
             cudaEventSynchronize(t1);

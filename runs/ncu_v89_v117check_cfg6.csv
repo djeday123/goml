@@ -1,0 +1,56 @@
+==PROF== Connected to process 375700 (/data/lib/podman-data/projects/goml/runs/fa_v89_pinregs_fp8)
+=== FA v89 hd=64 + P-in-regs (shfl gather, skip smP) ===
+GPU: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (188 SMs)
+
+SMEM/block (hd=64): 24832 B (24.25 KB) — SMEM allows 4 blocks/SM (≤ 100 KB cap)
+v79b baseline @ hd=128: 249 regs/thread → reg-bound 2 blocks/SM
+Need ≤ 170 regs/thread for 3 blocks. Expected v81 from arithmetic: ~217 regs (still over)
+
+--- Kernel attrs ---
+  LB=2 (natural)    numRegs=214  localSpill=16 B  staticSmem=0 B
+    reg-bound blocks/SM = 2   smem-bound = 4   ACTUAL = 2
+  LB=3 (forced)     numRegs=168  localSpill=16 B  staticSmem=0 B
+    reg-bound blocks/SM = 3   smem-bound = 4   ACTUAL = 3
+
+--- Phase 1: Correctness on hd=64 (all forms × both LB) ---
+  bh=1 sl=64 hd=64 ca=0 wnd=0     LB2: diff=0.0071 errs=0 PASS | LB3: diff=0.0071 errs=0 PASS
+  bh=1 sl=128 hd=64 ca=0 wnd=0     LB2: diff=0.0060 errs=0 PASS | LB3: diff=0.0060 errs=0 PASS
+  bh=1 sl=256 hd=64 ca=0 wnd=0     LB2: diff=0.0040 errs=0 PASS | LB3: diff=0.0040 errs=0 PASS
+  bh=1 sl=512 hd=64 ca=0 wnd=0     LB2: diff=0.0028 errs=0 PASS | LB3: diff=0.0028 errs=0 PASS
+  bh=2 sl=256 hd=64 ca=1 wnd=0     LB2: diff=0.0180 errs=0 PASS | LB3: diff=0.0180 errs=0 PASS
+  bh=1 sl=256 hd=64 ca=1 wnd=64    LB2: diff=0.0168 errs=0 PASS | LB3: diff=0.0168 errs=0 PASS
+  bh=1 sl=256 hd=64 ca=1 wnd=100   LB2: diff=0.0168 errs=0 PASS | LB3: diff=0.0168 errs=0 PASS
+  bh=1 sl=300 hd=64 ca=1 wnd=96    LB2: diff=0.0168 errs=0 PASS | LB3: diff=0.0168 errs=0 PASS
+  → LB=2: 8/8 PASS   LB=3: 8/8 PASS
+
+--- Phase 2: A/B perf — LB=2 vs LB=3 on hd=64 (variance ×3) ---
+  config                     | LB=2 (best/med/worst)        | LB=3 (best/med/worst)        | LB3/LB2
+  --------------------------|-------------------------------|-------------------------------|--------
+  bh=4 sl=1024 wnd=0         |  34.5 /  34.4 /  34.2 T  |  34.5 /  34.4 /  34.3 T  | 1.001  =
+  bh=4 sl=2048 wnd=0         |  86.4 /  86.4 /  86.4 T  |  83.0 /  83.0 /  83.0 T  | 0.961  ✗
+  bh=8 sl=2048 wnd=0         | 172.4 / 171.5 / 171.4 T  | 166.0 / 166.0 / 166.0 T  | 0.968  ✗
+  bh=4 sl=4096 wnd=0         | 181.4 / 181.4 / 181.3 T  | 177.5 / 177.4 / 177.4 T  | 0.978  ✗
+  bh=8 sl=4096 wnd=0         | 281.5 / 281.2 / 281.2 T  | 273.7 / 273.7 / 273.6 T  | 0.973  ✗
+  bh=16 sl=2048 wnd=0        | 260.1 / 260.0 / 260.0 T  | 257.8 / 257.4 / 257.1 T  | 0.990  =
+  bh=16 sl=4096 wnd=0        | 322.1 / 322.1 / 322.0 T  | 412.5 / 411.7 / 411.5 T  | 1.278  ✓
+  bh=32 sl=2048 wnd=0        | 303.1 / 302.6 / 302.5 T  | 387.1 / 386.9 / 386.9 T  | 1.279  ✓
+  bh=4 sl=8192 wnd=1024      | 188.5 / 188.5 / 188.4 T  | 188.3 / 188.3 / 188.2 T  | 0.999  =
+  bh=4 sl=4096 wnd=1024      | 128.5 / 128.5 / 128.5 T  | 121.9 / 121.8 / 121.6 T  | 0.948  ✗
+  bh=8 sl=8192 wnd=1024      | 204.1 / 203.8 / 203.3 T  | 277.0 / 276.8 / 276.8 T  | 1.358  ✓
+
+=== Verdict ===
+LB=2 (226 regs, 2 blocks/SM) vs LB=3 (168 regs, 3 blocks/SM) — same hd=64 kernel.
+ratio > 1.02 → 3rd block buys speed (occupancy hides latency)
+ratio ≈ 1.00 → 3rd block neutral (occupancy not the bottleneck)
+ratio < 0.98 → 3rd block hurts (e.g. extra resched cost, cache pressure)
+==PROF== Disconnected from process 375700
+"ID","Process ID","Process Name","Host Name","Kernel Name","Context","Stream","Block Size","Grid Size","Device","CC","Section Name","Metric Name","Metric Unit","Metric Value"
+"0","375700","fa_v89_pinregs_fp8","127.0.0.1","void fa89_kernel<3>(const unsigned char *, const unsigned char *, const unsigned char *, __half *, int, int, int, float, float, float, int)","1","7","(128, 1, 1)","(1, 1, 1)","0","12.0","Command line profiler metrics","smsp__warp_issue_stalled_barrier_per_warp_active.pct","%","1.32"
+"0","375700","fa_v89_pinregs_fp8","127.0.0.1","void fa89_kernel<3>(const unsigned char *, const unsigned char *, const unsigned char *, __half *, int, int, int, float, float, float, int)","1","7","(128, 1, 1)","(1, 1, 1)","0","12.0","Command line profiler metrics","smsp__warp_issue_stalled_dispatch_stall_per_warp_active.pct","%","0.72"
+"0","375700","fa_v89_pinregs_fp8","127.0.0.1","void fa89_kernel<3>(const unsigned char *, const unsigned char *, const unsigned char *, __half *, int, int, int, float, float, float, int)","1","7","(128, 1, 1)","(1, 1, 1)","0","12.0","Command line profiler metrics","smsp__warp_issue_stalled_lg_throttle_per_warp_active.pct","%","1.60"
+"0","375700","fa_v89_pinregs_fp8","127.0.0.1","void fa89_kernel<3>(const unsigned char *, const unsigned char *, const unsigned char *, __half *, int, int, int, float, float, float, int)","1","7","(128, 1, 1)","(1, 1, 1)","0","12.0","Command line profiler metrics","smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct","%","23.91"
+"0","375700","fa_v89_pinregs_fp8","127.0.0.1","void fa89_kernel<3>(const unsigned char *, const unsigned char *, const unsigned char *, __half *, int, int, int, float, float, float, int)","1","7","(128, 1, 1)","(1, 1, 1)","0","12.0","Command line profiler metrics","smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct","%","2.27"
+"0","375700","fa_v89_pinregs_fp8","127.0.0.1","void fa89_kernel<3>(const unsigned char *, const unsigned char *, const unsigned char *, __half *, int, int, int, float, float, float, int)","1","7","(128, 1, 1)","(1, 1, 1)","0","12.0","Command line profiler metrics","smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct","%","0.77"
+"0","375700","fa_v89_pinregs_fp8","127.0.0.1","void fa89_kernel<3>(const unsigned char *, const unsigned char *, const unsigned char *, __half *, int, int, int, float, float, float, int)","1","7","(128, 1, 1)","(1, 1, 1)","0","12.0","Command line profiler metrics","smsp__warp_issue_stalled_no_instruction_per_warp_active.pct","%","17.34"
+"0","375700","fa_v89_pinregs_fp8","127.0.0.1","void fa89_kernel<3>(const unsigned char *, const unsigned char *, const unsigned char *, __half *, int, int, int, float, float, float, int)","1","7","(128, 1, 1)","(1, 1, 1)","0","12.0","Command line profiler metrics","smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct","%","6.95"
+"0","375700","fa_v89_pinregs_fp8","127.0.0.1","void fa89_kernel<3>(const unsigned char *, const unsigned char *, const unsigned char *, __half *, int, int, int, float, float, float, int)","1","7","(128, 1, 1)","(1, 1, 1)","0","12.0","Command line profiler metrics","smsp__warp_issue_stalled_wait_per_warp_active.pct","%","19.19"
