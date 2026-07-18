@@ -26,3 +26,26 @@ runs/*.cubin
 ./data/en_combined.txt
 ./data/wiki_en_old.txt
 ./runs1/fp8_profile.ncu-rep
+
+# R03a-era additions (2026-07-18)
+# NCu кэш и тяжёлые артефакты
+/ncu_home/
+# Тестовые release-clones + промежуточные release-снапшоты
+/release_v0.2.0/
+/release_verify_clone/
+# Bench-логи champion-run'ов
+champion_*.log
+# libs/: временные Makefile'и per-бенч, build-логи, SASS/PTX-дампы, snapshot'ы .cu
+libs/Makefile.*
+libs/*_build.log
+libs/*.log
+libs/*.sass
+libs/*.ptx
+libs/*.cu.*
+# runs/: NCu-логи, sass/ptx-дампы, json-стата, txt-выгрузки
+runs/*.json
+runs/*.sass
+runs/*.ptx
+runs/*.txt
+runs/*.log
+runs/*_raw.*

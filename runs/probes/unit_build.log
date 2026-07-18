@@ -1,0 +1,12 @@
+pack_qt_unit_test.cu(23): warning #177-D: variable "SMEM_TOTAL_BYTES" was declared but never referenced
+  constexpr int SMEM_TOTAL_BYTES = SMEM_SMQ_BYTES + SMEM_SMQT_BYTES;
+                ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_Z11pack_kernelPhS_' for 'sm_120a'
+ptxas info    : Function properties for _Z11pack_kernelPhS_
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 48 registers, used 1 barriers, 16896 bytes smem
+ptxas info    : Compile time = 9.596 ms

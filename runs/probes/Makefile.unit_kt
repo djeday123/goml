@@ -1,0 +1,21 @@
+NVCC     := /usr/local/cuda-13.1/bin/nvcc
+ARCH     := -gencode arch=compute_120a,code=sm_120a
+STD      := -std=c++17
+OPT      := -O3
+PTXFLAGS := -Xptxas=-v
+
+BIN := pack_kt_unit_test
+
+$(BIN): pack_kt_unit_test.cu
+	$(NVCC) $(OPT) $(ARCH) $(STD) $(PTXFLAGS) pack_kt_unit_test.cu -o $(BIN) 2>&1 | tee unit_kt_build.log
+
+sass: $(BIN)
+	/usr/local/cuda-13.1/bin/cuobjdump --dump-sass $(BIN) > unit_kt_sass.txt 2>&1
+	@echo "=== SASS gates ==="
+	@echo -n "SHFL: "; grep -cE "SHFL" unit_kt_sass.txt
+	@echo -n "STS.32: "; grep -cE "^\s+/\*[0-9a-f]+\*/\s+STS\b" unit_kt_sass.txt
+	@echo -n "STS.U8/16: "; grep -cE "STS\.(U8|U16|B8|B16)" unit_kt_sass.txt
+	@echo -n "LDL/STL: "; grep -cE "\bLDL\b|\bSTL\b" unit_kt_sass.txt
+
+clean:
+	rm -f $(BIN) unit_kt_build.log unit_kt_sass.txt

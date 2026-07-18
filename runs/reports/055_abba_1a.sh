@@ -1,0 +1,26 @@
+#!/bin/bash
+# 055 §1.a ABBA: base (040 252r) vs cand (055 §1.a L2-hint 252r)
+BASE=/data/lib/podman-data/projects/goml/runs/archive/055_pre/r2c_merged_wall
+CAND=/data/lib/podman-data/projects/goml/runs/archive/055_pre/r2c_merged_wall_cand_1a
+LOG=/data/lib/podman-data/projects/goml/runs/reports/055_abba_1a_data.txt
+> "$LOG"
+
+echo "=== 055 §1.a ABBA: base(040 252r) vs cand(L2-hint 252r) ===" | tee -a "$LOG"
+
+echo "-- warmup 4 runs --" | tee -a "$LOG"
+for i in 1 2 3 4; do
+    T=$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits | head -1)
+    if [ $((i % 2)) -eq 0 ]; then BIN=$CAND; TAG=CAND; else BIN=$BASE; TAG=BASE; fi
+    OUT=$("$BIN" 2>&1 | grep -E "avg_ms" | head -1)
+    echo "warmup=$i temp=${T}C $TAG: $OUT" | tee -a "$LOG"
+done
+
+echo "-- 16 timed (8 pairs) --" | tee -a "$LOG"
+PATTERN=(BASE CAND CAND BASE BASE CAND CAND BASE BASE CAND CAND BASE BASE CAND CAND BASE)
+for i in $(seq 0 15); do
+    TAG=${PATTERN[$i]}
+    if [ "$TAG" = "BASE" ]; then BIN=$BASE; else BIN=$CAND; fi
+    T=$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits | head -1)
+    OUT=$("$BIN" 2>&1 | grep -E "avg_ms" | head -1)
+    echo "timed=$((i+1)) temp=${T}C $TAG: $OUT" | tee -a "$LOG"
+done

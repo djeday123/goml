@@ -1,0 +1,10 @@
+NVCC     := /usr/local/cuda-13.1/bin/nvcc
+ARCH     := -gencode arch=compute_120a,code=sm_120a
+STD      := -std=c++17
+OPT      := -O3
+PTXFLAGS := -Xptxas=-v
+
+BIN := transpose_ds_unit_test
+
+$(BIN): transpose_ds_unit_test.cu
+	$(NVCC) $(OPT) $(ARCH) $(STD) $(PTXFLAGS) transpose_ds_unit_test.cu -o $(BIN)

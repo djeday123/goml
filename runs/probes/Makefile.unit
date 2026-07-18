@@ -1,0 +1,17 @@
+NVCC     := /usr/local/cuda-13.1/bin/nvcc
+ARCH     := -gencode arch=compute_120a,code=sm_120a
+STD      := -std=c++17
+OPT      := -O3
+PTXFLAGS := -Xptxas=-v
+
+BIN := pack_qt_unit_test
+
+$(BIN): pack_qt_unit_test.cu
+	$(NVCC) $(OPT) $(ARCH) $(STD) $(PTXFLAGS) pack_qt_unit_test.cu -o $(BIN) 2>&1 | tee unit_build.log
+
+sass: $(BIN)
+	/usr/local/cuda-13.1/bin/cuobjdump --dump-sass $(BIN) > unit_sass.txt 2>&1
+	@echo "SASS: unit_sass.txt"
+
+clean:
+	rm -f $(BIN) unit_build.log unit_sass.txt

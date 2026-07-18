@@ -1,0 +1,126 @@
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_Z12probe_kernelILi25EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi25EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 19 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 6.016 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi24EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi24EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 19 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 5.256 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi23EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi23EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 15 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 5.079 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi22EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi22EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 18 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 5.247 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi21EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi21EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 26 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.736 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi20EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi20EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 26 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.719 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi19EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi19EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 26 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.721 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi18EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi18EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 26 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.708 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi17EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi17EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 18 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.980 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi16EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi16EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 17 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.899 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi15EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi15EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 17 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 5.017 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi14EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi14EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 18 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.977 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi13EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi13EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 26 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.704 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi12EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi12EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 26 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.722 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi11EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi11EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 26 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.714 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi10EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi10EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 26 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.703 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi9EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi9EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 25 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.747 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi8EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi8EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 24 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.679 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi7EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi7EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 18 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.888 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi6EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi6EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 18 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.887 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi5EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi5EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 25 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.749 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi4EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi4EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 25 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.802 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi3EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi3EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 26 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 5.291 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi2EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi2EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 23 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.893 ms
+ptxas info    : Compiling entry function '_Z12probe_kernelILi1EEvPji' for 'sm_120a'
+ptxas info    : Function properties for _Z12probe_kernelILi1EEvPji
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 23 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 4.883 ms
