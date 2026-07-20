@@ -81,10 +81,16 @@ var (
 	cuDeviceGetAttribute func(pi *int32, attrib int32, dev int32) CUresult
 	cuDeviceTotalMem     func(bytes *uint64, dev int32) CUresult
 
-	// Context
-	cuCtxCreate     func(pctx *uintptr, flags uint32, dev int32) CUresult
-	cuCtxSetCurrent func(ctx uintptr) CUresult
-	cuCtxDestroy    func(ctx uintptr) CUresult
+	// Context. Fix A (R03b-impl-1, 2026-07-18): goml переведён с cuCtxCreate
+	// на cuDevicePrimaryCtxRetain — оба мира gotorch и goml теперь retain'ят
+	// один и тот же primary context device-wide singleton. cuCtxCreate/Destroy
+	// оставлены зарегистрированными для потенциальных будущих сценариев
+	// (напр. изолированный вспомогательный контекст) — но в hot path не зовутся.
+	cuCtxCreate               func(pctx *uintptr, flags uint32, dev int32) CUresult
+	cuCtxSetCurrent           func(ctx uintptr) CUresult
+	cuCtxDestroy              func(ctx uintptr) CUresult
+	cuDevicePrimaryCtxRetain  func(pctx *uintptr, dev int32) CUresult
+	cuDevicePrimaryCtxRelease func(dev int32) CUresult
 
 	// Memory
 	cuMemAlloc   func(dptr *uintptr, bytesize uint64) CUresult
@@ -137,6 +143,8 @@ func initDriver() error {
 		purego.RegisterLibFunc(&cuCtxCreate, lib, "cuCtxCreate_v2")
 		purego.RegisterLibFunc(&cuCtxSetCurrent, lib, "cuCtxSetCurrent")
 		purego.RegisterLibFunc(&cuCtxDestroy, lib, "cuCtxDestroy_v2")
+		purego.RegisterLibFunc(&cuDevicePrimaryCtxRetain, lib, "cuDevicePrimaryCtxRetain")
+		purego.RegisterLibFunc(&cuDevicePrimaryCtxRelease, lib, "cuDevicePrimaryCtxRelease_v2")
 		purego.RegisterLibFunc(&cuMemAlloc, lib, "cuMemAlloc_v2")
 		purego.RegisterLibFunc(&cuMemFree, lib, "cuMemFree_v2")
 		purego.RegisterLibFunc(&cuMemcpyHtoD, lib, "cuMemcpyHtoD_v2")

@@ -68,9 +68,20 @@ func (b *Backend) ensureInit() error {
 		return fmt.Errorf("cuDeviceGet(%d): %s", b.deviceIdx, r.Error())
 	}
 
-	// Create context
-	if r := cuCtxCreate(&b.ctx, 0, b.device); r != CUDA_SUCCESS {
-		return fmt.Errorf("cuCtxCreate: %s", r.Error())
+	// Retain primary context (Fix A, R03b-impl-1, 2026-07-18).
+	// Ранее использовался cuCtxCreate — создавался floating context,
+	// отдельный от primary. Это разбивало интероп с любым процессом/пакетом,
+	// который живёт на primary (gotorch, PyTorch, TensorRT — все retain'ят
+	// primary). R03a матрица 2×2 показала: UVA cross-context прозрачно работает
+	// на текущих драйверах, но безусловно только пока UVA держится. Retain
+	// primary снимает эту зависимость: оба мира разделяют один context handle
+	// device-wide singleton.
+	if r := cuDevicePrimaryCtxRetain(&b.ctx, b.device); r != CUDA_SUCCESS {
+		return fmt.Errorf("cuDevicePrimaryCtxRetain: %s", r.Error())
+	}
+	if r := cuCtxSetCurrent(b.ctx); r != CUDA_SUCCESS {
+		cuDevicePrimaryCtxRelease(b.device)
+		return fmt.Errorf("cuCtxSetCurrent(primary): %s", r.Error())
 	}
 
 	// Create default stream
@@ -267,6 +278,16 @@ func (b *Backend) Sync() error {
 	return nil
 }
 
+// Stream возвращает CUDA-stream handle этого backend'а.
+// Требуется adapter'у goml/backend/gotorch/ (R03b-impl-2) для инъекции
+// одного stream'а в gotorch.SetStream — оба мира работают на одной очереди,
+// full-sync на границе adapter-метода не нужен.
+//
+// Возвращает 0 если backend ещё не инициализирован (stream создаётся
+// в ensureInit). Adapter обязан вызвать любой backend-метод (напр. Alloc)
+// перед чтением Stream, иначе получит 0 = default stream, что не то что нужно.
+func (b *Backend) Stream() uintptr { return b.stream }
+
 // Launch exposes kernel launching for custom kernels (e.g. AdamW from training loop).
 func (b *Backend) Launch(name string, gridX, gridY, gridZ, blockX, blockY, blockZ uint32, params []unsafe.Pointer) error {
 	if err := b.ensureInit(); err != nil {
@@ -330,7 +351,10 @@ func (b *Backend) Close() error {
 		cuStreamDestroy(b.stream)
 	}
 	if b.ctx != 0 {
-		cuCtxDestroy(b.ctx)
+		// Fix A (R03b-impl-1, 2026-07-18): primary context — refcounted
+		// device-wide singleton. Release decrement'ит refcount, но не убьёт
+		// context пока другие процессы/пакеты его retain'ят (gotorch, PyTorch…).
+		cuDevicePrimaryCtxRelease(b.device)
 	}
 	b.initialized = false
 	return nil
