@@ -210,6 +210,13 @@ func TestAdapterNoFullSync(t *testing.T) {
 			if bytes.HasPrefix(trimmed, []byte("//")) {
 				continue
 			}
+			// Whitelist: строки помеченные `// end-of-op boundary` — публичный
+			// Sync() API, не спрятанный full-sync внутри операционных методов.
+			// Пример: adapter.Sync() делегирующий в fb.Sync — нужен для
+			// gputrain-style user'ов (иначе type-assert падает и D2H race'ит).
+			if bytes.Contains(lineB, []byte("end-of-op boundary")) {
+				continue
+			}
 			for _, needle := range []string{
 				".Sync(",
 				"cuStreamSynchronize",

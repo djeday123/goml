@@ -125,3 +125,21 @@ func EnableIfEnv() error {
 
 func (b *Backend) Name() string                   { return "gotorch-adapter" }
 func (b *Backend) DeviceType() backend.DeviceType { return backend.CUDA }
+
+// Launch — делегация PTX kernel launch в fb. Adapter не имеет собственных
+// PTX-ядер (только Direct-методы через gotorch), поэтому Launch для user'ов
+// сырых kernel'ов (adamw_f32, custom kernels в gputrain-style trainer'ах)
+// делегируется в fallback goml.cuda backend. Kernel launch — НЕ sync, не
+// нарушает NoFullSync-контракт adapter body.
+func (b *Backend) Launch(name string, gridX, gridY, gridZ, blockX, blockY, blockZ uint32, params []unsafe.Pointer) error {
+	return b.fb.Launch(name, gridX, gridY, gridZ, blockX, blockY, blockZ, params)
+}
+
+// Sync — public API, single-purpose end-of-op boundary sync (не нарушает
+// NoFullSync-контракт внутри операционных методов adapter). Делегация в fb,
+// который уже владеет injected stream. Нужен для gputrain-style trainer'ов
+// которые перед D2H делают `b.(syncer).Sync()` (аналог cuda.Backend.Sync()).
+// Без этого метода type-assert падает, и cuMemcpyDtoH идёт на default stream
+// без ordering против kernel'ов на injected stream = D2H-race с грязными
+// данными.
+func (b *Backend) Sync() error { return b.fb.Sync() } // end-of-op boundary
