@@ -32,6 +32,8 @@
 
 **НЕ трогается:** PTX-ядра в `backend/cuda`, cuBLAS-обёртки, LayerNorm/RoPE/SDPA/Embedding — вся вычислительная логика внутри `backend/cuda`.
 
+**Известная разница режимов (R03b-impl-4-final):** legacy `cublas handle` в `backend/cuda/cublas.go:216` — TF32 (`cublasSetMathMode(TF32)`), gotorch — pedantic FP32. Adapter direct-путь через gotorch **~3600× точнее legacy** (измерено impl-4-final Sверка 3.2 на [16×16×16]: adapter maxAbs 9.5e-7 vs fb maxAbs 3.5e-3). Выравнивание gotorch под legacy TF32 **не выполняется** — эрозия целевого источника истины отклонена (см. gotorch/v6/ARCHITECTURE.md). При полном переходе трейна на gotorch эта разница исчезает в пользу FP32. TF32-vs-FP32 переоткрывается при порте композитных ядер в gotorch (например, где 1e-3 достаточно ради 2× throughput). Точечный TF32 доступен через `gotorch.PuregoBackend.MatMulF32_TF32` — режим свойство метода, не состояние backend'а.
+
 ## Мост goml ↔ gotorch (R03b)
 
 Пакет `goml/backend/gotorch/` — адаптер, реализующий `backend.Backend` через gotorch с fallback в `backend/cuda` для методов, которых в gotorch ещё нет. Включается явно:
