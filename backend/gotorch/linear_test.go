@@ -233,12 +233,18 @@ func TestAdapter_Linear_Sверка_3_2_Triangle_FP64(t *testing.T) {
 
 // --- Сверка 3.3: batch>1 delegate — bit-exact ---
 func TestAdapter_Linear_Sверка_3_3_Batched_Direct_TF32vsFP32(t *testing.T) {
-	// ПОСЛЕ B-impl-1 стрелка delegate->direct СХЛОПНУТА для batched
-	// (adapter.MatMul batched=b.gt.MatMulStridedBatchedF32 loop cublasSgemm
-	// в FP32 pedantic, вместо старого b.fb.MatMul через goml.cuda TF32 handle).
-	// Старая проверка "adapter delegate = fb bit-exact" стала невалидной по
-	// определению схлопывания. Новая семантика: A(fb TF32-handle) vs B(adapter
-	// FP32 pedantic) -- ожидание TF32-vs-FP32 class hybrid floor (impl-4-final Sверка 3.2).
+	// B-impl-1 доработка: этот тест НЕ работает как paritу-проверка.
+	// Причина: shapeA=[4,64,64] × shapeB=[64,64] (B non-batched, broadcast).
+	// Старый adapter loop и fb loop оба ЧИТАЛИ ЗА ГРАНИЦЫ буфера B
+	// (strideB=K*N при не-batched B) -- одинаковая UB давала одинаковый мусор,
+	// что маскировалось как "bit-exact". После B-impl-1 доработки adapter
+	// исправлен (strideB=0 для broadcast), fb продолжает читать OOB.
+	// Правильная semantics теперь ловится через B/J F64 CPU reference
+	// (см. TestAdapterMatMul_Batched_AvsB в matmul_batched_test.go).
+	t.Skip("skipped after B-impl-1 доработка: сравнение с fb невалидно " +
+		"из-за старой broadcast-UB в fb loop; правильная semantics -- через F64 CPU ref")
+	_ = t
+	return
 	b := tryEnable(t).(*Backend)
 	const batch, seq, dim = 4, 64, 64
 	r := rand.New(rand.NewSource(3))
@@ -417,8 +423,11 @@ func TestAdapter_Linear_Хвост_4_2_WithBias_MatMulIntermediate(t *testing.T)
 // Дополнительно проверим финальную FFN проекцию: Dim=64 → FFNHiddenDim=172
 // forma [4,64,64] @ [64,172] batched.
 func TestAdapter_Linear_Хвост_4_3_Realistic_FFN_Shape(t *testing.T) {
-	// ПОСЛЕ B-impl-1 delegate->direct для batched: старый bit-exact-vs-fb невалиден.
-	// Новая семантика (как в 3.3): TF32-vs-FP32 class floor.
+	// B-impl-1 доработка: тот же паттерн broadcast-UB что 3.3 -- fb loop
+	// читает OOB, adapter теперь правильный. Skipped, F64 CPU ref покрывает.
+	t.Skip("skipped after B-impl-1 доработка: fb loop broadcast-UB; F64 CPU ref покрывает semantics")
+	_ = t
+	return
 	b := tryEnable(t).(*Backend)
 	const batch, seq, dim, hidden = 4, 64, 64, 172
 	r := rand.New(rand.NewSource(7))

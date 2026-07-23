@@ -32,13 +32,24 @@ func (b *Backend) MatMul(dst, a, bs backend.Storage, shapeA, shapeB core.Shape, 
 		batchSize *= shapeA[i]
 	}
 	if batchSize > 1 {
-		// B-impl-1: стрелка delegate -> direct через loop-batched (тот же
-		// паттерн что goml.cuda.BatchedMatMulF32, cublas.go:264). Bit-exact vs
-		// goml при одинаковом math mode (проверяется в A/B тесте).
+		// B-impl-1: стрелка delegate -> direct через strided-batched.
+		// Broadcast semantics: если B имеет меньше batch-размерностей чем A --
+		// та же B используется для всех batches (strideB=0). Иначе полный stride.
+		// Прежний loop-path в goml/loop-fallback читал за границы буфера B при
+		// broadcast, но получал одинаковый "мусор" в обоих путях -- скрытая UB
+		// удерживалась case-by-case. Native strided cuBLAS обнажает UB -- fix
+		// через explicit strideB=0.
+		strideA := int64(M * K)
+		strideB := int64(K * N)
+		strideC := int64(M * N)
+		if ndimB < ndimA {
+			// B не batched -- broadcast: одна и та же матрица для всех batches.
+			strideB = 0
+		}
 		return b.gt.MatMulStridedBatchedF32(
 			wrapForeign(a), wrapForeign(bs), wrapForeign(dst),
 			batchSize, M, N, K,
-			int64(M*K), int64(K*N), int64(M*N),
+			strideA, strideB, strideC,
 		)
 	}
 
