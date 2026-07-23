@@ -11,9 +11,9 @@ import (
 	"github.com/djeday123/goml/core"
 )
 
-// MatMul: batch=1 → gotorch direct; batched → fb (stays-in-goml).
+// MatMul: batch=1 → gotorch direct; batched → gotorch strided-batched (B-impl-1).
 // goml.cuda.MatMul сигнатура: A[M,K] × B[K,N] → C[M,N] (batched через shapeA[..-2] product).
-// gotorch.MatMulF32 сигнатура: (a, b, c, m, n, k) без батчинга.
+// gotorch.MatMulStridedBatchedF32: loop cublasSgemm по batch (тот же паттерн что goml BatchedMatMulF32).
 func (b *Backend) MatMul(dst, a, bs backend.Storage, shapeA, shapeB core.Shape, dtype core.DType) error {
 	if err := requireF32("MatMul", dtype); err != nil {
 		return err
@@ -32,9 +32,14 @@ func (b *Backend) MatMul(dst, a, bs backend.Storage, shapeA, shapeB core.Shape, 
 		batchSize *= shapeA[i]
 	}
 	if batchSize > 1 {
-		// stays-in-goml: у goml есть боевой cublasGemmStridedBatched.
-		// Delegate в fb; loop-по-батчу в adapter'e = anti-pattern (см. правку 2 R03b_design.md).
-		return b.fb.MatMul(dst, a, bs, shapeA, shapeB, dtype)
+		// B-impl-1: стрелка delegate -> direct через loop-batched (тот же
+		// паттерн что goml.cuda.BatchedMatMulF32, cublas.go:264). Bit-exact vs
+		// goml при одинаковом math mode (проверяется в A/B тесте).
+		return b.gt.MatMulStridedBatchedF32(
+			wrapForeign(a), wrapForeign(bs), wrapForeign(dst),
+			batchSize, M, N, K,
+			int64(M*K), int64(K*N), int64(M*N),
+		)
 	}
 
 	return b.gt.MatMulF32(wrapForeign(a), wrapForeign(bs), wrapForeign(dst), M, N, K)

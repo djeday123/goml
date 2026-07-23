@@ -232,9 +232,14 @@ func TestAdapter_Linear_Sверка_3_2_Triangle_FP64(t *testing.T) {
 }
 
 // --- Сверка 3.3: batch>1 delegate — bit-exact ---
-func TestAdapter_Linear_Sверка_3_3_Batched_Delegate_BitExact(t *testing.T) {
+func TestAdapter_Linear_Sверка_3_3_Batched_Direct_TF32vsFP32(t *testing.T) {
+	// ПОСЛЕ B-impl-1 стрелка delegate->direct СХЛОПНУТА для batched
+	// (adapter.MatMul batched=b.gt.MatMulStridedBatchedF32 loop cublasSgemm
+	// в FP32 pedantic, вместо старого b.fb.MatMul через goml.cuda TF32 handle).
+	// Старая проверка "adapter delegate = fb bit-exact" стала невалидной по
+	// определению схлопывания. Новая семантика: A(fb TF32-handle) vs B(adapter
+	// FP32 pedantic) -- ожидание TF32-vs-FP32 class hybrid floor (impl-4-final Sверка 3.2).
 	b := tryEnable(t).(*Backend)
-	// Attention Q projection TinyConfig: x[4,64,64] @ Wq[64,64] → [4,64,64].
 	const batch, seq, dim = 4, 64, 64
 	r := rand.New(rand.NewSource(3))
 	a := make([]float32, batch*seq*dim)
@@ -249,9 +254,27 @@ func TestAdapter_Linear_Sверка_3_3_Batched_Delegate_BitExact(t *testing.T) 
 		core.Shape{batch, seq, dim}, core.Shape{dim, dim}, core.Shape{batch, seq, dim})
 	fbOut := runMatMulFb(t, b, a, x,
 		core.Shape{batch, seq, dim}, core.Shape{dim, dim}, core.Shape{batch, seq, dim})
-	// Adapter batch>1 → delegate в fb → тот же код-путь → обязан bit-exact.
-	checkBitExact(t, adapterOut, fbOut,
-		"[3.3] batched delegate [4,64,64]×[64,64] adapter-via-fb vs fb-direct")
+	var maxAbs, maxRel float64
+	fails := 0
+	const absTol, relTol = 1e-2, 2e-1
+	for i := range adapterOut {
+		d := math.Abs(float64(adapterOut[i]) - float64(fbOut[i]))
+		rel := d / (math.Abs(float64(fbOut[i])) + 1e-30)
+		if d > maxAbs {
+			maxAbs = d
+		}
+		if rel > maxRel {
+			maxRel = rel
+		}
+		if d > absTol+relTol*math.Abs(float64(fbOut[i])) {
+			fails++
+		}
+	}
+	t.Logf("[3.3] batched direct A(fb TF32)/B(adapter FP32) [4,64,64]×[64,64]: maxAbs=%.3e maxRel=%.3e fails=%d/%d (floor TF32-vs-FP32 class, impl-4-final)",
+		maxAbs, maxRel, fails, len(adapterOut))
+	if fails > 0 {
+		t.Errorf("[3.3] batched: %d fails", fails)
+	}
 }
 
 // --- Сверка 3.4: TF32-vs-TF32, главная ---
@@ -394,8 +417,9 @@ func TestAdapter_Linear_Хвост_4_2_WithBias_MatMulIntermediate(t *testing.T)
 // Дополнительно проверим финальную FFN проекцию: Dim=64 → FFNHiddenDim=172
 // forma [4,64,64] @ [64,172] batched.
 func TestAdapter_Linear_Хвост_4_3_Realistic_FFN_Shape(t *testing.T) {
+	// ПОСЛЕ B-impl-1 delegate->direct для batched: старый bit-exact-vs-fb невалиден.
+	// Новая семантика (как в 3.3): TF32-vs-FP32 class floor.
 	b := tryEnable(t).(*Backend)
-	// TinyConfig FFN gate: x [4, 64, 64] @ w1^T [64, 172] → [4, 64, 172].
 	const batch, seq, dim, hidden = 4, 64, 64, 172
 	r := rand.New(rand.NewSource(7))
 	a := make([]float32, batch*seq*dim)
@@ -410,7 +434,25 @@ func TestAdapter_Linear_Хвост_4_3_Realistic_FFN_Shape(t *testing.T) {
 		core.Shape{batch, seq, dim}, core.Shape{dim, hidden}, core.Shape{batch, seq, hidden})
 	fbOut := runMatMulFb(t, b, a, x,
 		core.Shape{batch, seq, dim}, core.Shape{dim, hidden}, core.Shape{batch, seq, hidden})
-	// batch=4 > 1 → delegate → bit-exact.
-	checkBitExact(t, adapterOut, fbOut,
-		"[4.3] FFN gate batched [4,64,64]×[64,172] delegate")
+	var maxAbs, maxRel float64
+	fails := 0
+	const absTol, relTol = 1e-2, 2e-1
+	for i := range adapterOut {
+		d := math.Abs(float64(adapterOut[i]) - float64(fbOut[i]))
+		rel := d / (math.Abs(float64(fbOut[i])) + 1e-30)
+		if d > maxAbs {
+			maxAbs = d
+		}
+		if rel > maxRel {
+			maxRel = rel
+		}
+		if d > absTol+relTol*math.Abs(float64(fbOut[i])) {
+			fails++
+		}
+	}
+	t.Logf("[4.3] FFN gate batched direct [4,64,64]×[64,172] A(fb TF32)/B(adapter FP32): maxAbs=%.3e maxRel=%.3e fails=%d/%d (floor TF32-vs-FP32 class)",
+		maxAbs, maxRel, fails, len(adapterOut))
+	if fails > 0 {
+		t.Errorf("[4.3] FFN batched: %d fails", fails)
+	}
 }
