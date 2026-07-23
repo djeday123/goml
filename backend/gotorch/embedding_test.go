@@ -206,6 +206,82 @@ func TestAdapterEmbedding_AvsB_Forward(t *testing.T) {
 	}
 }
 
+// TestAdapterEmbedding_AvsB_via_Interface — стрелка delegate->direct через
+// backend.Backend.Embedding интерфейс. goml подаёт int64 tokens как есть,
+// adapter internal cvt в scratch и вызов gt.EmbeddingF32I64. Прогноз:
+// bit-exact (gather = memcpy row; cvt.u32.u64 не теряет данные при idx<2^31).
+func TestAdapterEmbedding_AvsB_via_Interface(t *testing.T) {
+	gomlB, err := backend.Get(backend.CUDA)
+	if err != nil {
+		t.Skipf("CUDA unavailable: %v", err)
+	}
+	if s, err := gomlB.Alloc(4); err == nil {
+		gomlB.Free(s)
+	}
+	if gomlB.Name() == "gotorch-adapter" {
+		t.Skipf("adapter уже включён — тест требует чистого goml.cuda (skip)")
+	}
+
+	const vocab, hidden, n = 256, 64, 16
+	r := rand.New(rand.NewSource(5252))
+	table := make([]float32, vocab*hidden)
+	for i := range table {
+		table[i] = float32(r.NormFloat64())
+	}
+	indices64 := make([]int64, n)
+	for i := range indices64 {
+		indices64[i] = int64(r.Intn(vocab))
+	}
+
+	// Path A: goml.cuda.Embedding через backend interface (int64 native).
+	tS_A := allocFromSlice(t, gomlB, table)
+	defer gomlB.Free(tS_A)
+	iS_A := allocIndicesInt64(t, gomlB, indices64)
+	defer gomlB.Free(iS_A)
+	oS_A, _ := gomlB.Alloc(n * hidden * 4)
+	defer gomlB.Free(oS_A)
+	if err := gomlB.Embedding(oS_A, tS_A, iS_A, vocab, hidden, n, core.Float32); err != nil {
+		t.Fatalf("goml.cuda.Embedding: %v", err)
+	}
+	if syncer, ok := gomlB.(interface{ Sync() error }); ok {
+		syncer.Sync()
+	}
+	gotA := downloadF32(t, gomlB, oS_A)
+
+	// Path B: adapter.Embedding через backend interface (delegate->direct через I64-фасад).
+	if err := Enable(); err != nil {
+		t.Fatalf("adapter Enable: %v", err)
+	}
+	adapterAny, _ := backend.Get(backend.CUDA)
+	adapter, ok := adapterAny.(*Backend)
+	if !ok {
+		t.Fatalf("adapter type-assert: %T", adapterAny)
+	}
+	tS_B := allocFromSlice(t, adapter, table)
+	defer adapter.Free(tS_B)
+	iS_B := allocIndicesInt64(t, adapter, indices64)
+	defer adapter.Free(iS_B)
+	oS_B, _ := adapter.Alloc(n * hidden * 4)
+	defer adapter.Free(oS_B)
+	if err := adapter.Embedding(oS_B, tS_B, iS_B, vocab, hidden, n, core.Float32); err != nil {
+		t.Fatalf("adapter.Embedding: %v", err)
+	}
+	adapter.Sync()
+	gotB := downloadF32(t, adapter, oS_B)
+
+	mismatches := 0
+	for i := range gotA {
+		if math.Float32bits(gotA[i]) != math.Float32bits(gotB[i]) {
+			mismatches++
+		}
+	}
+	t.Logf("A(goml.cuda int64) vs B(adapter int64->int32 фасад) fwd [v=%d h=%d n=%d]: bit-exact=%d/%d",
+		vocab, hidden, n, len(gotA)-mismatches, len(gotA))
+	if mismatches > 0 {
+		t.Errorf("adapter.Embedding interface arrow: %d bit-mismatches (прогноз P1 bit-exact)", mismatches)
+	}
+}
+
 func TestAdapterEmbeddingGradF32_BvsJ(t *testing.T) {
 	// Pre-registered floor: hybrid abs=1e-4 + rel=1e-5 (соответствует F32 grad tests).
 	bAny := tryEnable(t)

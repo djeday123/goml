@@ -47,9 +47,9 @@ func (b *Backend) Mean(dst, src backend.Storage, shape core.Shape, axes []int, k
 func (b *Backend) LayerNorm(dst, src, gamma, beta backend.Storage, shape core.Shape, normAxis int, eps float64, dtype core.DType) error {
 	return b.fb.LayerNorm(dst, src, gamma, beta, shape, normAxis, eps, dtype)
 }
-func (b *Backend) Embedding(dst, weight, indices backend.Storage, vocabSize, embedDim, seqLen int, dtype core.DType) error {
-	return b.fb.Embedding(dst, weight, indices, vocabSize, embedDim, seqLen, dtype)
-}
+// Embedding перенесён в embedding.go — стрелка delegate -> direct через
+// P5A-EMB-I64 фасад (принимает goml int64, внутри конвертит в int32-канон).
+//
 // RoPE перенесён в rope.go — стрелка delegate -> direct для F32-пути (bit-exact
 // vs goml.cuda), F64 в fb.RoPE (goml.cuda даёт not-supported).
 
