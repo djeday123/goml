@@ -256,7 +256,10 @@ func (b *Backend) MatMul(dst, a, bStore backend.Storage, shapeA, shapeB core.Sha
 	if batchSize == 1 {
 		return b.cublas.MatMulF32(devPtr(dst), devPtr(a), devPtr(bStore), M, K, N)
 	}
-	return b.cublas.BatchedMatMulF32(devPtr(dst), devPtr(a), devPtr(bStore), batchSize, M, K, N)
+	// broadcastB=true когда B имеет меньше batch-размерностей чем A -- одна и та
+	// же матрица B для всех батчей (см. LEGACY SAFETY FIX в cublas.go).
+	broadcastB := ndimB < ndimA
+	return b.cublas.BatchedMatMulF32(devPtr(dst), devPtr(a), devPtr(bStore), batchSize, M, K, N, broadcastB)
 }
 
 // ----------------------------------------------------------------

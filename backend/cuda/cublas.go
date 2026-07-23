@@ -261,11 +261,23 @@ func (h *CuBLASHandle) MatMulF32(dstPtr, aPtr, bPtr uintptr, M, K, N int) error 
 }
 
 // BatchedMatMulF32: batched C = A @ B via loop.
-func (h *CuBLASHandle) BatchedMatMulF32(dstPtr, aPtr, bPtr uintptr, batch, M, K, N int) error {
+//
+// broadcastB: если true, B non-batched (broadcast) -- одна и та же матрица
+// используется для всех батчей, strideB=0. Если false, B batched (strideB=K*N).
+//
+// LEGACY SAFETY FIX (2026-07-23, B-impl-1 доработка reveal): раньше метод
+// всегда шагал bPtr на K*N*4 -- при shape=[batch,M,K]×[K,N] (B non-batched
+// broadcast case) это OOB read буфера B. Скрывалось "мусор==мусор проходил
+// тесты, честный strideB=0 сломал симметрию" (см. gotorch/v6/runs/reports/
+// B_impl1_dorabotka.md). Единственное read-only исключение = memory safety.
+func (h *CuBLASHandle) BatchedMatMulF32(dstPtr, aPtr, bPtr uintptr, batch, M, K, N int, broadcastB bool) error {
 	alpha := float32(1.0)
 	beta := float32(0.0)
 	strideA := uintptr(M * K * 4)
 	strideB := uintptr(K * N * 4)
+	if broadcastB {
+		strideB = 0
+	}
 	strideC := uintptr(M * N * 4)
 
 	for i := 0; i < batch; i++ {
