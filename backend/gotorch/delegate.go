@@ -50,9 +50,9 @@ func (b *Backend) LayerNorm(dst, src, gamma, beta backend.Storage, shape core.Sh
 func (b *Backend) Embedding(dst, weight, indices backend.Storage, vocabSize, embedDim, seqLen int, dtype core.DType) error {
 	return b.fb.Embedding(dst, weight, indices, vocabSize, embedDim, seqLen, dtype)
 }
-func (b *Backend) RoPE(dst, src backend.Storage, shape core.Shape, headDim int, base float64, dtype core.DType) error {
-	return b.fb.RoPE(dst, src, shape, headDim, base, dtype)
-}
+// RoPE перенесён в rope.go — стрелка delegate -> direct для F32-пути (bit-exact
+// vs goml.cuda), F64 в fb.RoPE (goml.cuda даёт not-supported).
+
 func (b *Backend) ScaledDotProductAttention(dst, q, k, v backend.Storage, batchSize, numHeads, seqLen, headDim int, causal bool, dtype core.DType) error {
 	return b.fb.ScaledDotProductAttention(dst, q, k, v, batchSize, numHeads, seqLen, headDim, causal, dtype)
 }
