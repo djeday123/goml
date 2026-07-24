@@ -21,6 +21,18 @@ func (b *Backend) MatMulF16(a, bb, c backend.Storage, m, n, k int) error {
 	return b.gt.MatMulF16(wrapForeign(a), wrapForeign(bb), wrapForeign(c), m, n, k)
 }
 
+// MatMulF32Ex -- F32 GEMM с per-call trans-флагами (A-0, 2026-07-24).
+// Row-major: C[m,n] = op(A)[m,k] · op(B)[k,n], где op зависит от transA/transB.
+// Compute: full FP32 accumulator (не TF32).
+// Требует libgotorch_blas_wrapper.so.
+// Назначение: gradOW = normed^T @ gradLogits на GPU (заменяет CPU host-loop бэкворда B2).
+func (b *Backend) MatMulF32Ex(a, bb, c backend.Storage, m, n, k int, transA, transB bool) error {
+	if m <= 0 || n <= 0 || k <= 0 {
+		return fmt.Errorf("gotorch adapter MatMulF32Ex: m/n/k must be > 0")
+	}
+	return b.gt.MatMulF32Ex(wrapForeign(a), wrapForeign(bb), wrapForeign(c), m, n, k, transA, transB)
+}
+
 // MatMulF8E4M3 -- FP8 E4M3 IO + FP16 out (NVIDIA cublasLt path).
 // scaleA/B/C -- device float* per-tensor scales.
 // amaxD -- optional device float* (nil = не устанавливать).
