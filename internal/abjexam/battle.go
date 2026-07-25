@@ -438,3 +438,157 @@ func trainStepBattleA0(b backend.Backend, st *BattleState, inputTokens, targetTo
 	gradOW = gpuToHost(b, gradOWGPU, cfg.Embed*cfg.Vocab)
 	return loss, gradOW, nil
 }
+
+// trainStepBattleA1 -- A-1 (2026-07-24): F32 GPU-bwd + fused CE-scatter kernel.
+//
+// Отличие от trainStepBattleA0:
+//   - НЕТ вызова Softmax + probs D2H + CE host loop + gradLogits H2D.
+//   - Вместо: логиты остаются на GPU; kernel `cross_entropy_f32` за один запуск
+//     считает per-row loss и gradLogits (softmax - onehot) * invM.
+//   - Только per-row loss[m] D2H (m*4 = 4 KB) для host-суммирования (scalar loss для лога).
+//
+// Layout:
+//   logits[m, V] on GPU → cross_entropy_f32 → lossGPU[m], gradLogitsGPU[m, V]
+//   → MatMulF32Ex(normed, gradLogitsGPU, gradOWGPU, transA=T) (тот же путь A-0)
+//   → adamw_f32 GPU (тот же)
+//
+// Устраняет три жирных куска карты A-0 (probs D2H 49ms + CE host 21ms + gradLogits H2D 31ms
+// = 101 ms из 125 ms wall'а). Прогноз wall ~25ms, speedup ~190× vs B2.
+func trainStepBattleA1(b backend.Backend, st *BattleState, inputTokens, targetTokens []int64, step int) (loss float64, gradOW []float32, err error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	cfg := st.Cfg
+	m := cfg.Batch * cfg.Seq
+
+	gtB, ok := b.(*gotorchAdapter.Backend)
+	if !ok {
+		return 0, nil, fmt.Errorf("trainStepBattleA1 requires gotorch adapter, got %T", b)
+	}
+	_ = gtB
+
+	inputGPU, err := b.ToDevice(backend.CUDADevice(0), &cpuStorage{data: int64ToBytes(inputTokens)})
+	if err != nil {
+		return 0, nil, fmt.Errorf("upload tokens: %w", err)
+	}
+	defer b.Free(inputGPU)
+
+	// Convert targets int64 → int32 (CE kernel expects int32).
+	targetsI32 := make([]int32, m)
+	for i, t := range targetTokens {
+		targetsI32[i] = int32(t)
+	}
+	targetsBytes := make([]byte, m*4)
+	for i, v := range targetsI32 {
+		u := uint32(v)
+		targetsBytes[i*4+0] = byte(u)
+		targetsBytes[i*4+1] = byte(u >> 8)
+		targetsBytes[i*4+2] = byte(u >> 16)
+		targetsBytes[i*4+3] = byte(u >> 24)
+	}
+	targetsGPU, err := b.ToDevice(backend.CUDADevice(0), &cpuStorage{data: targetsBytes})
+	if err != nil {
+		return 0, nil, fmt.Errorf("upload targets i32: %w", err)
+	}
+	defer b.Free(targetsGPU)
+
+	embedded, _ := b.Alloc(m * cfg.Embed * 4)
+	defer b.Free(embedded)
+	if err := b.Embedding(embedded, st.EmbW, inputGPU, cfg.Vocab, cfg.Embed, m, core.Float32); err != nil {
+		return 0, nil, fmt.Errorf("embedding: %w", err)
+	}
+	normed, _ := b.Alloc(m * cfg.Embed * 4)
+	defer b.Free(normed)
+	if err := b.LayerNorm(normed, embedded, st.LNG, st.LNB,
+		core.Shape{m, cfg.Embed}, 1, 1e-5, core.Float32); err != nil {
+		return 0, nil, fmt.Errorf("layernorm: %w", err)
+	}
+	logits, _ := b.Alloc(m * cfg.Vocab * 4)
+	defer b.Free(logits)
+	if err := b.MatMul(logits, normed, st.OutW,
+		core.Shape{m, cfg.Embed}, core.Shape{cfg.Embed, cfg.Vocab}, core.Float32); err != nil {
+		return 0, nil, fmt.Errorf("matmul f32: %w", err)
+	}
+
+	// A-1 core: fused CE kernel.
+	lossGPU, _ := b.Alloc(m * 4)
+	defer b.Free(lossGPU)
+	gradLogitsGPU, _ := b.Alloc(m * cfg.Vocab * 4)
+	defer b.Free(gradLogitsGPU)
+
+	logitsPtr := devPtr(logits)
+	targetsPtr := devPtr(targetsGPU)
+	lossPtr := devPtr(lossGPU)
+	gradLogitsPtr := devPtr(gradLogitsGPU)
+	nRows := uint32(m)
+	vocab := uint32(cfg.Vocab)
+	invBs := float32(1.0 / float32(m))
+	ceParams := []unsafe.Pointer{
+		unsafe.Pointer(&logitsPtr),
+		unsafe.Pointer(&targetsPtr),
+		unsafe.Pointer(&lossPtr),
+		unsafe.Pointer(&gradLogitsPtr),
+		unsafe.Pointer(&nRows),
+		unsafe.Pointer(&vocab),
+		unsafe.Pointer(&invBs),
+	}
+	if l, ok := b.(interface {
+		Launch(name string, gx, gy, gz, bx, by, bz uint32, params []unsafe.Pointer) error
+	}); ok {
+		if err := l.Launch("cross_entropy_f32", uint32(m), 1, 1, 256, 1, 1, ceParams); err != nil {
+			return 0, nil, fmt.Errorf("cross_entropy_f32 launch: %w", err)
+		}
+	}
+
+	// Backward outW = normed^T @ gradLogits на GPU (A-0 механизм).
+	gradOWGPU, _ := b.Alloc(cfg.Embed * cfg.Vocab * 4)
+	defer b.Free(gradOWGPU)
+	if err := gtB.MatMulF32Ex(normed, gradLogitsGPU, gradOWGPU,
+		cfg.Embed, cfg.Vocab, m, true, false); err != nil {
+		return 0, nil, fmt.Errorf("matmul-bwd F32Ex: %w", err)
+	}
+
+	// AdamW (тот же путь A-0).
+	b1corr := float32(1.0 - math.Pow(float64(Beta1), float64(step)))
+	b2corr := float32(1.0 - math.Pow(float64(Beta2), float64(step)))
+	nOW := uint32(cfg.Embed * cfg.Vocab)
+	owPtr := devPtr(st.OutW)
+	gowPtr := devPtr(gradOWGPU)
+	momPtr := devPtr(st.OutMomM)
+	vomPtr := devPtr(st.OutMomV)
+	lrLoc := LR
+	b1Loc := Beta1
+	b2Loc := Beta2
+	epsLoc := EPS
+	wdLoc := WD
+	adamParams := []unsafe.Pointer{
+		unsafe.Pointer(&owPtr), unsafe.Pointer(&gowPtr),
+		unsafe.Pointer(&momPtr), unsafe.Pointer(&vomPtr),
+		unsafe.Pointer(&nOW),
+		unsafe.Pointer(&lrLoc), unsafe.Pointer(&b1Loc), unsafe.Pointer(&b2Loc),
+		unsafe.Pointer(&epsLoc), unsafe.Pointer(&wdLoc),
+		unsafe.Pointer(&b1corr), unsafe.Pointer(&b2corr),
+	}
+	if l, ok := b.(interface {
+		Launch(name string, gx, gy, gz, bx, by, bz uint32, params []unsafe.Pointer) error
+	}); ok {
+		if err := l.Launch("adamw_f32",
+			gridSize(int(nOW), 256), 1, 1, 256, 1, 1, adamParams); err != nil {
+			return 0, nil, err
+		}
+	}
+	if s, ok := b.(interface{ Sync() error }); ok {
+		s.Sync()
+	}
+
+	// Download per-row loss (4 KB, tiny) — host sum + divide.
+	lossHost := gpuToHost(b, lossGPU, m)
+	lossSum := 0.0
+	for _, v := range lossHost {
+		lossSum += float64(v)
+	}
+	loss = lossSum / float64(m)
+
+	// Download gradOW для сверки с A-0-путём (в тесте A/B).
+	gradOW = gpuToHost(b, gradOWGPU, cfg.Embed*cfg.Vocab)
+	return loss, gradOW, nil
+}

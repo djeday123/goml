@@ -731,6 +731,147 @@ $L_arange_done:
 $L_where_done:
     ret;
 }
+
+// ============================================================
+// cross_entropy_f32: fused CrossEntropy forward + backward (A-1, 2026-07-24).
+// Input:
+//   logits    [num_rows, vocab]  F32
+//   targets   [num_rows]         int32 (uploaded as u32-compat, indices >= 0)
+// Output:
+//   loss_out  [num_rows]         F32  per-row NLL (unscaled -- host sum/m)
+//   grad_out  [num_rows, vocab]  F32  (softmax - onehot) * inv_bs
+// Const scalar: inv_bs (F32) -- usually 1.0 / num_rows.
+//
+// Grid: (num_rows, 1, 1), Block: (256, 1, 1). Thread 0 per block does the work
+// (same pattern as softmax_f32; V=32000 sequential in 3 passes, ~0.3-1 ms total
+// for 1024 rows in parallel across SMs).
+// Two-pass: (max) + (sum exp) + (loss + grad). log/exp via lg2.approx.f32/ex2.approx.f32.
+// ============================================================
+.visible .entry cross_entropy_f32(
+    .param .u64 p_logits,
+    .param .u64 p_targets,
+    .param .u64 p_loss_out,
+    .param .u64 p_grad_out,
+    .param .u32 p_num_rows,
+    .param .u32 p_vocab,
+    .param .f32 p_inv_bs
+) {
+    .reg .u32 %tidx, %bidx, %num_rows, %vocab, %i, %row_off_u32, %tgt;
+    .reg .u64 %logits, %targets, %loss_out, %grad_out;
+    .reg .u64 %logits_base, %grad_base, %off;
+    .reg .f32 %val, %max_val, %sum, %log2e, %ln2, %inv_sum;
+    .reg .f32 %inv_bs, %e, %p_prob, %log_sum, %log_z, %tgt_logit, %loss;
+    .reg .f32 %one;
+    .reg .pred %pred, %ploop;
+
+    ld.param.u64 %logits,   [p_logits];
+    ld.param.u64 %targets,  [p_targets];
+    ld.param.u64 %loss_out, [p_loss_out];
+    ld.param.u64 %grad_out, [p_grad_out];
+    ld.param.u32 %num_rows, [p_num_rows];
+    ld.param.u32 %vocab,    [p_vocab];
+    ld.param.f32 %inv_bs,   [p_inv_bs];
+
+    mov.u32 %bidx, %ctaid.x;
+    setp.ge.u32 %pred, %bidx, %num_rows;
+    @%pred bra $L_ce_done;
+
+    // Only thread 0 in the block does the work.
+    mov.u32 %tidx, %tid.x;
+    setp.ne.u32 %pred, %tidx, 0;
+    @%pred bra $L_ce_done;
+
+    // logits_base = logits + bidx * vocab * 4
+    mul.lo.u32 %row_off_u32, %bidx, %vocab;
+    mul.wide.u32 %logits_base, %row_off_u32, 4;
+    add.u64 %logits_base, %logits, %logits_base;
+    // grad_base = grad_out + bidx * vocab * 4
+    mul.wide.u32 %grad_base, %row_off_u32, 4;
+    add.u64 %grad_base, %grad_out, %grad_base;
+
+    // Pass 1: find max
+    mov.f32 %max_val, 0fFF800000;    // -inf
+    mov.u32 %i, 0;
+$L_ce_max:
+    setp.ge.u32 %ploop, %i, %vocab;
+    @%ploop bra $L_ce_max_end;
+    mul.wide.u32 %off, %i, 4;
+    add.u64 %off, %logits_base, %off;
+    ld.global.f32 %val, [%off];
+    max.f32 %max_val, %max_val, %val;
+    add.u32 %i, %i, 1;
+    bra $L_ce_max;
+$L_ce_max_end:
+
+    // Pass 2: sum = sum_i exp(logits[i] - max_val)
+    // exp(x) = 2^(x * log2e). log2e = 0x3FB8AA3B.
+    mov.f32 %sum, 0f00000000;
+    mov.f32 %log2e, 0f3FB8AA3B;
+    mov.u32 %i, 0;
+$L_ce_sum:
+    setp.ge.u32 %ploop, %i, %vocab;
+    @%ploop bra $L_ce_sum_end;
+    mul.wide.u32 %off, %i, 4;
+    add.u64 %off, %logits_base, %off;
+    ld.global.f32 %val, [%off];
+    sub.f32 %val, %val, %max_val;
+    mul.f32 %val, %val, %log2e;
+    ex2.approx.f32 %val, %val;
+    add.f32 %sum, %sum, %val;
+    add.u32 %i, %i, 1;
+    bra $L_ce_sum;
+$L_ce_sum_end:
+
+    // log_z = max_val + ln(sum) = max_val + lg2.approx.f32(sum) * ln(2).
+    // ln(2) = 0x3F317218.
+    mov.f32 %ln2, 0f3F317218;
+    lg2.approx.f32 %log_sum, %sum;
+    mul.f32 %log_sum, %log_sum, %ln2;
+    add.f32 %log_z, %max_val, %log_sum;
+
+    // Load target (interpret int32 as u32; targets >= 0 by contract).
+    mul.wide.u32 %off, %bidx, 4;
+    add.u64 %off, %targets, %off;
+    ld.global.u32 %tgt, [%off];
+
+    // Load logits[bidx, tgt].
+    mul.wide.u32 %off, %tgt, 4;
+    add.u64 %off, %logits_base, %off;
+    ld.global.f32 %tgt_logit, [%off];
+
+    // loss = log_z - tgt_logit  (per-row NLL, unscaled).
+    sub.f32 %loss, %log_z, %tgt_logit;
+    mul.wide.u32 %off, %bidx, 4;
+    add.u64 %off, %loss_out, %off;
+    st.global.f32 [%off], %loss;
+
+    // Pass 3: grad[i] = (exp(logits[i]-max)/sum - onehot[i]) * inv_bs.
+    rcp.approx.f32 %inv_sum, %sum;
+    mov.f32 %one, 0f3F800000;        // 1.0
+    mov.u32 %i, 0;
+$L_ce_grad:
+    setp.ge.u32 %ploop, %i, %vocab;
+    @%ploop bra $L_ce_grad_end;
+    mul.wide.u32 %off, %i, 4;
+    add.u64 %off, %logits_base, %off;
+    ld.global.f32 %val, [%off];
+    sub.f32 %val, %val, %max_val;
+    mul.f32 %val, %val, %log2e;
+    ex2.approx.f32 %e, %val;
+    mul.f32 %p_prob, %e, %inv_sum;
+    setp.eq.u32 %pred, %i, %tgt;
+    @%pred sub.f32 %p_prob, %p_prob, %one;
+    mul.f32 %p_prob, %p_prob, %inv_bs;
+    mul.wide.u32 %off, %i, 4;
+    add.u64 %off, %grad_base, %off;
+    st.global.f32 [%off], %p_prob;
+    add.u32 %i, %i, 1;
+    bra $L_ce_grad;
+$L_ce_grad_end:
+
+$L_ce_done:
+    ret;
+}
 ` + "\x00"
 
 // Phase B kernel names
@@ -749,4 +890,5 @@ var kernelNames_B = []string{
 	"layernorm_f32",
 	"arange_f32",
 	"where_f32",
+	"cross_entropy_f32", // A-1 (2026-07-24)
 }
