@@ -592,3 +592,212 @@ func trainStepBattleA1(b backend.Backend, st *BattleState, inputTokens, targetTo
 	gradOW = gpuToHost(b, gradOWGPU, cfg.Embed*cfg.Vocab)
 	return loss, gradOW, nil
 }
+
+// BattleScratch -- pre-allocated buffers для hot loop trainStepBattleA2 (A-2, 2026-07-24).
+//
+// 6 больших буферов (форма фиксирована cfg), выделяются один раз, переиспользуются
+// каждый шаг. tokens/targets НЕ в scratch -- содержимое меняется, но размер мал
+// (m*8 + m*4 = 12 KB), alloc-per-step приемлем в этой атаке (одно звено — одна атака).
+//
+// Zero-fill semantics:
+//   embedded/normed/logits/gradLogits/loss -- каждый шаг полностью перезаписываются
+//     ядрами (embedding, layernorm, matmul beta=0, cross_entropy_f32, matmul beta=0).
+//   gradOW -- MatMulF32Ex использует beta=0; cuBLAS special-cases beta=0 (не читает C).
+//     Начальный контент безопасен на любом.
+// Итог: НИ ОДИН буфер не требует per-step zero-fill. Проверено анализом.
+//   Single-shot zero-init на этапе allocation достаточен для perceived-safety
+//   (устраняет любые SGEMM NaN-propagation теоретические сценарии).
+type BattleScratch struct {
+	Embedded   backend.Storage // F32 [m, Embed]
+	Normed     backend.Storage // F32 [m, Embed]
+	Logits     backend.Storage // F32 [m, Vocab]
+	Loss       backend.Storage // F32 [m]  (per-row NLL from CE kernel)
+	GradLogits backend.Storage // F32 [m, Vocab]
+	GradOW     backend.Storage // F32 [Embed, Vocab]
+}
+
+// NewBattleScratch -- одноразовая аллокация + zero-init.
+func NewBattleScratch(cfg BattleCfg, b backend.Backend) (*BattleScratch, error) {
+	m := cfg.Batch * cfg.Seq
+	sc := &BattleScratch{}
+	alloc := func(name string, bytes int) (backend.Storage, error) {
+		s, err := b.Alloc(bytes)
+		if err != nil {
+			return nil, fmt.Errorf("scratch %s alloc %d bytes: %w", name, bytes, err)
+		}
+		return s, nil
+	}
+	var err error
+	if sc.Embedded, err = alloc("Embedded", m*cfg.Embed*4); err != nil {
+		return nil, err
+	}
+	if sc.Normed, err = alloc("Normed", m*cfg.Embed*4); err != nil {
+		sc.FreeAll(b)
+		return nil, err
+	}
+	if sc.Logits, err = alloc("Logits", m*cfg.Vocab*4); err != nil {
+		sc.FreeAll(b)
+		return nil, err
+	}
+	if sc.Loss, err = alloc("Loss", m*4); err != nil {
+		sc.FreeAll(b)
+		return nil, err
+	}
+	if sc.GradLogits, err = alloc("GradLogits", m*cfg.Vocab*4); err != nil {
+		sc.FreeAll(b)
+		return nil, err
+	}
+	if sc.GradOW, err = alloc("GradOW", cfg.Embed*cfg.Vocab*4); err != nil {
+		sc.FreeAll(b)
+		return nil, err
+	}
+	return sc, nil
+}
+
+// FreeAll -- освобождает все буферы. Nil-safe.
+func (sc *BattleScratch) FreeAll(b backend.Backend) {
+	if sc == nil {
+		return
+	}
+	free := func(s backend.Storage) {
+		if s != nil {
+			b.Free(s)
+		}
+	}
+	free(sc.Embedded)
+	free(sc.Normed)
+	free(sc.Logits)
+	free(sc.Loss)
+	free(sc.GradLogits)
+	free(sc.GradOW)
+	*sc = BattleScratch{}
+}
+
+// trainStepBattleA2 -- A-2 (2026-07-24): A-1 + pre-allocated buffer cache.
+//
+// Идентичен trainStepBattleA1, кроме использования scratch для 6 больших буферов
+// (embedded/normed/logits/loss/gradLogits/gradOW). Никаких Alloc/Free в hot loop
+// для этих буферов.
+//
+// Прогноз bit-exact vs A-1 (та же математика, только стабильные адреса).
+// Если НЕ bit-exact — скрытая зависимость от свежести памяти, СТОП разбор.
+func trainStepBattleA2(b backend.Backend, st *BattleState, scratch *BattleScratch, inputTokens, targetTokens []int64, step int) (loss float64, gradOW []float32, err error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	cfg := st.Cfg
+	m := cfg.Batch * cfg.Seq
+
+	gtB, ok := b.(*gotorchAdapter.Backend)
+	if !ok {
+		return 0, nil, fmt.Errorf("trainStepBattleA2 requires gotorch adapter, got %T", b)
+	}
+
+	// Tokens/targets: alloc-per-step (small ~12KB, out of A-2 scope). One-звено=one-атака.
+	inputGPU, err := b.ToDevice(backend.CUDADevice(0), &cpuStorage{data: int64ToBytes(inputTokens)})
+	if err != nil {
+		return 0, nil, fmt.Errorf("upload tokens: %w", err)
+	}
+	defer b.Free(inputGPU)
+
+	targetsI32 := make([]int32, m)
+	for i, t := range targetTokens {
+		targetsI32[i] = int32(t)
+	}
+	targetsBytes := make([]byte, m*4)
+	for i, v := range targetsI32 {
+		u := uint32(v)
+		targetsBytes[i*4+0] = byte(u)
+		targetsBytes[i*4+1] = byte(u >> 8)
+		targetsBytes[i*4+2] = byte(u >> 16)
+		targetsBytes[i*4+3] = byte(u >> 24)
+	}
+	targetsGPU, err := b.ToDevice(backend.CUDADevice(0), &cpuStorage{data: targetsBytes})
+	if err != nil {
+		return 0, nil, fmt.Errorf("upload targets: %w", err)
+	}
+	defer b.Free(targetsGPU)
+
+	// Forward — все буферы из scratch, никаких Alloc/Free.
+	if err := b.Embedding(scratch.Embedded, st.EmbW, inputGPU, cfg.Vocab, cfg.Embed, m, core.Float32); err != nil {
+		return 0, nil, fmt.Errorf("embedding: %w", err)
+	}
+	if err := b.LayerNorm(scratch.Normed, scratch.Embedded, st.LNG, st.LNB,
+		core.Shape{m, cfg.Embed}, 1, 1e-5, core.Float32); err != nil {
+		return 0, nil, fmt.Errorf("layernorm: %w", err)
+	}
+	if err := b.MatMul(scratch.Logits, scratch.Normed, st.OutW,
+		core.Shape{m, cfg.Embed}, core.Shape{cfg.Embed, cfg.Vocab}, core.Float32); err != nil {
+		return 0, nil, fmt.Errorf("matmul f32: %w", err)
+	}
+
+	// A-1 core: fused CE kernel.
+	logitsPtr := devPtr(scratch.Logits)
+	targetsPtr := devPtr(targetsGPU)
+	lossPtr := devPtr(scratch.Loss)
+	gradLogitsPtr := devPtr(scratch.GradLogits)
+	nRows := uint32(m)
+	vocab := uint32(cfg.Vocab)
+	invBs := float32(1.0 / float32(m))
+	ceParams := []unsafe.Pointer{
+		unsafe.Pointer(&logitsPtr), unsafe.Pointer(&targetsPtr),
+		unsafe.Pointer(&lossPtr), unsafe.Pointer(&gradLogitsPtr),
+		unsafe.Pointer(&nRows), unsafe.Pointer(&vocab), unsafe.Pointer(&invBs),
+	}
+	if l, ok := b.(interface {
+		Launch(name string, gx, gy, gz, bx, by, bz uint32, params []unsafe.Pointer) error
+	}); ok {
+		if err := l.Launch("cross_entropy_f32", uint32(m), 1, 1, 256, 1, 1, ceParams); err != nil {
+			return 0, nil, fmt.Errorf("cross_entropy_f32 launch: %w", err)
+		}
+	}
+
+	// A-0 backward.
+	if err := gtB.MatMulF32Ex(scratch.Normed, scratch.GradLogits, scratch.GradOW,
+		cfg.Embed, cfg.Vocab, m, true, false); err != nil {
+		return 0, nil, fmt.Errorf("matmul-bwd F32Ex: %w", err)
+	}
+
+	// AdamW.
+	b1corr := float32(1.0 - math.Pow(float64(Beta1), float64(step)))
+	b2corr := float32(1.0 - math.Pow(float64(Beta2), float64(step)))
+	nOW := uint32(cfg.Embed * cfg.Vocab)
+	owPtr := devPtr(st.OutW)
+	gowPtr := devPtr(scratch.GradOW)
+	momPtr := devPtr(st.OutMomM)
+	vomPtr := devPtr(st.OutMomV)
+	lrLoc := LR
+	b1Loc := Beta1
+	b2Loc := Beta2
+	epsLoc := EPS
+	wdLoc := WD
+	adamParams := []unsafe.Pointer{
+		unsafe.Pointer(&owPtr), unsafe.Pointer(&gowPtr),
+		unsafe.Pointer(&momPtr), unsafe.Pointer(&vomPtr),
+		unsafe.Pointer(&nOW),
+		unsafe.Pointer(&lrLoc), unsafe.Pointer(&b1Loc), unsafe.Pointer(&b2Loc),
+		unsafe.Pointer(&epsLoc), unsafe.Pointer(&wdLoc),
+		unsafe.Pointer(&b1corr), unsafe.Pointer(&b2corr),
+	}
+	if l, ok := b.(interface {
+		Launch(name string, gx, gy, gz, bx, by, bz uint32, params []unsafe.Pointer) error
+	}); ok {
+		if err := l.Launch("adamw_f32",
+			gridSize(int(nOW), 256), 1, 1, 256, 1, 1, adamParams); err != nil {
+			return 0, nil, err
+		}
+	}
+	if s, ok := b.(interface{ Sync() error }); ok {
+		s.Sync()
+	}
+
+	// Loss (4 KB), gradOW (32 MB) D2H -- для сверки в тесте.
+	// Prod-версия убрала бы gradOW D2H (это тема A-3 по решению user'а).
+	lossHost := gpuToHost(b, scratch.Loss, m)
+	lossSum := 0.0
+	for _, v := range lossHost {
+		lossSum += float64(v)
+	}
+	loss = lossSum / float64(m)
+	gradOW = gpuToHost(b, scratch.GradOW, cfg.Embed*cfg.Vocab)
+	return loss, gradOW, nil
+}
