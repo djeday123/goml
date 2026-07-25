@@ -801,3 +801,133 @@ func trainStepBattleA2(b backend.Backend, st *BattleState, scratch *BattleScratc
 	gradOW = gpuToHost(b, scratch.GradOW, cfg.Embed*cfg.Vocab)
 	return loss, gradOW, nil
 }
+
+// trainStepBattleA3 -- A-3 (2026-07-25): prod-Step без test-only gradOW D2H.
+//
+// Отличие от trainStepBattleA2:
+//   Убран `gpuToHost(scratch.GradOW, Embed*Vocab)` -- в prod'е gradOW не нужен
+//   на host'е. Обновление весов OutW уже выполнено adamw_f32 kernel'ом на GPU.
+//
+// Верификация SGD-on-GPU: adamw_f32 PTX kernel (kernels.go:610) вызывается на
+// каждом шаге через b.Launch("adamw_f32", ...) -- см. battle.go:285/428/574/784.
+// OutW / OutMomM / OutMomV живут в BattleState на GPU от старта до teardown
+// тренировки, host round-trip НЕ нужен.
+//
+// Return value gradOW == nil в prod-режиме (test path использует trainStepBattleA2
+// с D2H для сверки; A-3 -- финальный prod-путь battle-цепочки).
+func trainStepBattleA3(b backend.Backend, st *BattleState, scratch *BattleScratch, inputTokens, targetTokens []int64, step int) (loss float64, err error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	cfg := st.Cfg
+	m := cfg.Batch * cfg.Seq
+
+	gtB, ok := b.(*gotorchAdapter.Backend)
+	if !ok {
+		return 0, fmt.Errorf("trainStepBattleA3 requires gotorch adapter, got %T", b)
+	}
+
+	inputGPU, err := b.ToDevice(backend.CUDADevice(0), &cpuStorage{data: int64ToBytes(inputTokens)})
+	if err != nil {
+		return 0, fmt.Errorf("upload tokens: %w", err)
+	}
+	defer b.Free(inputGPU)
+
+	targetsI32 := make([]int32, m)
+	for i, t := range targetTokens {
+		targetsI32[i] = int32(t)
+	}
+	targetsBytes := make([]byte, m*4)
+	for i, v := range targetsI32 {
+		u := uint32(v)
+		targetsBytes[i*4+0] = byte(u)
+		targetsBytes[i*4+1] = byte(u >> 8)
+		targetsBytes[i*4+2] = byte(u >> 16)
+		targetsBytes[i*4+3] = byte(u >> 24)
+	}
+	targetsGPU, err := b.ToDevice(backend.CUDADevice(0), &cpuStorage{data: targetsBytes})
+	if err != nil {
+		return 0, fmt.Errorf("upload targets: %w", err)
+	}
+	defer b.Free(targetsGPU)
+
+	if err := b.Embedding(scratch.Embedded, st.EmbW, inputGPU, cfg.Vocab, cfg.Embed, m, core.Float32); err != nil {
+		return 0, fmt.Errorf("embedding: %w", err)
+	}
+	if err := b.LayerNorm(scratch.Normed, scratch.Embedded, st.LNG, st.LNB,
+		core.Shape{m, cfg.Embed}, 1, 1e-5, core.Float32); err != nil {
+		return 0, fmt.Errorf("layernorm: %w", err)
+	}
+	if err := b.MatMul(scratch.Logits, scratch.Normed, st.OutW,
+		core.Shape{m, cfg.Embed}, core.Shape{cfg.Embed, cfg.Vocab}, core.Float32); err != nil {
+		return 0, fmt.Errorf("matmul f32: %w", err)
+	}
+
+	// Fused CE (A-1).
+	logitsPtr := devPtr(scratch.Logits)
+	targetsPtr := devPtr(targetsGPU)
+	lossPtr := devPtr(scratch.Loss)
+	gradLogitsPtr := devPtr(scratch.GradLogits)
+	nRows := uint32(m)
+	vocab := uint32(cfg.Vocab)
+	invBs := float32(1.0 / float32(m))
+	ceParams := []unsafe.Pointer{
+		unsafe.Pointer(&logitsPtr), unsafe.Pointer(&targetsPtr),
+		unsafe.Pointer(&lossPtr), unsafe.Pointer(&gradLogitsPtr),
+		unsafe.Pointer(&nRows), unsafe.Pointer(&vocab), unsafe.Pointer(&invBs),
+	}
+	if l, ok := b.(interface {
+		Launch(name string, gx, gy, gz, bx, by, bz uint32, params []unsafe.Pointer) error
+	}); ok {
+		if err := l.Launch("cross_entropy_f32", uint32(m), 1, 1, 256, 1, 1, ceParams); err != nil {
+			return 0, fmt.Errorf("cross_entropy_f32 launch: %w", err)
+		}
+	}
+
+	// MatMul backward (A-0).
+	if err := gtB.MatMulF32Ex(scratch.Normed, scratch.GradLogits, scratch.GradOW,
+		cfg.Embed, cfg.Vocab, m, true, false); err != nil {
+		return 0, fmt.Errorf("matmul-bwd F32Ex: %w", err)
+	}
+
+	// AdamW (SGD on GPU, verified adamw_f32 kernels.go:610).
+	b1corr := float32(1.0 - math.Pow(float64(Beta1), float64(step)))
+	b2corr := float32(1.0 - math.Pow(float64(Beta2), float64(step)))
+	nOW := uint32(cfg.Embed * cfg.Vocab)
+	owPtr := devPtr(st.OutW)
+	gowPtr := devPtr(scratch.GradOW)
+	momPtr := devPtr(st.OutMomM)
+	vomPtr := devPtr(st.OutMomV)
+	lrLoc := LR
+	b1Loc := Beta1
+	b2Loc := Beta2
+	epsLoc := EPS
+	wdLoc := WD
+	adamParams := []unsafe.Pointer{
+		unsafe.Pointer(&owPtr), unsafe.Pointer(&gowPtr),
+		unsafe.Pointer(&momPtr), unsafe.Pointer(&vomPtr),
+		unsafe.Pointer(&nOW),
+		unsafe.Pointer(&lrLoc), unsafe.Pointer(&b1Loc), unsafe.Pointer(&b2Loc),
+		unsafe.Pointer(&epsLoc), unsafe.Pointer(&wdLoc),
+		unsafe.Pointer(&b1corr), unsafe.Pointer(&b2corr),
+	}
+	if l, ok := b.(interface {
+		Launch(name string, gx, gy, gz, bx, by, bz uint32, params []unsafe.Pointer) error
+	}); ok {
+		if err := l.Launch("adamw_f32",
+			gridSize(int(nOW), 256), 1, 1, 256, 1, 1, adamParams); err != nil {
+			return 0, err
+		}
+	}
+	if s, ok := b.(interface{ Sync() error }); ok {
+		s.Sync()
+	}
+
+	// Only loss[m] D2H (4 KB) for scalar loss logging. NO gradOW D2H.
+	lossHost := gpuToHost(b, scratch.Loss, m)
+	lossSum := 0.0
+	for _, v := range lossHost {
+		lossSum += float64(v)
+	}
+	loss = lossSum / float64(m)
+	return loss, nil
+}
