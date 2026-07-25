@@ -79,6 +79,30 @@ FA_API fa_status_t fa_forward(fa_ctx_t* ctx,
                        float scale, fa_stream_t stream);
 
 /*
+ * fa_forward_train(): forward + LSE (log-sum-exp) output for backward path.
+ *
+ * A-LLM-1 G1 (2026-07-25). Separate function from fa_forward — production
+ * fa_forward ABI/behavior UNCHANGED.
+ *
+ * Same Q/K/V/O semantics as fa_forward, plus l_out:
+ *   l_out: F32 device ptr, [batch_heads, seq_len] row-major.
+ *          LSE = m_i + log(sum_j exp(q_i·k_j - m_i)) in natural base.
+ *          May be NULL to skip L writeback (behaves as fa_forward).
+ *
+ * Currently head_dim=128 only (v121r-train FA_STRIDE hardcoded).
+ * scale should compose FP8 dequant:
+ *   scale = softmax_scale · scale_Q · scale_K
+ *   (launcher hardcodes qk_descale=1.0; свёртка scale·scale_Q·scale_K тождественна —
+ *   все три множителя одного скаляра до softmax).
+ */
+FA_API fa_status_t fa_forward_train(fa_ctx_t* ctx,
+                             const void* q, const void* k, const void* v,
+                             void* o, void* l_out,
+                             int batch_heads, int seq_len, int head_dim,
+                             int causal, int window,
+                             float scale, fa_stream_t stream);
+
+/*
  * fa_destroy(): release all internal state. Returns FA_OK even on null ctx.
  */
 FA_API fa_status_t fa_destroy(fa_ctx_t* ctx);

@@ -17,7 +17,7 @@ CXX_FLAGS := -O3 -fPIC -fvisibility=hidden -std=c++17 $(INCLUDE)
 
 BUILD     := build
 SRCS_CXX  := src/fa_dispatch.cpp
-SRCS_CU   := src/_v121r_kernel_full.cu src/fa_ctx.cu
+SRCS_CU   := src/_v121r_kernel_full.cu src/_v121r_train_kernel_full.cu src/fa_ctx.cu
 
 OBJS_CXX  := $(SRCS_CXX:%.cpp=$(BUILD)/%.o)
 OBJS_CU   := $(SRCS_CU:%.cu=$(BUILD)/%.o)
@@ -32,6 +32,11 @@ all: lib
 ## Step 1: concat v121r kernel + launcher wrapper into single TU
 src/_v121r_kernel_full.cu: src/_v121r_kernel.cu src/_v121r_launcher.cuh
 	cat src/_v121r_kernel.cu src/_v121r_launcher.cuh > $@
+
+## Step 1b (A-LLM-1 G1): concat v121r-train kernel (fwd+LSE) + launcher.
+## fa96b_train_kernel symbol lives alongside fa96b_kernel; production ABI unchanged.
+src/_v121r_train_kernel_full.cu: src/_v121r_train_kernel.cu src/_v121r_train_launcher.cuh
+	cat src/_v121r_train_kernel.cu src/_v121r_train_launcher.cuh > $@
 
 lib: $(LIB_SO) $(LIB_A)
 
@@ -68,4 +73,4 @@ test_readme: lib
 	@LD_LIBRARY_PATH=$(PWD):$(CUDA)/lib64:$$LD_LIBRARY_PATH $(BUILD)/test_readme_c
 
 clean:
-	rm -rf $(BUILD) $(LIB_SO) $(LIB_A) src/_v121r_kernel_full.cu
+	rm -rf $(BUILD) $(LIB_SO) $(LIB_A) src/_v121r_kernel_full.cu src/_v121r_train_kernel_full.cu

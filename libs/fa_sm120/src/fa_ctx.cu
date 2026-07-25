@@ -25,6 +25,15 @@ namespace fa_sm120_v121r {
         float scale, cudaStream_t stream);
 }
 
+/* ---- v121r-TRAIN kernel (A-LLM-1 G1: fwd + LSE writeback for backward) ---- */
+namespace fa_sm120_v121r_train {
+    extern void launch(
+        const uint8_t* Q, const uint8_t* K, const uint8_t* V, __half* O,
+        float* L_out,        /* [bh, sl] LSE; nullptr = skip L */
+        int bh, int sl, int hd, int causal, int window,
+        float scale, cudaStream_t stream);
+}
+
 struct fa_ctx {
     int device_id;
     int cc_major, cc_minor;     /* compute capability */
@@ -161,4 +170,66 @@ extern "C" fa_status_t fa_forward(fa_ctx_t* ctx,
                   fa_kernel_name(kid), (int)kid);
     set_err(ctx, msg);
     return FA_ERR_INTERNAL;
+}
+
+/* fa_forward_train — forward with L (LSE) output for backward path.
+ * A-LLM-1 G1 (2026-07-25). Separate function from fa_forward — production
+ * fa_forward ABI/behavior UNCHANGED (боевой символ не трогаем).
+ *
+ * Same Q/K/V/O semantics as fa_forward:
+ *   Q,K,V: FP8 e4m3 device ptrs, [bh, sl, hd] row-major
+ *   O:     FP16 device ptr, [bh, sl, hd]
+ *   scale: pre-composed = softmax_scale * scale_Q * scale_K (launcher
+ *          hardcodes qk_descale=1.0, v_descale=1.0 in v121r-train — свёртка
+ *          scale·scale_Q·scale_K тождественна: все три множителя одного
+ *          скаляра до softmax, A-LLM-1 решение #2).
+ * Additional:
+ *   l_out: F32 device ptr, [bh, sl] LSE = m_i + log(sum(exp(q·k - m_i))).
+ *          MAY be NULL — kernel skips L writeback.
+ *
+ * Currently hd=128 only (train kernel FA_STRIDE=128 hardcoded).
+ * Uses fa_sm120_v121r_train::launch directly (no dispatcher — only v121r-train
+ * wired at this stage).
+ */
+extern "C" fa_status_t fa_forward_train(fa_ctx_t* ctx,
+                                        const void* q, const void* k, const void* v,
+                                        void* o, void* l_out,
+                                        int bh, int sl, int hd,
+                                        int causal, int window,
+                                        float scale, fa_stream_t stream)
+{
+    if (!ctx) return FA_ERR_INVALID_ARG;
+    if (!q || !k || !v || !o) {
+        set_err(ctx, "fa_forward_train: null pointer in q/k/v/o");
+        return FA_ERR_INVALID_ARG;
+    }
+    /* l_out may be NULL (matches kernel semantics). */
+    if (bh <= 0 || sl <= 0) {
+        set_err(ctx, "fa_forward_train: bh/sl must be > 0");
+        return FA_ERR_INVALID_ARG;
+    }
+    if (hd != 128) {
+        set_err(ctx, "fa_forward_train: head_dim must be 128 (v121r-train FA_STRIDE hardcoded)");
+        return FA_ERR_UNSUPPORTED_HD;
+    }
+    if (window < 0 || window > sl) {
+        set_err(ctx, "fa_forward_train: window must be in [0, seq_len]");
+        return FA_ERR_INVALID_ARG;
+    }
+    if (causal != 0 && causal != 1) {
+        set_err(ctx, "fa_forward_train: causal must be 0 or 1");
+        return FA_ERR_INVALID_ARG;
+    }
+
+    fa_sm120_v121r_train::launch(
+        (const uint8_t*)q, (const uint8_t*)k, (const uint8_t*)v,
+        (__half*)o, (float*)l_out,
+        bh, sl, hd, causal, window, scale,
+        (cudaStream_t)stream);
+    cudaError_t e = cudaGetLastError();
+    if (e != cudaSuccess) {
+        set_cuda_err(ctx, e, "v121r-train launch");
+        return FA_ERR_CUDA;
+    }
+    return FA_OK;
 }
