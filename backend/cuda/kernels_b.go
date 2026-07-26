@@ -872,6 +872,71 @@ $L_ce_grad_end:
 $L_ce_done:
     ret;
 }
+
+// ============================================================
+// transpose_shd_hsd_f32 (A-LLM-1 Stage 3, 2026-07-25):
+//   Permute [S, H, hd] -> [H, S, hd] on device.
+//   Each (h, s) pair -- one block; thread copies one hd element.
+//   Layout FA: attention needs [B*H, S, hd] bh-major; after Wq/Wk/Wv
+//   output [S, H*hd] naturally viewed as [S, H, hd]; permute gives [H, S, hd].
+//   For B>1: caller does per-batch permute into different bh-offsets scratch.
+//
+// Grid: (H, S, 1). Block: (hd, 1, 1). hd in {64, 128}.
+// src[s, h, d] at src + (s*H*hd + h*hd + d) * 4
+// dst[h, s, d] at dst + (h*S*hd + s*hd + d) * 4
+// ============================================================
+.visible .entry transpose_shd_hsd_f32(
+    .param .u64 p_dst,
+    .param .u64 p_src,
+    .param .u32 p_S,
+    .param .u32 p_H,
+    .param .u32 p_HD
+) {
+    .reg .u32 %h, %s, %d, %S, %H, %HD, %src_off_u32, %dst_off_u32, %row_stride;
+    .reg .u64 %dst, %src, %off;
+    .reg .f32 %val;
+    .reg .pred %pred;
+
+    ld.param.u64 %dst, [p_dst];
+    ld.param.u64 %src, [p_src];
+    ld.param.u32 %S,   [p_S];
+    ld.param.u32 %H,   [p_H];
+    ld.param.u32 %HD,  [p_HD];
+
+    mov.u32 %h, %ctaid.x;
+    mov.u32 %s, %ctaid.y;
+    mov.u32 %d, %tid.x;
+
+    setp.ge.u32 %pred, %d, %HD;
+    @%pred bra $L_tp_done;
+    setp.ge.u32 %pred, %h, %H;
+    @%pred bra $L_tp_done;
+    setp.ge.u32 %pred, %s, %S;
+    @%pred bra $L_tp_done;
+
+    // src_off = s*H*HD + h*HD + d
+    mul.lo.u32 %row_stride, %H, %HD;
+    mul.lo.u32 %src_off_u32, %s, %row_stride;
+    mul.lo.u32 %row_stride, %h, %HD;
+    add.u32 %src_off_u32, %src_off_u32, %row_stride;
+    add.u32 %src_off_u32, %src_off_u32, %d;
+    mul.wide.u32 %off, %src_off_u32, 4;
+    add.u64 %off, %src, %off;
+    ld.global.f32 %val, [%off];
+
+    // dst_off = h*S*HD + s*HD + d
+    mul.lo.u32 %row_stride, %S, %HD;
+    mul.lo.u32 %dst_off_u32, %h, %row_stride;
+    mul.lo.u32 %row_stride, %s, %HD;
+    add.u32 %dst_off_u32, %dst_off_u32, %row_stride;
+    add.u32 %dst_off_u32, %dst_off_u32, %d;
+    mul.wide.u32 %off, %dst_off_u32, 4;
+    add.u64 %off, %dst, %off;
+    st.global.f32 [%off], %val;
+
+$L_tp_done:
+    ret;
+}
 ` + "\x00"
 
 // Phase B kernel names
@@ -890,5 +955,6 @@ var kernelNames_B = []string{
 	"layernorm_f32",
 	"arange_f32",
 	"where_f32",
-	"cross_entropy_f32", // A-1 (2026-07-24)
+	"cross_entropy_f32",       // A-1 (2026-07-24)
+	"transpose_shd_hsd_f32",   // A-LLM-1 Stage 3 (2026-07-25)
 }
