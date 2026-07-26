@@ -937,6 +937,85 @@ $L_ce_done:
 $L_tp_done:
     ret;
 }
+
+// ============================================================
+// softmax_bwd_f32 (A-LLM-1 Stage 4, 2026-07-26):
+//   Row-wise softmax backward: dS_ij = P_ij * (dP_ij - sum_k(P_ik * dP_ik)).
+//   Grid: (rows, 1, 1). Block: (1, 1, 1). Single-thread per row (reference kernel,
+//   NOT a hot path -- used only for F32-reconstruct attention bwd).
+// Params: p_P (in), p_dP (in), p_dS (out), p_rows (u32), p_cols (u32).
+// ============================================================
+.visible .entry softmax_bwd_f32(
+    .param .u64 p_P,
+    .param .u64 p_dP,
+    .param .u64 p_dS,
+    .param .u32 p_rows,
+    .param .u32 p_cols
+) {
+    .reg .u64 %P, %dP, %dS, %row_base, %off;
+    .reg .u32 %tidx, %bidx, %rows, %cols, %i, %row_off;
+    .reg .f32 %p_val, %dp_val, %s_val, %sum_r;
+    .reg .pred %pred;
+
+    ld.param.u64 %P,     [p_P];
+    ld.param.u64 %dP,    [p_dP];
+    ld.param.u64 %dS,    [p_dS];
+    ld.param.u32 %rows,  [p_rows];
+    ld.param.u32 %cols,  [p_cols];
+
+    mov.u32 %bidx, %ctaid.x;
+    setp.ge.u32 %pred, %bidx, %rows;
+    @%pred bra $L_sbwd_done;
+
+    mov.u32 %tidx, %tid.x;
+    setp.ne.u32 %pred, %tidx, 0;
+    @%pred bra $L_sbwd_done;
+
+    // row_base = P + row * cols * 4
+    mul.lo.u32 %row_off, %bidx, %cols;
+    mul.wide.u32 %row_base, %row_off, 4;
+
+    // Pass 1: sum_r = sum(P * dP) over row.
+    mov.f32 %sum_r, 0f00000000;
+    mov.u32 %i, 0;
+$L_sbwd_p1:
+    setp.ge.u32 %pred, %i, %cols;
+    @%pred bra $L_sbwd_p1_end;
+    mul.wide.u32 %off, %i, 4;
+    add.u64 %off, %off, %row_base;
+    add.u64 %off, %off, %P;
+    ld.global.f32 %p_val, [%off];
+    sub.u64 %off, %off, %P;
+    add.u64 %off, %off, %dP;
+    ld.global.f32 %dp_val, [%off];
+    fma.rn.f32 %sum_r, %p_val, %dp_val, %sum_r;
+    add.u32 %i, %i, 1;
+    bra $L_sbwd_p1;
+$L_sbwd_p1_end:
+
+    // Pass 2: dS[row, i] = P[row, i] * (dP[row, i] - sum_r)
+    mov.u32 %i, 0;
+$L_sbwd_p2:
+    setp.ge.u32 %pred, %i, %cols;
+    @%pred bra $L_sbwd_done;
+    mul.wide.u32 %off, %i, 4;
+    add.u64 %off, %off, %row_base;
+    add.u64 %off, %off, %P;
+    ld.global.f32 %p_val, [%off];
+    sub.u64 %off, %off, %P;
+    add.u64 %off, %off, %dP;
+    ld.global.f32 %dp_val, [%off];
+    sub.f32 %s_val, %dp_val, %sum_r;
+    mul.f32 %s_val, %s_val, %p_val;
+    sub.u64 %off, %off, %dP;
+    add.u64 %off, %off, %dS;
+    st.global.f32 [%off], %s_val;
+    add.u32 %i, %i, 1;
+    bra $L_sbwd_p2;
+
+$L_sbwd_done:
+    ret;
+}
 ` + "\x00"
 
 // Phase B kernel names
@@ -957,4 +1036,5 @@ var kernelNames_B = []string{
 	"where_f32",
 	"cross_entropy_f32",       // A-1 (2026-07-24)
 	"transpose_shd_hsd_f32",   // A-LLM-1 Stage 3 (2026-07-25)
+	"softmax_bwd_f32",         // A-LLM-1 Stage 4 (2026-07-26)
 }
