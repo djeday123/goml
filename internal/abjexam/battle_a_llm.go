@@ -440,15 +440,30 @@ func fwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 		}
 
 		// 6. Quantize F32 -> FP8 (per-tensor amax).
+		// Zero amax buffers before Quantize (kernel does atomicMax; stale value from previous
+		// call/layer/step could poison scale). Also Sync between quantize calls (async race).
 		nElem := BH * S * HD
+		zeroF := []byte{0, 0, 0, 0}
+		uploadInto(b, sc.AmaxQ, zeroF)
+		uploadInto(b, sc.AmaxK, zeroF)
+		uploadInto(b, sc.AmaxV, zeroF)
 		if err := gtB.QuantizeF32ToF8E4M3(sc.QPerm, sc.QFP8, sc.ScaleQ, sc.AmaxQ, nElem); err != nil {
 			return 0, fmt.Errorf("layer %d Q quantize: %w", l, err)
+		}
+		if s, ok := b.(interface{ Sync() error }); ok {
+			s.Sync()
 		}
 		if err := gtB.QuantizeF32ToF8E4M3(sc.KPerm, sc.KFP8, sc.ScaleK, sc.AmaxK, nElem); err != nil {
 			return 0, fmt.Errorf("layer %d K quantize: %w", l, err)
 		}
+		if s, ok := b.(interface{ Sync() error }); ok {
+			s.Sync()
+		}
 		if err := gtB.QuantizeF32ToF8E4M3(sc.VPerm, sc.VFP8, sc.ScaleV, sc.AmaxV, nElem); err != nil {
 			return 0, fmt.Errorf("layer %d V quantize: %w", l, err)
+		}
+		if s, ok := b.(interface{ Sync() error }); ok {
+			s.Sync()
 		}
 
 		// 7. Read scales (host) to compose FA scale.
@@ -475,6 +490,13 @@ func fwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 		}
 		faScale := softmaxScale * scaleQ * scaleK
 
+		// Zero OFP16 and LGPU before FA to ensure fresh state per call.
+		{
+			ofp16Zero := make([]byte, BH*S*HD*2)
+			uploadInto(b, sc.OFP16, ofp16Zero)
+			lZero := make([]byte, BH*S*4)
+			uploadInto(b, sc.LGPU, lZero)
+		}
 		// 8. FA-fwd-with-L. Output O -> FP16 [BH, S, HD], L -> F32 [BH, S].
 		if err := faCtx.ForwardTrain(
 			devPtr(sc.QFP8), devPtr(sc.KFP8), devPtr(sc.VFP8),

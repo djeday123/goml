@@ -1016,6 +1016,67 @@ $L_sbwd_p2:
 $L_sbwd_done:
     ret;
 }
+
+// ============================================================
+// silu_bwd_f32 (A-LLM-2 Stage 1, 2026-07-26):
+//   Silu(h) = h * sigmoid(h). Backward:
+//     dh = dSilu * (sigmoid + h * sigmoid * (1 - sigmoid))
+//        = dSilu * (sigmoid + Silu_out * (1 - sigmoid))
+//   Elementwise, single kernel, no reductions.
+// Params: p_dSilu (in), p_h (in), p_sigmoid (in), p_dh (out), p_n (u32).
+// Grid (ceil(n/256), 1, 1). Block (256, 1, 1).
+// ============================================================
+.visible .entry silu_bwd_f32(
+    .param .u64 p_dSilu,
+    .param .u64 p_h,
+    .param .u64 p_sigmoid,
+    .param .u64 p_dh,
+    .param .u32 p_n
+) {
+    .reg .u64 %dSilu, %h, %sig, %dh, %off, %addr;
+    .reg .u32 %tidx, %bidx, %n, %idx, %off_bytes;
+    .reg .f32 %dsv, %hv, %sv, %one_minus_s, %tmp, %grad;
+    .reg .pred %pred;
+
+    ld.param.u64 %dSilu, [p_dSilu];
+    ld.param.u64 %h,     [p_h];
+    ld.param.u64 %sig,   [p_sigmoid];
+    ld.param.u64 %dh,    [p_dh];
+    ld.param.u32 %n,     [p_n];
+
+    mov.u32 %tidx, %tid.x;
+    mov.u32 %bidx, %ctaid.x;
+    mad.lo.u32 %idx, %bidx, 256, %tidx;
+    setp.ge.u32 %pred, %idx, %n;
+    @%pred bra $L_silubwd_done;
+
+    mul.lo.u32 %off_bytes, %idx, 4;
+    cvt.u64.u32 %off, %off_bytes;
+
+    add.u64 %addr, %dSilu, %off;
+    ld.global.f32 %dsv, [%addr];
+    add.u64 %addr, %h, %off;
+    ld.global.f32 %hv, [%addr];
+    add.u64 %addr, %sig, %off;
+    ld.global.f32 %sv, [%addr];
+
+    // one_minus_s = 1 - sv
+    mov.f32 %one_minus_s, 0f3f800000; // 1.0
+    sub.f32 %one_minus_s, %one_minus_s, %sv;
+    // tmp = hv * sv * one_minus_s
+    mul.f32 %tmp, %hv, %sv;
+    mul.f32 %tmp, %tmp, %one_minus_s;
+    // grad_factor = sv + tmp
+    add.f32 %grad, %sv, %tmp;
+    // dh = dsv * grad_factor
+    mul.f32 %grad, %dsv, %grad;
+
+    add.u64 %addr, %dh, %off;
+    st.global.f32 [%addr], %grad;
+
+$L_silubwd_done:
+    ret;
+}
 ` + "\x00"
 
 // Phase B kernel names
@@ -1037,4 +1098,5 @@ var kernelNames_B = []string{
 	"cross_entropy_f32",       // A-1 (2026-07-24)
 	"transpose_shd_hsd_f32",   // A-LLM-1 Stage 3 (2026-07-25)
 	"softmax_bwd_f32",         // A-LLM-1 Stage 4 (2026-07-26)
+	"silu_bwd_f32",            // A-LLM-2 (2026-07-26)
 }
