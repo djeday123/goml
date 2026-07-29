@@ -381,15 +381,30 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 		return fmt.Errorf("bwdBattleAF32 requires gotorch adapter, got %T", b)
 	}
 
+	// Б-1 DIAG helper (top-level).
+	diagTop := func(name string, s backend.Storage, n int) {
+		h := gpuToHost(b, s, n)
+		var mx float32
+		for _, v := range h {
+			a := v
+			if a < 0 { a = -a }
+			if a > mx { mx = a }
+		}
+		fmt.Printf("Б-1 TOP  %-16s |max|=%.3e\n", name, mx)
+	}
+	diagTop("GradL(from-CE)", sc.GradL, M*V)
+	diagTop("sc.Normed(fwd)", sc.Normed, M*D)
 	// Output layer: dLogits already in sc.GradL from CE kernel.
 	// dWout = Normed^T @ dLogits (Normed = post-top RMSNorm output, from sc.Normed at fwd end).
 	if err := gtB.MatMulF32Ex(sc.Normed, sc.GradL, grads.DWout, D, V, M, true, false); err != nil {
 		return fmt.Errorf("dWout: %w", err)
 	}
+	diagTop("dWout(1st)", grads.DWout, D*V)
 	// dNormedTop = dLogits @ Wout^T.
 	if err := gtB.MatMulF32Ex(sc.GradL, st.Wout, bs.DNormedTop, M, D, V, false, true); err != nil {
 		return fmt.Errorf("dNormedTop: %w", err)
 	}
+	diagTop("dNormedTop(1st)", bs.DNormedTop, M*D)
 	// Top RMSNorm bwd — использует XPreTop.
 	if err := gtB.RMSNormGradF32(sc.XPreTop, st.NormOut, bs.DNormedTop, bs.DX, grads.DNormOut, M, D, cfg.Eps); err != nil {
 		return fmt.Errorf("top RMSNormGrad: %w", err)
@@ -475,6 +490,22 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 				return fmt.Errorf("layer %d dOAttn permute batch %d: %w", l, bi, err)
 			}
 		}
+		// Б-1 DIAG: chain magnitudes for layer 0.
+		diagAbs := func(name string, s backend.Storage, n int) {
+			h := gpuToHost(b, s, n)
+			var mx float32
+			for _, v := range h {
+				a := v
+				if a < 0 { a = -a }
+				if a > mx { mx = a }
+			}
+			fmt.Printf("Б-1 L=%d %-16s |max|=%.3e\n", l, name, mx)
+		}
+		if l == 0 {
+			diagAbs("dAttnOut(post-copy)", bs.DAttnOut, M*D)
+			diagAbs("dQ_buf(dA@Wo^T)", bs.DQ, M*D)
+			diagAbs("dOF32(inv-perm)", bs.DOF32, BH*S*HD)
+		}
 		// attnReconstructBwd на per-layer snapshots. Нужен P (пересчитаем).
 		if err := attnReconstructFwd(b, gtB, sc.QPermSnap[l], sc.KPermSnap[l], sc.VPermSnap[l],
 			bs.OReconDbg, bs.SReconTemp, bs.PRecon, bs.QScaledTmp,
@@ -538,6 +569,10 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 		if err := gtB.RoPEGradF32(bs.DKPerm, bs.DKPerm, BH, 1, S, HD, cfg.Base); err != nil {
 			return fmt.Errorf("layer %d RoPE bwd K: %w", l, err)
 		}
+		if l == 0 {
+			diagAbs("dQPerm(post-RoPE-bwd)", bs.DQPerm, BH*S*HD)
+			diagAbs("dKPerm(post-RoPE-bwd)", bs.DKPerm, BH*S*HD)
+		}
 		// Inverse permute [BH, S, HD] -> [B, S, H, HD].
 		dqpBase := devPtr(bs.DQPerm)
 		dkpBase := devPtr(bs.DKPerm)
@@ -557,9 +592,16 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 				return fmt.Errorf("layer %d dV inv-permute batch %d: %w", l, bi, err)
 			}
 		}
+		if l == 0 {
+			diagAbs("dQ(post-inv-perm)", bs.DQ, M*D)
+			diagAbs("dK(post-inv-perm)", bs.DK, M*D)
+		}
 		// Recompute Normed1 = RMSNorm(XPreAttn[l], Norm1) для dWq/dWk/dWv.
 		if err := gtB.RMSNormF32(sc.XPreAttn[l], lw.Norm1, bs.NormedRecomp, M, D, cfg.Eps); err != nil {
 			return fmt.Errorf("layer %d recompute Normed1: %w", l, err)
+		}
+		if l == 0 {
+			diagAbs("NormedRecomp1", bs.NormedRecomp, M*D)
 		}
 		// dNormed = dQ @ Wq^T + dK @ Wk^T + dV @ Wv^T.
 		if err := gtB.MatMulF32Ex(bs.DQ, lw.Wq, bs.DNormed, M, D, D, false, true); err != nil {
@@ -580,6 +622,9 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 		// Weight grads.
 		if err := gtB.MatMulF32Ex(bs.NormedRecomp, bs.DQ, lg.DWq, D, D, M, true, false); err != nil {
 			return fmt.Errorf("layer %d dWq: %w", l, err)
+		}
+		if l == 0 {
+			diagAbs("dWq(final)", lg.DWq, D*D)
 		}
 		if err := gtB.MatMulF32Ex(bs.NormedRecomp, bs.DK, lg.DWk, D, D, M, true, false); err != nil {
 			return fmt.Errorf("layer %d dWk: %w", l, err)
