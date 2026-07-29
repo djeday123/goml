@@ -127,12 +127,6 @@ func attnReconstructBwd(b backend.Backend, gtB *gotorchAdapter.Backend,
 		if err := launchSoftmaxBwd(b, devPtr(P), devPtr(dPtemp), devPtr(dStemp), S, S); err != nil {
 			return fmt.Errorf("attn recon bwd: softmax_bwd_f32: %w", err)
 		}
-		// A-LLM-2 v2 fix: Sync between softmax_bwd PTX kernel и следующий MatMul.
-		// Без Sync первый MatMulF32Ex(dStemp, K, dQ) на форме (S=32, HD=128) даёт EXACT
-		// ZERO output — сoftmax_bwd kernel не успевает записать dStemp когда cublas читает.
-		if s, ok := b.(interface{ Sync() error }); ok {
-			s.Sync()
-		}
 		if err := gtB.MatMulF32Ex(dStemp, K, dQ, S, HD, S, false, false); err != nil {
 			return fmt.Errorf("attn recon bwd: dQ=dS@K: %w", err)
 		}
