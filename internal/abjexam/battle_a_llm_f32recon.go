@@ -486,6 +486,51 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 			BH, S, HD, softmaxScale); err != nil {
 			return fmt.Errorf("layer %d recon bwd: %w", l, err)
 		}
+		// DEBUG-DISABLED: check dQPerm/dOF32 magnitudes (kept for future investigation).
+		if false && l == 0 {
+			doH := gpuToHost(b, bs.DOF32, BH*S*HD)
+			dqpH := gpuToHost(b, bs.DQPerm, BH*S*HD)
+			dpH := gpuToHost(b, bs.DPTemp, BH*S*S)
+			dsH := gpuToHost(b, bs.DSTemp, BH*S*S)
+			var maxDO, maxDQP, maxDP, maxDS float32
+			for _, v := range doH {
+				if a := v; a < 0 {
+					if -a > maxDO {
+						maxDO = -a
+					}
+				} else if a > maxDO {
+					maxDO = a
+				}
+			}
+			for _, v := range dqpH {
+				if a := v; a < 0 {
+					if -a > maxDQP {
+						maxDQP = -a
+					}
+				} else if a > maxDQP {
+					maxDQP = a
+				}
+			}
+			for _, v := range dpH {
+				if a := v; a < 0 {
+					if -a > maxDP {
+						maxDP = -a
+					}
+				} else if a > maxDP {
+					maxDP = a
+				}
+			}
+			for _, v := range dsH {
+				if a := v; a < 0 {
+					if -a > maxDS {
+						maxDS = -a
+					}
+				} else if a > maxDS {
+					maxDS = a
+				}
+			}
+			fmt.Printf("DEBUG bwd L=0: |dOF32|=%.3e, |dP|=%.3e, |dS|=%.3e, |dQPerm|=%.3e\n", maxDO, maxDP, maxDS, maxDQP)
+		}
 		// RoPE bwd Q, K.
 		if err := gtB.RoPEGradF32(bs.DQPerm, bs.DQPerm, BH, 1, S, HD, cfg.Base); err != nil {
 			return fmt.Errorf("layer %d RoPE bwd Q: %w", l, err)

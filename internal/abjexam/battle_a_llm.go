@@ -97,9 +97,7 @@ func NewBattleAState(cfg BattleACfg, r *rand.Rand, b backend.Backend) (*BattleAS
 	if cfg.D != cfg.H*cfg.HD {
 		return nil, fmt.Errorf("BattleACfg: D=%d must equal H*hd=%d*%d=%d", cfg.D, cfg.H, cfg.HD, cfg.H*cfg.HD)
 	}
-	if cfg.HD != 128 {
-		return nil, fmt.Errorf("BattleACfg: hd=%d, FA-fwd-train требует hd=128", cfg.HD)
-	}
+	// hd=128 требуется только для FA path. F32-only bypasses this check.
 	upload := func(data []float32) (backend.Storage, error) {
 		return b.ToDevice(backend.CUDADevice(0), &cpuStorage{data: f32ToBytes(data)})
 	}

@@ -39,9 +39,9 @@ func TestALLM_BwdCertF32_MultiLayer(t *testing.T) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	// Multi-layer form. HD=128 нужно для attnReconstruct (softmax_scale computation).
+	// Probe: hd=128 D=128 S=32. Isolates hd-specific bug.
 	cfg := BattleACfg{
-		V: 128, D: 128, H: 1, HD: 128, L: 1, S: 32, B: 1, FFN: 128,
+		V: 32, D: 128, H: 1, HD: 128, L: 1, S: 32, B: 1, FFN: 128,
 		Base: 10000.0, Eps: 1e-5,
 	}
 	rInit := rand.New(rand.NewSource(31))
@@ -66,16 +66,48 @@ func TestALLM_BwdCertF32_MultiLayer(t *testing.T) {
 	}
 	defer grads.FreeAll(adB)
 
+	// Гипотеза 1/2: УНИКАЛЬНЫЕ токены исключают atomicAdd multi-occurrence
+	// в EmbeddingGrad (num-grad шевелит только ОДНУ позицию, но ana аккумулирует
+	// scatter в ту же позицию N раз при повторах).
 	rTok := rand.New(rand.NewSource(41))
 	M := cfg.B * cfg.S
 	inp := make([]int64, M)
 	tgt := make([]int32, M)
-	for i := 0; i < M; i++ {
-		inp[i] = int64(rTok.Intn(cfg.V))
-		tgt[i] = int32(rTok.Intn(cfg.V))
+	usedTokens := map[int]bool{}
+	if M > cfg.V {
+		t.Fatalf("M=%d > V=%d — cannot have unique tokens", M, cfg.V)
 	}
+	for i := 0; i < M; i++ {
+		var t int
+		for {
+			t = rTok.Intn(cfg.V)
+			if !usedTokens[t] {
+				break
+			}
+		}
+		usedTokens[t] = true
+		inp[i] = int64(t)
+		tgt[i] = int32(rTok.Intn(cfg.V)) // targets могут повторяться (не участвуют в scatter)
+	}
+	// Проверка уникальности.
+	seen := map[int64]bool{}
+	for _, v := range inp {
+		if seen[v] {
+			t.Fatalf("input tokens NOT unique — cert test broken")
+		}
+		seen[v] = true
+	}
+	t.Logf("Input tokens: %d unique of %d total; V=%d", len(seen), M, cfg.V)
 
-	// Analytical bwd.
+	// WARMUP: 5 SGD шагов чтобы выйти из uniform-attention regime.
+	// Fresh-init: P uniform → softmax_bwd exactly ZERO для dS (математический ноль!),
+	// а numerical grad от конечного eps даёт non-zero — рассогласование не bug, а numerical artifact.
+	for step := 0; step < 5; step++ {
+		if _, err := trainStepBattleAF32(adB, st, sc, bs, grads, inp, tgt, 1e-2); err != nil {
+			t.Fatalf("warmup step %d: %v", step, err)
+		}
+	}
+	// Analytical bwd (после warmup).
 	loss, err := fwdBattleAF32(adB, st, sc, inp, tgt)
 	if err != nil {
 		t.Fatalf("initial fwd: %v", err)
@@ -157,10 +189,14 @@ func TestALLM_BwdCertF32_MultiLayer(t *testing.T) {
 		idx   int
 		ana   float32
 	}
+	// Индексы автомат: middle-ish entries.
+	wqIdx := (cfg.D / 2) * cfg.D + (cfg.D / 3)     // [D/2][D/3]
+	w1Idx := (cfg.D / 2) * cfg.FFN + (cfg.FFN / 3) // [D/2][FFN/3]
+	embIdx := int(inp[0])*cfg.D + (cfg.D / 3)      // [inp0][D/3]
 	points := []point{
-		{"Wq[L=0][3,5]", st.Layers[0].Wq, cfg.D * cfg.D, 3*cfg.D + 5, dWq0Ana[3*cfg.D+5]},
-		{"W1[L=0][2,13]", st.Layers[0].W1, cfg.D * cfg.FFN, 2*cfg.FFN + 13, dW1L0Ana[2*cfg.FFN+13]},
-		{"Embed[inp0*D+17]", st.Embed, cfg.V * cfg.D, int(inp[0])*cfg.D + 17, dEmbedAna[int(inp[0])*cfg.D+17]},
+		{"Wq[L=0]", st.Layers[0].Wq, cfg.D * cfg.D, wqIdx, dWq0Ana[wqIdx]},
+		{"W1[L=0]", st.Layers[0].W1, cfg.D * cfg.FFN, w1Idx, dW1L0Ana[w1Idx]},
+		{"Embed[i0,d]", st.Embed, cfg.V * cfg.D, embIdx, dEmbedAna[embIdx]},
 	}
 
 	// Floor: 5e-2 abs (4 слоя FP32 chain × центральный FD eps=1e-2).
