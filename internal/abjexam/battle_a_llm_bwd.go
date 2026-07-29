@@ -135,6 +135,8 @@ type BattleABwdScratch struct {
 	DFA_dKF32  backend.Storage // F32 [BH, S, HD]
 	// Softmax scale ones-buffer (for host-broadcast usage)
 	OnesFFN backend.Storage // F32 [FFN]
+	// A-LLM-2 v2: recompute Normed = RMSNorm(XPre*, gamma) per layer в bwd.
+	NormedRecomp backend.Storage // F32 [M, D]
 }
 
 func NewBattleABwdScratch(cfg BattleACfg, b backend.Backend) (*BattleABwdScratch, error) {
@@ -181,6 +183,7 @@ func NewBattleABwdScratch(cfg BattleACfg, b backend.Backend) (*BattleABwdScratch
 	sc.DFA_dQF32 = al(BH * S * HD * 4)
 	sc.DFA_dKF32 = al(BH * S * HD * 4)
 	sc.OnesFFN = al(FFN * 4)
+	sc.NormedRecomp = al(M * D * 4)
 	// Init OnesFFN
 	ones := make([]float32, FFN)
 	for i := range ones {
@@ -229,6 +232,7 @@ func (sc *BattleABwdScratch) FreeAll(b backend.Backend) {
 	free(sc.DFA_dQF32)
 	free(sc.DFA_dKF32)
 	free(sc.OnesFFN)
+	free(sc.NormedRecomp)
 }
 
 // launchSiluBwd -- silu_bwd_f32 kernel: dh = dSilu * (sig + h*sig*(1-sig)).
