@@ -117,24 +117,65 @@ func attnReconstructBwd(b backend.Backend, gtB *gotorchAdapter.Backend,
 	Q, K, V, P, dO, dQ, dK, dV, dPtemp, dStemp backend.Storage,
 	BH, S, HD int, scale float32) error {
 	if BH == 1 {
-		// Certificate path: whole tensors, no sliceStore.
-		if err := gtB.MatMulF32Ex(P, dO, dV, S, HD, S, true, false); err != nil {
+		// Ход-2 full replacement: все 4 matmul через plain b.MatMul (cublasSgemm),
+		// host-transpose для trans-inputs. gt_gemm_ex путь оставляет context-dependent
+		// zero (isolated 777-тест на scale 1e-5 живой → не magnitude), root ищем ПОСЛЕ.
+		// Cert path BH=1, S=32, HD=128 — размеры тривиальны для host D2H/H2D.
+		hostTranspose := func(h []float32, rows, cols int) []float32 {
+			t := make([]float32, rows*cols)
+			for i := 0; i < rows; i++ {
+				for j := 0; j < cols; j++ {
+					t[j*rows+i] = h[i*cols+j]
+				}
+			}
+			return t
+		}
+		matmulPlainTA := func(dst, aStor, bStor backend.Storage, m, n, k int, transA, transB bool) error {
+			// A shape (assumed row-major stored): transA=false → [m,k]; transA=true → [k,m]
+			// B shape: transB=false → [k,n]; transB=true → [n,k]
+			var aUse backend.Storage = aStor
+			var bUse backend.Storage = bStor
+			if transA {
+				aH := gpuToHost(b, aStor, k*m) // stored [k,m]
+				aT := hostTranspose(aH, k, m)  // → [m,k]
+				tmp, err := b.Alloc(m * k * 4)
+				if err != nil {
+					return err
+				}
+				defer b.Free(tmp)
+				if _, err := uploadInto(b, tmp, f32ToBytes(aT)); err != nil {
+					return err
+				}
+				aUse = tmp
+			}
+			if transB {
+				bH := gpuToHost(b, bStor, n*k) // stored [n,k]
+				bT := hostTranspose(bH, n, k)  // → [k,n]
+				tmp, err := b.Alloc(k * n * 4)
+				if err != nil {
+					return err
+				}
+				defer b.Free(tmp)
+				if _, err := uploadInto(b, tmp, f32ToBytes(bT)); err != nil {
+					return err
+				}
+				bUse = tmp
+			}
+			return b.MatMul(dst, aUse, bUse, core.Shape{m, k}, core.Shape{k, n}, core.Float32)
+		}
+		if err := matmulPlainTA(dV, P, dO, S, HD, S, true, false); err != nil {
 			return fmt.Errorf("attn recon bwd: dV=P^T@dO: %w", err)
 		}
-		if err := gtB.MatMulF32Ex(dO, V, dPtemp, S, S, HD, false, true); err != nil {
+		if err := matmulPlainTA(dPtemp, dO, V, S, S, HD, false, true); err != nil {
 			return fmt.Errorf("attn recon bwd: dP=dO@V^T: %w", err)
 		}
 		if err := launchSoftmaxBwd(b, devPtr(P), devPtr(dPtemp), devPtr(dStemp), S, S); err != nil {
 			return fmt.Errorf("attn recon bwd: softmax_bwd_f32: %w", err)
 		}
-		// Ход-1/2 probe: MatMulF32Ex дал EXACT ZERO (|dS|=1.164e-3 живой → |dQPerm|=0.0).
-		// Fallback на plain b.MatMul (cublasSgemm через goml backend) — тот же путь
-		// что использует fwd, где значения выживают. Если plain MatMul даёт non-zero
-		// dQ → баг локализован в gt_gemm_ex wrapper на small-magnitude F32.
-		if err := b.MatMul(dQ, dStemp, K, core.Shape{S, S}, core.Shape{S, HD}, core.Float32); err != nil {
-			return fmt.Errorf("attn recon bwd: dQ=dS@K (plain probe): %w", err)
+		if err := matmulPlainTA(dQ, dStemp, K, S, HD, S, false, false); err != nil {
+			return fmt.Errorf("attn recon bwd: dQ=dS@K: %w", err)
 		}
-		if err := gtB.MatMulF32Ex(dStemp, Q, dK, S, HD, S, true, false); err != nil {
+		if err := matmulPlainTA(dK, dStemp, Q, S, HD, S, true, false); err != nil {
 			return fmt.Errorf("attn recon bwd: dK=dS^T@Q: %w", err)
 		}
 	} else {
