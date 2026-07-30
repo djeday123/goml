@@ -381,6 +381,8 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 		return fmt.Errorf("bwdBattleAF32 requires gotorch adapter, got %T", b)
 	}
 
+	// PRE-WARMUP отключён — вызывал регрессию (все iters dead).
+
 	// Б-1 DIAG helper (top-level).
 	diagTop := func(name string, s backend.Storage, n int) {
 		h := gpuToHost(b, s, n)

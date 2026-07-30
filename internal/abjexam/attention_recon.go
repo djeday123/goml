@@ -127,13 +127,7 @@ func attnReconstructBwd(b backend.Backend, gtB *gotorchAdapter.Backend,
 		if err := launchSoftmaxBwd(b, devPtr(P), devPtr(dPtemp), devPtr(dStemp), S, S); err != nil {
 			return fmt.Errorf("attn recon bwd: softmax_bwd_f32: %w", err)
 		}
-		// cublas warmup: first-call для уникальной (m,n,k,transA,transB) combo
-		// возвращает EXACT ZERO. dQ = dS@K с (S,HD,S,false,false) — уникальная
-		// combo, не warmed никаким предыдущим matmul в attn recon (dV/dP/dK use
-		// TF/FT/TF). Double-call: первый zeros, второй пишет correct (beta=0).
-		if err := gtB.MatMulF32Ex(dStemp, K, dQ, S, HD, S, false, false); err != nil {
-			return fmt.Errorf("attn recon bwd: dQ=dS@K warmup: %w", err)
-		}
+		// Warmup applied at bwdBattleAF32 entry (see battle_a_llm_f32recon.go).
 		if err := gtB.MatMulF32Ex(dStemp, K, dQ, S, HD, S, false, false); err != nil {
 			return fmt.Errorf("attn recon bwd: dQ=dS@K: %w", err)
 		}
