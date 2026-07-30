@@ -209,10 +209,12 @@ func TestALLM_BwdCertF32_MultiLayer(t *testing.T) {
 	// делённый на 2*eps_pert, даёт "фейковый gradient" ~ 1/eps_pert. True slope
 	// от eps_pert НЕ зависит. Ratio num(eps=1e-2)/num(eps=3e-2) ≈ 3 => noise;
 	// ≈ 1 => true. Формула шумового пола: |g|_min ~ eps_F32*|L|*sqrt(K) / (2*eps_pert).
-	t.Logf("=== Ход-1а eps-scan noise arbiter ===")
+	t.Logf("=== Ход-1а eps-scan noise arbiter (extended: 1e-3 tail) ===")
 	for _, p := range points {
 		n1 := numGradAt(p.W, p.idx, p.nElem, 1e-2)
 		n3 := numGradAt(p.W, p.idx, p.nElem, 3e-2)
+		nA := numGradAt(p.W, p.idx, p.nElem, 1e-3)
+		t.Logf("  %-14s at eps=1e-3 num=%+.3e (nonlinearity probe vs eps=1e-2 num=%+.3e)", p.name, nA, n1)
 		absN1 := n1
 		if absN1 < 0 {
 			absN1 = -absN1
