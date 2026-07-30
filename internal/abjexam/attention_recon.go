@@ -127,9 +127,12 @@ func attnReconstructBwd(b backend.Backend, gtB *gotorchAdapter.Backend,
 		if err := launchSoftmaxBwd(b, devPtr(P), devPtr(dPtemp), devPtr(dStemp), S, S); err != nil {
 			return fmt.Errorf("attn recon bwd: softmax_bwd_f32: %w", err)
 		}
-		// Warmup applied at bwdBattleAF32 entry (see battle_a_llm_f32recon.go).
-		if err := gtB.MatMulF32Ex(dStemp, K, dQ, S, HD, S, false, false); err != nil {
-			return fmt.Errorf("attn recon bwd: dQ=dS@K: %w", err)
+		// Ход-1/2 probe: MatMulF32Ex дал EXACT ZERO (|dS|=1.164e-3 живой → |dQPerm|=0.0).
+		// Fallback на plain b.MatMul (cublasSgemm через goml backend) — тот же путь
+		// что использует fwd, где значения выживают. Если plain MatMul даёт non-zero
+		// dQ → баг локализован в gt_gemm_ex wrapper на small-magnitude F32.
+		if err := b.MatMul(dQ, dStemp, K, core.Shape{S, S}, core.Shape{S, HD}, core.Float32); err != nil {
+			return fmt.Errorf("attn recon bwd: dQ=dS@K (plain probe): %w", err)
 		}
 		if err := gtB.MatMulF32Ex(dStemp, Q, dK, S, HD, S, true, false); err != nil {
 			return fmt.Errorf("attn recon bwd: dK=dS^T@Q: %w", err)

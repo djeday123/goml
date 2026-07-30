@@ -99,12 +99,15 @@ func TestALLM_BwdCertF32_MultiLayer(t *testing.T) {
 	}
 	t.Logf("Input tokens: %d unique of %d total; V=%d", len(seen), M, cfg.V)
 
-	// WARMUP: 5 SGD шагов чтобы выйти из uniform-attention regime.
-	// Fresh-init: P uniform → softmax_bwd exactly ZERO для dS (математический ноль!),
-	// а numerical grad от конечного eps даёт non-zero — рассогласование не bug, а numerical artifact.
-	for step := 0; step < 5; step++ {
-		if _, err := trainStepBattleAF32(adB, st, sc, bs, grads, inp, tgt, 1e-2); err != nil {
-			t.Fatalf("warmup step %d: %v", step, err)
+	// Ход-2а: warmup ОТКЛЮЧЁН (SGD-warmup при dead attn = death spiral, cf. Ход-1а ratio=1.01).
+	// Fresh init — самое честное состояние. P-энтропия ПРОГНОЗ: близко к ln(S)=ln(32)=3.466 (uniform).
+	// Если и на fresh init dWq систематически теряет реальный slope — GPU-баг подтверждён.
+	const skipWarmup = true
+	if !skipWarmup {
+		for step := 0; step < 5; step++ {
+			if _, err := trainStepBattleAF32(adB, st, sc, bs, grads, inp, tgt, 1e-2); err != nil {
+				t.Fatalf("warmup step %d: %v", step, err)
+			}
 		}
 	}
 	// Analytical bwd (после warmup).
@@ -167,18 +170,21 @@ func TestALLM_BwdCertF32_MultiLayer(t *testing.T) {
 		}
 		return l
 	}
-	numGrad := func(W backend.Storage, idx int, n int) float32 {
+	numGradAt := func(W backend.Storage, idx int, n int, e float32) float32 {
 		wH := gpuToHost(adB, W, n)
 		orig := wH[idx]
-		wH[idx] = orig + eps
+		wH[idx] = orig + e
 		upload(W, wH)
 		lp := fwdLoss()
-		wH[idx] = orig - eps
+		wH[idx] = orig - e
 		upload(W, wH)
 		lm := fwdLoss()
 		wH[idx] = orig
 		upload(W, wH)
-		return float32((lp - lm) / (2.0 * float64(eps)))
+		return float32((lp - lm) / (2.0 * float64(e)))
+	}
+	numGrad := func(W backend.Storage, idx int, n int) float32 {
+		return numGradAt(W, idx, n, eps)
 	}
 
 	// Test points across DIFFERENT layers — межслойность ловит caveat-1.
@@ -197,6 +203,36 @@ func TestALLM_BwdCertF32_MultiLayer(t *testing.T) {
 		{"Wq[L=0]", st.Layers[0].Wq, cfg.D * cfg.D, wqIdx, dWq0Ana[wqIdx]},
 		{"W1[L=0]", st.Layers[0].W1, cfg.D * cfg.FFN, w1Idx, dW1L0Ana[w1Idx]},
 		{"Embed[i0,d]", st.Embed, cfg.V * cfg.D, embIdx, dEmbedAna[embIdx]},
+	}
+
+	// Ход-1а: noise-arbiter. F32 fwd accumulation shot-noise ~ sqrt(K)*eps_F32*|L|,
+	// делённый на 2*eps_pert, даёт "фейковый gradient" ~ 1/eps_pert. True slope
+	// от eps_pert НЕ зависит. Ratio num(eps=1e-2)/num(eps=3e-2) ≈ 3 => noise;
+	// ≈ 1 => true. Формула шумового пола: |g|_min ~ eps_F32*|L|*sqrt(K) / (2*eps_pert).
+	t.Logf("=== Ход-1а eps-scan noise arbiter ===")
+	for _, p := range points {
+		n1 := numGradAt(p.W, p.idx, p.nElem, 1e-2)
+		n3 := numGradAt(p.W, p.idx, p.nElem, 3e-2)
+		absN1 := n1
+		if absN1 < 0 {
+			absN1 = -absN1
+		}
+		absN3 := n3
+		if absN3 < 0 {
+			absN3 = -absN3
+		}
+		var ratio float32
+		if absN3 > 0 {
+			ratio = absN1 / absN3
+		}
+		verdict := "AMBIGUOUS"
+		if ratio > 2.0 && ratio < 4.5 {
+			verdict = "NOISE (scales as 1/eps → num measures shot-noise, not slope)"
+		} else if ratio > 0.7 && ratio < 1.4 {
+			verdict = "TRUE-SLOPE (num eps-invariant)"
+		}
+		t.Logf("  %-14s ana=%+.3e  num(1e-2)=%+.3e  num(3e-2)=%+.3e  ratio=%.2f  → %s",
+			p.name, p.ana, n1, n3, ratio, verdict)
 	}
 
 	// Floor: 5e-2 abs (4 слоя FP32 chain × центральный FD eps=1e-2).

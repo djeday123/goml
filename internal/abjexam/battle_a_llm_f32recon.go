@@ -519,8 +519,8 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 			BH, S, HD, softmaxScale); err != nil {
 			return fmt.Errorf("layer %d recon bwd: %w", l, err)
 		}
-		// DEBUG-DISABLED: check dQPerm/dOF32 magnitudes (kept for future investigation).
-		if false && l == 0 {
+		// Ход-1а/2а: активирую для локализации звена смерти в attnReconstructBwd.
+		if l == 0 {
 			doH := gpuToHost(b, bs.DOF32, BH*S*HD)
 			dqpH := gpuToHost(b, bs.DQPerm, BH*S*HD)
 			dpH := gpuToHost(b, bs.DPTemp, BH*S*S)
