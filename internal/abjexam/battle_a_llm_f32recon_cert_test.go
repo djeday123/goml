@@ -128,6 +128,157 @@ func TestALLM_BwdCertF32_MultiLayer(t *testing.T) {
 	if s, ok := adB.(interface{ Sync() error }); ok {
 		s.Sync()
 	}
+	// D-протокол: поэтажный CPU-F64 arbiter. Snapshot после каждого звена.
+	dxAfterTopH := gpuToHost(adB, bs.DXAfterTop, (cfg.B * cfg.S)*cfg.D)
+	dffnOutSnapH := gpuToHost(adB, bs.DFFNOutSnap, (cfg.B * cfg.S)*cfg.D)
+	dffnSiluSnapH := gpuToHost(adB, bs.DFFNSiluSnap, (cfg.B * cfg.S)*cfg.FFN)
+	dffnHidSnapH := gpuToHost(adB, bs.DFFNHidSnap, (cfg.B * cfg.S)*cfg.FFN)
+	xpreTopH := gpuToHost(adB, sc.XPreTop, (cfg.B * cfg.S)*cfg.D)
+	normOutH := gpuToHost(adB, st.NormOut, cfg.D)
+	dnormedTopH := gpuToHost(adB, bs.DNormedTop, (cfg.B * cfg.S)*cfg.D)
+	w2L0H := gpuToHost(adB, st.Layers[0].W2, cfg.FFN*cfg.D)
+	ffnHidH := gpuToHost(adB, sc.FFNHid, (cfg.B * cfg.S)*cfg.FFN)
+	ffnSigH := gpuToHost(adB, sc.FFNSig, (cfg.B * cfg.S)*cfg.FFN)
+	{
+		// (1) dX_ref через F64: dx_j = γ_j·dy_j/rms - x_j·S·rms^{-3}/D.
+		Mn := (cfg.B * cfg.S)
+		Dn := cfg.D
+		dxRef := make([]float64, Mn*Dn)
+		for row := 0; row < Mn; row++ {
+			var sumX2 float64
+			for j := 0; j < Dn; j++ {
+				x := float64(xpreTopH[row*Dn+j])
+				sumX2 += x * x
+			}
+			ms := sumX2/float64(Dn) + float64(cfg.Eps)
+			rms := math.Sqrt(ms)
+			var S float64
+			for j := 0; j < Dn; j++ {
+				S += float64(normOutH[j]) * float64(xpreTopH[row*Dn+j]) * float64(dnormedTopH[row*Dn+j])
+			}
+			invRms := 1.0 / rms
+			invRms3ByD := invRms * invRms * invRms / float64(Dn)
+			for j := 0; j < Dn; j++ {
+				g := float64(normOutH[j])
+				x := float64(xpreTopH[row*Dn+j])
+				dy := float64(dnormedTopH[row*Dn+j])
+				dxRef[row*Dn+j] = g*dy*invRms - x*S*invRms3ByD
+			}
+		}
+		var maxAbsDx, maxRelDx float64
+		var maxGpu, maxRef float64
+		var argMax int
+		for i := range dxRef {
+			gpu := float64(dxAfterTopH[i])
+			ref := dxRef[i]
+			diff := math.Abs(gpu - ref)
+			den := math.Abs(ref)
+			if den < 1e-8 {
+				den = 1e-8
+			}
+			if diff > maxAbsDx {
+				maxAbsDx = diff
+				maxGpu = gpu
+				maxRef = ref
+				argMax = i
+			}
+			rel := diff / den
+			if rel > maxRelDx {
+				maxRelDx = rel
+			}
+		}
+		t.Logf("D-hop-1 dX_after_top: max cell idx=%d GPU=%+.6e F64=%+.6e diff=%.3e maxRel=%.3e",
+			argMax, maxGpu, maxRef, maxAbsDx, maxRelDx)
+	}
+	{
+		// (2) dFFNOut = Copy(bs.DX) - must be identical to dX_after_top.
+		var maxDiff float64
+		for i := range dxAfterTopH {
+			d := math.Abs(float64(dffnOutSnapH[i]) - float64(dxAfterTopH[i]))
+			if d > maxDiff {
+				maxDiff = d
+			}
+		}
+		t.Logf("D-hop-2 dFFNOut vs dX_after_top: max abs diff=%.3e (must be 0)", maxDiff)
+	}
+	{
+		// (3) dFFNSilu_ref = dFFNOut @ W2^T. Shape [M, FFN].
+		Mn := (cfg.B * cfg.S)
+		FFNn := cfg.FFN
+		Dn := cfg.D
+		dsiluRef := make([]float64, Mn*FFNn)
+		for m := 0; m < Mn; m++ {
+			for f := 0; f < FFNn; f++ {
+				var acc float64
+				for d := 0; d < Dn; d++ {
+					acc += float64(dffnOutSnapH[m*Dn+d]) * float64(w2L0H[f*Dn+d])
+				}
+				dsiluRef[m*FFNn+f] = acc
+			}
+		}
+		var maxAbs, maxRel float64
+		var maxGpu, maxRef float64
+		var argMax int
+		for i := range dsiluRef {
+			gpu := float64(dffnSiluSnapH[i])
+			ref := dsiluRef[i]
+			diff := math.Abs(gpu - ref)
+			den := math.Abs(ref)
+			if den < 1e-8 {
+				den = 1e-8
+			}
+			if diff > maxAbs {
+				maxAbs = diff
+				maxGpu = gpu
+				maxRef = ref
+				argMax = i
+			}
+			rel := diff / den
+			if rel > maxRel {
+				maxRel = rel
+			}
+		}
+		t.Logf("D-hop-3 dFFNSilu: max cell idx=%d GPU=%+.6e F64=%+.6e diff=%.3e maxRel=%.3e",
+			argMax, maxGpu, maxRef, maxAbs, maxRel)
+	}
+	{
+		// (4) dFFNHidden_ref = silu_bwd(dFFNSilu, FFNHid, FFNSig).
+		// silu(h) = h * σ(h). d silu/dh = σ + h * σ * (1 - σ).
+		Mn := (cfg.B * cfg.S)
+		FFNn := cfg.FFN
+		dhidRef := make([]float64, Mn*FFNn)
+		for i := range dhidRef {
+			h := float64(ffnHidH[i])
+			s := float64(ffnSigH[i])
+			dSiludh := s + h*s*(1.0-s)
+			dhidRef[i] = float64(dffnSiluSnapH[i]) * dSiludh
+		}
+		var maxAbs, maxRel float64
+		var maxGpu, maxRef float64
+		var argMax int
+		for i := range dhidRef {
+			gpu := float64(dffnHidSnapH[i])
+			ref := dhidRef[i]
+			diff := math.Abs(gpu - ref)
+			den := math.Abs(ref)
+			if den < 1e-8 {
+				den = 1e-8
+			}
+			if diff > maxAbs {
+				maxAbs = diff
+				maxGpu = gpu
+				maxRef = ref
+				argMax = i
+			}
+			rel := diff / den
+			if rel > maxRel {
+				maxRel = rel
+			}
+		}
+		t.Logf("D-hop-4 dFFNHidden: max cell idx=%d GPU=%+.6e F64=%+.6e diff=%.3e maxRel=%.3e",
+			argMax, maxGpu, maxRef, maxAbs, maxRel)
+	}
+
 	// Snapshot analytical grads for cross-layer points.
 	dWq0Ana := gpuToHost(adB, grads.Layers[0].DWq, cfg.D*cfg.D)
 	_ = grads.Layers[cfg.L-1].DWq // last layer unused in L=1

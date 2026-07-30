@@ -137,6 +137,15 @@ type BattleABwdScratch struct {
 	OnesFFN backend.Storage // F32 [FFN]
 	// A-LLM-2 v2: recompute Normed = RMSNorm(XPre*, gamma) per layer в bwd.
 	NormedRecomp backend.Storage // F32 [M, D]
+	// D-протокол: snapshot bs.DX RIGHT AFTER RMSNormGradTop, before residual-adds.
+	// Cert test uses this для CPU-F64 vs GPU arbiter поэтажно.
+	DXAfterTop backend.Storage // F32 [M, D]
+	// D-протокол: dFFNOut snapshot RIGHT AFTER Copy(DFFNOut,DX), before FFN chain.
+	DFFNOutSnap backend.Storage // F32 [M, D]
+	// D-протокол: dFFNSilu snapshot RIGHT AFTER dFFNOut@W2^T, before silu_bwd.
+	DFFNSiluSnap backend.Storage // F32 [M, FFN]
+	// D-протокол: dFFNHidden snapshot RIGHT AFTER silu_bwd, before dW1 matmul.
+	DFFNHidSnap backend.Storage // F32 [M, FFN]
 }
 
 func NewBattleABwdScratch(cfg BattleACfg, b backend.Backend) (*BattleABwdScratch, error) {
@@ -184,6 +193,10 @@ func NewBattleABwdScratch(cfg BattleACfg, b backend.Backend) (*BattleABwdScratch
 	sc.DFA_dKF32 = al(BH * S * HD * 4)
 	sc.OnesFFN = al(FFN * 4)
 	sc.NormedRecomp = al(M * D * 4)
+	sc.DXAfterTop = al(M * D * 4)
+	sc.DFFNOutSnap = al(M * D * 4)
+	sc.DFFNSiluSnap = al(M * cfg.FFN * 4)
+	sc.DFFNHidSnap = al(M * cfg.FFN * 4)
 	// Init OnesFFN
 	ones := make([]float32, FFN)
 	for i := range ones {
@@ -233,6 +246,10 @@ func (sc *BattleABwdScratch) FreeAll(b backend.Backend) {
 	free(sc.DFA_dKF32)
 	free(sc.OnesFFN)
 	free(sc.NormedRecomp)
+	free(sc.DXAfterTop)
+	free(sc.DFFNOutSnap)
+	free(sc.DFFNSiluSnap)
+	free(sc.DFFNHidSnap)
 }
 
 // launchSiluBwd -- silu_bwd_f32 kernel: dh = dSilu * (sig + h*sig*(1-sig)).

@@ -380,6 +380,27 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 	if !ok {
 		return fmt.Errorf("bwdBattleAF32 requires gotorch adapter, got %T", b)
 	}
+	// D-протокол helper: plain b.MatMul с host-transpose для transB=true (M,n,k,F,T pattern).
+	// Bug class isolated: MatMulF32Ex дает EXACT ZERO partial для (M=32,X,X,F,T).
+	matmulPlainTB := func(dst, aStor, bStor backend.Storage, m, n, k int) error {
+		bH := gpuToHost(b, bStor, n*k)
+		bT := make([]float32, k*n)
+		for i := 0; i < n; i++ {
+			for j := 0; j < k; j++ {
+				bT[j*n+i] = bH[i*k+j]
+			}
+		}
+		tmp, err := b.Alloc(k * n * 4)
+		if err != nil {
+			return err
+		}
+		defer b.Free(tmp)
+		if _, err := uploadInto(b, tmp, f32ToBytes(bT)); err != nil {
+			return err
+		}
+		return b.MatMul(dst, aStor, tmp, core.Shape{m, k}, core.Shape{k, n}, core.Float32)
+	}
+	_ = matmulPlainTB
 
 	// PRE-WARMUP отключён — вызывал регрессию (все iters dead).
 
@@ -431,6 +452,10 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 	if err := gtB.RMSNormGradF32(sc.XPreTop, st.NormOut, bs.DNormedTop, bs.DX, grads.DNormOut, M, D, cfg.Eps); err != nil {
 		return fmt.Errorf("top RMSNormGrad: %w", err)
 	}
+	// D-протокол snapshot: bs.DX сразу после RMSNormGradTop (до residual-adds).
+	if err := b.Copy(bs.DXAfterTop, bs.DX, M*D*4); err != nil {
+		return fmt.Errorf("D-snap DXAfterTop: %w", err)
+	}
 
 	batchStride := uintptr(S * D * 4)
 	// Per-layer bwd (REVERSE).
@@ -442,9 +467,41 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 		if err := b.Copy(bs.DFFNOut, bs.DX, M*D*4); err != nil {
 			return fmt.Errorf("layer %d dFFNOut copy: %w", l, err)
 		}
-		// dFFNSilu = dFFNOut @ W2^T.
-		if err := gtB.MatMulF32Ex(bs.DFFNOut, lw.W2, bs.DFFNSilu, M, FFN, D, false, true); err != nil {
-			return fmt.Errorf("layer %d dFFNSilu: %w", l, err)
+		// D-протокол snapshot DFFNOut сразу после copy (только L=0 для cert).
+		if l == 0 {
+			if err := b.Copy(bs.DFFNOutSnap, bs.DFFNOut, M*D*4); err != nil {
+				return fmt.Errorf("D-snap DFFNOutSnap: %w", err)
+			}
+		}
+		// D-протокол localized: MatMulF32Ex(dFFNOut, W2, dFFNSilu, F, T) даёт
+		// EXACT ZERO на некоторых cells (context-dep zero bug). Fix: plain b.MatMul.
+		// dFFNSilu[M, FFN] = dFFNOut[M, D] @ W2^T[D, FFN]. W2 stored [FFN, D].
+		{
+			w2H := gpuToHost(b, lw.W2, FFN*D)
+			w2T := make([]float32, D*FFN)
+			for i := 0; i < FFN; i++ {
+				for j := 0; j < D; j++ {
+					w2T[j*FFN+i] = w2H[i*D+j]
+				}
+			}
+			tmp, err := b.Alloc(D * FFN * 4)
+			if err != nil {
+				return fmt.Errorf("layer %d dFFNSilu W2T alloc: %w", l, err)
+			}
+			if _, err := uploadInto(b, tmp, f32ToBytes(w2T)); err != nil {
+				b.Free(tmp)
+				return fmt.Errorf("layer %d dFFNSilu W2T upload: %w", l, err)
+			}
+			if err := b.MatMul(bs.DFFNSilu, bs.DFFNOut, tmp, core.Shape{M, D}, core.Shape{D, FFN}, core.Float32); err != nil {
+				b.Free(tmp)
+				return fmt.Errorf("layer %d dFFNSilu plain: %w", l, err)
+			}
+			b.Free(tmp)
+		}
+		if l == 0 {
+			if err := b.Copy(bs.DFFNSiluSnap, bs.DFFNSilu, M*FFN*4); err != nil {
+				return fmt.Errorf("D-snap DFFNSiluSnap: %w", err)
+			}
 		}
 		// dW2 = FFNSilu^T @ dFFNOut. FFNSilu пересчитываем: RMSNorm2(XPreFFN[l]) -> Normed2, W1@Normed2 -> hidden, sigmoid, silu.
 		// Для простоты: recompute FFNSilu.
@@ -467,9 +524,14 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 		if err := launchSiluBwd(b, devPtr(bs.DFFNSilu), devPtr(sc.FFNHid), devPtr(sc.FFNSig), devPtr(bs.DFFNHidden), M*FFN); err != nil {
 			return fmt.Errorf("layer %d silu_bwd: %w", l, err)
 		}
+		if l == 0 {
+			if err := b.Copy(bs.DFFNHidSnap, bs.DFFNHidden, M*FFN*4); err != nil {
+				return fmt.Errorf("D-snap DFFNHidSnap: %w", err)
+			}
+		}
 		// dNormed(FFN) = dFFNHidden @ W1^T.
-		if err := gtB.MatMulF32Ex(bs.DFFNHidden, lw.W1, bs.DNormed, M, D, FFN, false, true); err != nil {
-			return fmt.Errorf("layer %d dNormed(FFN): %w", l, err)
+		if err := matmulPlainTB(bs.DNormed, bs.DFFNHidden, lw.W1, M, D, FFN); err != nil {
+			return fmt.Errorf("layer %d dNormed(FFN) plain: %w", l, err)
 		}
 		// dW1 = Normed2^T @ dFFNHidden.
 		if err := gtB.MatMulF32Ex(bs.NormedRecomp, bs.DFFNHidden, lg.DW1, D, FFN, M, true, false); err != nil {
@@ -487,8 +549,8 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 			return fmt.Errorf("layer %d dAttnOut copy: %w", l, err)
 		}
 		// dQ_buf = dAttnOut @ Wo^T.
-		if err := gtB.MatMulF32Ex(bs.DAttnOut, lw.Wo, bs.DQ, M, D, D, false, true); err != nil {
-			return fmt.Errorf("layer %d dQ_buf(Wo): %w", l, err)
+		if err := matmulPlainTB(bs.DQ, bs.DAttnOut, lw.Wo, M, D, D); err != nil {
+			return fmt.Errorf("layer %d dQ_buf(Wo) plain: %w", l, err)
 		}
 		// dWo = Q_buf^T @ dAttnOut. Q_buf = inv-permuted OAttnSnap[l].
 		// Recompute Q_buf via inverse permute OAttnSnap[l] into sc.Q.
@@ -626,17 +688,17 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 			diagAbs("NormedRecomp1", bs.NormedRecomp, M*D)
 		}
 		// dNormed = dQ @ Wq^T + dK @ Wk^T + dV @ Wv^T.
-		if err := gtB.MatMulF32Ex(bs.DQ, lw.Wq, bs.DNormed, M, D, D, false, true); err != nil {
-			return fmt.Errorf("layer %d dNormed(Q): %w", l, err)
+		if err := matmulPlainTB(bs.DNormed, bs.DQ, lw.Wq, M, D, D); err != nil {
+			return fmt.Errorf("layer %d dNormed(Q) plain: %w", l, err)
 		}
-		if err := gtB.MatMulF32Ex(bs.DK, lw.Wk, bs.DAttnOut, M, D, D, false, true); err != nil {
-			return fmt.Errorf("layer %d dNormed(K): %w", l, err)
+		if err := matmulPlainTB(bs.DAttnOut, bs.DK, lw.Wk, M, D, D); err != nil {
+			return fmt.Errorf("layer %d dNormed(K) plain: %w", l, err)
 		}
 		if err := b.Add(bs.DNormed, bs.DNormed, bs.DAttnOut, core.Shape{M, D}, core.Shape{M, D}, core.Shape{M, D}, core.Float32); err != nil {
 			return fmt.Errorf("layer %d dNormed sum K: %w", l, err)
 		}
-		if err := gtB.MatMulF32Ex(bs.DV, lw.Wv, bs.DAttnOut, M, D, D, false, true); err != nil {
-			return fmt.Errorf("layer %d dNormed(V): %w", l, err)
+		if err := matmulPlainTB(bs.DAttnOut, bs.DV, lw.Wv, M, D, D); err != nil {
+			return fmt.Errorf("layer %d dNormed(V) plain: %w", l, err)
 		}
 		if err := b.Add(bs.DNormed, bs.DNormed, bs.DAttnOut, core.Shape{M, D}, core.Shape{M, D}, core.Shape{M, D}, core.Float32); err != nil {
 			return fmt.Errorf("layer %d dNormed sum V: %w", l, err)
