@@ -132,6 +132,10 @@ func TestALLM_BwdCertF32_MultiLayer(t *testing.T) {
 	dWq0Ana := gpuToHost(adB, grads.Layers[0].DWq, cfg.D*cfg.D)
 	_ = grads.Layers[cfg.L-1].DWq // last layer unused in L=1
 	dW1L0Ana := gpuToHost(adB, grads.Layers[0].DW1, cfg.D*cfg.FFN)
+	dW2L0Ana := gpuToHost(adB, grads.Layers[0].DW2, cfg.FFN*cfg.D)
+	dWv0Ana := gpuToHost(adB, grads.Layers[0].DWv, cfg.D*cfg.D)
+	dWo0Ana := gpuToHost(adB, grads.Layers[0].DWo, cfg.D*cfg.D)
+	dWout0Ana := gpuToHost(adB, grads.DWout, cfg.D*cfg.V)
 	dEmbedAna := gpuToHost(adB, grads.DEmbed, cfg.V*cfg.D)
 
 	// NaN check in grads.
@@ -198,10 +202,21 @@ func TestALLM_BwdCertF32_MultiLayer(t *testing.T) {
 	// Индексы автомат: middle-ish entries.
 	wqIdx := (cfg.D / 2) * cfg.D + (cfg.D / 3)     // [D/2][D/3]
 	w1Idx := (cfg.D / 2) * cfg.FFN + (cfg.FFN / 3) // [D/2][FFN/3]
+	w2Idx := (cfg.FFN / 2) * cfg.D + (cfg.D / 3)   // [FFN/2][D/3]
+	wvIdx := (cfg.D / 2) * cfg.D + (cfg.D / 3)     // [D/2][D/3]
+	woIdx := (cfg.D / 2) * cfg.D + (cfg.D / 3)     // [D/2][D/3]
+	woutIdx := (cfg.D / 2) * cfg.V + (cfg.V / 3)   // [D/2][V/3]
 	embIdx := int(inp[0])*cfg.D + (cfg.D / 3)      // [inp0][D/3]
+	// F-протокол: dW2 → если чист, зло между dFFNOut и dW1; если off, зло выше (top chain).
+	// dWv → parallel check attn chain (K/V different from Q); dWo → attn output layer.
+	// dWout → CE-стык verification.
 	points := []point{
-		{"Wq[L=0]", st.Layers[0].Wq, cfg.D * cfg.D, wqIdx, dWq0Ana[wqIdx]},
-		{"W1[L=0]", st.Layers[0].W1, cfg.D * cfg.FFN, w1Idx, dW1L0Ana[w1Idx]},
+		{"Wout(top)", st.Wout, cfg.D * cfg.V, woutIdx, dWout0Ana[woutIdx]},
+		{"Wo[L=0](attn-out)", st.Layers[0].Wo, cfg.D * cfg.D, woIdx, dWo0Ana[woIdx]},
+		{"W2[L=0](ffn-out)", st.Layers[0].W2, cfg.FFN * cfg.D, w2Idx, dW2L0Ana[w2Idx]},
+		{"W1[L=0](ffn-in)", st.Layers[0].W1, cfg.D * cfg.FFN, w1Idx, dW1L0Ana[w1Idx]},
+		{"Wv[L=0](attn-in)", st.Layers[0].Wv, cfg.D * cfg.D, wvIdx, dWv0Ana[wvIdx]},
+		{"Wq[L=0](attn-in)", st.Layers[0].Wq, cfg.D * cfg.D, wqIdx, dWq0Ana[wqIdx]},
 		{"Embed[i0,d]", st.Embed, cfg.V * cfg.D, embIdx, dEmbedAna[embIdx]},
 	}
 

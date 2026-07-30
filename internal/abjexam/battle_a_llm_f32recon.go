@@ -402,9 +402,29 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 		return fmt.Errorf("dWout: %w", err)
 	}
 	diagTop("dWout(1st)", grads.DWout, D*V)
-	// dNormedTop = dLogits @ Wout^T.
-	if err := gtB.MatMulF32Ex(sc.GradL, st.Wout, bs.DNormedTop, M, D, V, false, true); err != nil {
-		return fmt.Errorf("dNormedTop: %w", err)
+	// F-протокол probe: dNormedTop = dLogits @ Wout^T через plain b.MatMul (host-transpose Wout).
+	// Если downstream грады улучшаются - MatMulF32Ex wrapper дает systematic ошибку не только
+	// на exact-zero (attnReconstructBwd) но и на 30-70% недо/переоценку.
+	{
+		woutH := gpuToHost(b, st.Wout, D*V)
+		woutT := make([]float32, V*D)
+		for i := 0; i < D; i++ {
+			for j := 0; j < V; j++ {
+				woutT[j*D+i] = woutH[i*V+j]
+			}
+		}
+		tmp, err := b.Alloc(V * D * 4)
+		if err != nil {
+			return fmt.Errorf("dNormedTop transpose alloc: %w", err)
+		}
+		defer b.Free(tmp)
+		if _, err := uploadInto(b, tmp, f32ToBytes(woutT)); err != nil {
+			return fmt.Errorf("dNormedTop transpose upload: %w", err)
+		}
+		if err := b.MatMul(bs.DNormedTop, sc.GradL, tmp, core.Shape{M, V}, core.Shape{V, D}, core.Float32); err != nil {
+			return fmt.Errorf("dNormedTop (plain probe): %w", err)
+		}
+		fmt.Printf("F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)\n")
 	}
 	diagTop("dNormedTop(1st)", bs.DNormedTop, M*D)
 	// Top RMSNorm bwd — использует XPreTop.
