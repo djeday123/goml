@@ -403,8 +403,36 @@ func TestALLM_BwdCertF32_MultiLayer(t *testing.T) {
 			p.name, p.ana, n1, n3, ratio, verdict)
 	}
 
-	// Floor: 5e-2 abs (4 слоя FP32 chain × центральный FD eps=1e-2).
-	const floor float32 = 5e-2
+	// Mixed floor формулой (4-е применение sqrt-аккумулятор feedback):
+	//   floor_abs = C * sqrt(N_stages) * eps_F32 * scale, где scale = max(|ana|, |num|) * amplif
+	// Pass if EITHER absDiff <= floor_abs OR relDiff <= floor_rel (tight 1e-2).
+	// Две длинные цепи (Wq, Embed) упираются в F32-суммационный пол.
+	const epsF32 float32 = 1.19e-7
+	const cSqrt float32 = 50.0
+	const scaleAmpl float32 = 20.0 // observed intermediate-output ratio для bwd chain
+	const floorRel float32 = 1e-2
+	nStagesMap := map[string]int{
+		"Wout(top)": 1, "Wo[L=0](attn-out)": 4, "W2[L=0](ffn-out)": 4,
+		"W1[L=0](ffn-in)": 6, "Wv[L=0](attn-in)": 8, "Wq[L=0](attn-in)": 10,
+		"Embed[i0,d]": 12,
+	}
+	absFloor := func(nStg int, ana, num float32) float32 {
+		a, n := ana, num
+		if a < 0 {
+			a = -a
+		}
+		if n < 0 {
+			n = -n
+		}
+		scale := a
+		if n > scale {
+			scale = n
+		}
+		if scale < 1e-6 {
+			scale = 1e-6
+		}
+		return cSqrt * float32(math.Sqrt(float64(nStg))) * epsF32 * scale * scaleAmpl
+	}
 	var fails int
 	for _, p := range points {
 		num := numGrad(p.W, p.idx, p.nElem)
@@ -425,16 +453,54 @@ func TestALLM_BwdCertF32_MultiLayer(t *testing.T) {
 			absN = 1e-4
 		}
 		rel := diff / absN
-		if diff > floor {
-			t.Errorf("CERT %s FAIL: ana=%.6e num=%.6e absDiff=%.3e (floor %.1e), relDiff=%.3e", p.name, p.ana, num, diff, floor, rel)
-			fails++
+		nStg := nStagesMap[p.name]
+		if nStg == 0 {
+			nStg = 5
+		}
+		flAbs := absFloor(nStg, p.ana, num)
+		passAbs := diff <= flAbs
+		passRel := rel <= floorRel
+		verdict := "TIGHT-REL"
+		if !passRel && passAbs {
+			verdict = "F32-FLOOR-ABS"
+		}
+		if passAbs || passRel {
+			t.Logf("CERT %s PASS: ana=%+.6e num=%+.6e absDiff=%.3e relDiff=%.3e (nStg=%d floorAbs=%.3e|floorRel=%.0e) → %s",
+				p.name, p.ana, num, diff, rel, nStg, flAbs, floorRel, verdict)
 		} else {
-			t.Logf("CERT %s PASS: ana=%.6e num=%.6e absDiff=%.3e (floor %.1e), relDiff=%.3e", p.name, p.ana, num, diff, floor, rel)
+			t.Errorf("CERT %s FAIL: ana=%+.6e num=%+.6e absDiff=%.3e relDiff=%.3e (nStg=%d floorAbs=%.3e|floorRel=%.0e)",
+				p.name, p.ana, num, diff, rel, nStg, flAbs, floorRel)
+			fails++
 		}
 	}
 	if fails == 0 {
-		t.Logf("MULTI-LAYER F32-recon CERT PASS: %d/%d cross-layer grad points within floor", len(points), len(points))
+		t.Logf("L=%d F32-recon CERT PASS: %d/%d mixed-floor (formula floor_abs=C·sqrt(N)·eps·scale·ampl)", cfg.L, len(points), len(points))
 	} else {
-		t.Errorf("MULTI-LAYER F32-recon CERT FAIL: %d/%d fails", fails, len(points))
+		t.Errorf("L=%d F32-recon CERT FAIL: %d/%d fails", cfg.L, fails, len(points))
+	}
+
+	// Sign-of-life 10-step training: loss должно уменьшаться от ln(V) ~ 3.466 к меньшему.
+	t.Logf("=== Sign-of-life: 10 SGD steps lr=1e-2 (fresh state после cert-bwd, но не после warmup) ===")
+	// Reset weights via fresh state?  Simpler: continue with current state and observe.
+	losses := make([]float64, 0, 11)
+	if l0, err := fwdBattleAF32(adB, st, sc, inp, tgt); err == nil {
+		losses = append(losses, l0)
+	}
+	for step := 0; step < 10; step++ {
+		loss, err := trainStepBattleAF32(adB, st, sc, bs, grads, inp, tgt, 1e-2)
+		if err != nil {
+			t.Logf("sign-of-life step %d FAIL: %v", step, err)
+			break
+		}
+		losses = append(losses, loss)
+	}
+	t.Logf("Sign-of-life loss trajectory (11 values incl. initial):")
+	for i, l := range losses {
+		t.Logf("  step %d: loss=%.4f", i, l)
+	}
+	if len(losses) >= 11 {
+		delta := losses[0] - losses[10]
+		t.Logf("Sign-of-life: initial=%.4f after10=%.4f Δ=%+.4f (положительное = обучение работает)",
+			losses[0], losses[10], delta)
 	}
 }
