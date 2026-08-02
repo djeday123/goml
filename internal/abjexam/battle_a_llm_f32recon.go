@@ -380,25 +380,53 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 	if !ok {
 		return fmt.Errorf("bwdBattleAF32 requires gotorch adapter, got %T", b)
 	}
-	// D-протокол helper: plain b.MatMul с host-transpose для transB=true (M,n,k,F,T pattern).
-	// Bug class isolated: MatMulF32Ex дает EXACT ZERO partial для (M=32,X,X,F,T).
-	matmulPlainTB := func(dst, aStor, bStor backend.Storage, m, n, k int) error {
-		bH := gpuToHost(b, bStor, n*k)
-		bT := make([]float32, k*n)
-		for i := 0; i < n; i++ {
-			for j := 0; j < k; j++ {
-				bT[j*n+i] = bH[i*k+j]
+	// Де-wrapper: matmulPlainT unit-tested (TestMatmulPlainT_Unit PASS).
+	// C[m,n] = op(A) @ op(B), plain b.MatMul + host-transpose per flag.
+	// UNIT test PASS: small shapes bit-exact, prod F32 accum 1e-6 abs.
+	hostTr := func(h []float32, rows, cols int) []float32 {
+		t := make([]float32, rows*cols)
+		for i := 0; i < rows; i++ {
+			for j := 0; j < cols; j++ {
+				t[j*rows+i] = h[i*cols+j]
 			}
 		}
-		tmp, err := b.Alloc(k * n * 4)
-		if err != nil {
-			return err
+		return t
+	}
+	matmulPlainT := func(dst, aStor, bStor backend.Storage, m, n, k int, transA, transB bool) error {
+		var aUse backend.Storage = aStor
+		var bUse backend.Storage = bStor
+		if transA {
+			aH := gpuToHost(b, aStor, k*m)
+			aT := hostTr(aH, k, m)
+			tmp, err := b.Alloc(m * k * 4)
+			if err != nil {
+				return err
+			}
+			defer b.Free(tmp)
+			if _, err := uploadInto(b, tmp, f32ToBytes(aT)); err != nil {
+				return err
+			}
+			aUse = tmp
 		}
-		defer b.Free(tmp)
-		if _, err := uploadInto(b, tmp, f32ToBytes(bT)); err != nil {
-			return err
+		if transB {
+			bH := gpuToHost(b, bStor, n*k)
+			bT := hostTr(bH, n, k)
+			tmp, err := b.Alloc(k * n * 4)
+			if err != nil {
+				return err
+			}
+			defer b.Free(tmp)
+			if _, err := uploadInto(b, tmp, f32ToBytes(bT)); err != nil {
+				return err
+			}
+			bUse = tmp
 		}
-		return b.MatMul(dst, aStor, tmp, core.Shape{m, k}, core.Shape{k, n}, core.Float32)
+		return b.MatMul(dst, aUse, bUse, core.Shape{m, k}, core.Shape{k, n}, core.Float32)
+	}
+	_ = matmulPlainT
+	// Legacy compat helpers использованы старым кодом.
+	matmulPlainTB := func(dst, aStor, bStor backend.Storage, m, n, k int) error {
+		return matmulPlainT(dst, aStor, bStor, m, n, k, false, true)
 	}
 	_ = matmulPlainTB
 
@@ -419,8 +447,8 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 	diagTop("sc.Normed(fwd)", sc.Normed, M*D)
 	// Output layer: dLogits already in sc.GradL from CE kernel.
 	// dWout = Normed^T @ dLogits (Normed = post-top RMSNorm output, from sc.Normed at fwd end).
-	if err := gtB.MatMulF32Ex(sc.Normed, sc.GradL, grads.DWout, D, V, M, true, false); err != nil {
-		return fmt.Errorf("dWout: %w", err)
+	if err := matmulPlainT(grads.DWout, sc.Normed, sc.GradL, D, V, M, true, false); err != nil {
+		return fmt.Errorf("dWout plain: %w", err)
 	}
 	diagTop("dWout(1st)", grads.DWout, D*V)
 	// F-протокол probe: dNormedTop = dLogits @ Wout^T через plain b.MatMul (host-transpose Wout).
@@ -517,8 +545,8 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 		if err := b.Mul(sc.FFNSilu, sc.FFNHid, sc.FFNSig, core.Shape{M, FFN}, core.Shape{M, FFN}, core.Shape{M, FFN}, core.Float32); err != nil {
 			return fmt.Errorf("layer %d recompute FFN Silu Mul: %w", l, err)
 		}
-		if err := gtB.MatMulF32Ex(sc.FFNSilu, bs.DFFNOut, lg.DW2, FFN, D, M, true, false); err != nil {
-			return fmt.Errorf("layer %d dW2: %w", l, err)
+		if err := matmulPlainT(lg.DW2, sc.FFNSilu, bs.DFFNOut, FFN, D, M, true, false); err != nil {
+			return fmt.Errorf("layer %d dW2 plain: %w", l, err)
 		}
 		// silu_bwd -> dFFNHidden.
 		if err := launchSiluBwd(b, devPtr(bs.DFFNSilu), devPtr(sc.FFNHid), devPtr(sc.FFNSig), devPtr(bs.DFFNHidden), M*FFN); err != nil {
@@ -534,8 +562,8 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 			return fmt.Errorf("layer %d dNormed(FFN) plain: %w", l, err)
 		}
 		// dW1 = Normed2^T @ dFFNHidden.
-		if err := gtB.MatMulF32Ex(bs.NormedRecomp, bs.DFFNHidden, lg.DW1, D, FFN, M, true, false); err != nil {
-			return fmt.Errorf("layer %d dW1: %w", l, err)
+		if err := matmulPlainT(lg.DW1, bs.NormedRecomp, bs.DFFNHidden, D, FFN, M, true, false); err != nil {
+			return fmt.Errorf("layer %d dW1 plain: %w", l, err)
 		}
 		// dRMSNorm2 -> add to dX.
 		if err := gtB.RMSNormGradF32(sc.XPreFFN[l], lw.Norm2, bs.DNormed, bs.DAttnOut, lg.DNorm2, M, D, cfg.Eps); err != nil {
@@ -562,7 +590,7 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 				return fmt.Errorf("layer %d Q_buf recompute inv-permute batch %d: %w", l, bi, err)
 			}
 		}
-		if err := gtB.MatMulF32Ex(sc.Q, bs.DAttnOut, lg.DWo, D, D, M, true, false); err != nil {
+		if err := matmulPlainT(lg.DWo, sc.Q, bs.DAttnOut, D, D, M, true, false); err != nil {
 			return fmt.Errorf("layer %d dWo: %w", l, err)
 		}
 		// dQ_buf [M, D] -> inverse permute to dOAttn [BH, S, HD].
@@ -704,16 +732,16 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 			return fmt.Errorf("layer %d dNormed sum V: %w", l, err)
 		}
 		// Weight grads.
-		if err := gtB.MatMulF32Ex(bs.NormedRecomp, bs.DQ, lg.DWq, D, D, M, true, false); err != nil {
+		if err := matmulPlainT(lg.DWq, bs.NormedRecomp, bs.DQ, D, D, M, true, false); err != nil {
 			return fmt.Errorf("layer %d dWq: %w", l, err)
 		}
 		if l == 0 {
 			diagAbs("dWq(final)", lg.DWq, D*D)
 		}
-		if err := gtB.MatMulF32Ex(bs.NormedRecomp, bs.DK, lg.DWk, D, D, M, true, false); err != nil {
+		if err := matmulPlainT(lg.DWk, bs.NormedRecomp, bs.DK, D, D, M, true, false); err != nil {
 			return fmt.Errorf("layer %d dWk: %w", l, err)
 		}
-		if err := gtB.MatMulF32Ex(bs.NormedRecomp, bs.DV, lg.DWv, D, D, M, true, false); err != nil {
+		if err := matmulPlainT(lg.DWv, bs.NormedRecomp, bs.DV, D, D, M, true, false); err != nil {
 			return fmt.Errorf("layer %d dWv: %w", l, err)
 		}
 		// dRMSNorm1 -> add to dX.

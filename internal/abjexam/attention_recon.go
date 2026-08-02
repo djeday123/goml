@@ -65,15 +65,34 @@ func attnReconstructFwd(b backend.Backend, gtB *gotorchAdapter.Backend,
 	}
 
 	if BH == 1 {
-		// Fast path (certificate form): use whole tensors, no sliceStore.
-		if err := gtB.MatMulF32Ex(Qscaled, K, Stemp, S, S, HD, false, true); err != nil {
-			return fmt.Errorf("attn recon fwd: S=QK^T: %w", err)
+		// De-wrapper: plain b.MatMul + host-transpose K (K stored [S, HD], transpose to [HD, S]).
+		{
+			kH := gpuToHost(b, K, S*HD)
+			kT := make([]float32, HD*S)
+			for i := 0; i < S; i++ {
+				for j := 0; j < HD; j++ {
+					kT[j*S+i] = kH[i*HD+j]
+				}
+			}
+			tmp, err := b.Alloc(HD * S * 4)
+			if err != nil {
+				return fmt.Errorf("attn recon fwd: kT alloc: %w", err)
+			}
+			if _, err := uploadInto(b, tmp, f32ToBytes(kT)); err != nil {
+				b.Free(tmp)
+				return fmt.Errorf("attn recon fwd: kT upload: %w", err)
+			}
+			if err := b.MatMul(Stemp, Qscaled, tmp, core.Shape{S, HD}, core.Shape{HD, S}, core.Float32); err != nil {
+				b.Free(tmp)
+				return fmt.Errorf("attn recon fwd plain: S=QK^T: %w", err)
+			}
+			b.Free(tmp)
 		}
 		if err := b.Softmax(Pout, Stemp, core.Shape{S, S}, -1, core.Float32); err != nil {
 			return fmt.Errorf("attn recon fwd: softmax: %w", err)
 		}
-		if err := gtB.MatMulF32Ex(Pout, V, O, S, HD, S, false, false); err != nil {
-			return fmt.Errorf("attn recon fwd: O=P@V: %w", err)
+		if err := b.MatMul(O, Pout, V, core.Shape{S, S}, core.Shape{S, HD}, core.Float32); err != nil {
+			return fmt.Errorf("attn recon fwd plain: O=P@V: %w", err)
 		}
 		return nil
 	}
