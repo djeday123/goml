@@ -176,11 +176,98 @@ env GOTORCH_LIBS_DIR=/data/lib/podman-data/projects/gotorch/v6/libs \
 
 ---
 
-## Заголовок задания следующей сессии (одна строка)
+## Заголовок задания следующей сессии (одна строка) — ПЕРЕОПРЕДЕЛЁН 2026-08-02
 
-**Полная де-wrapper-изация reference-ветки (6 MatMulF32Ex в BH>1 attention_recon) + починка determinism (cublasSgemm probe / EmbeddingGradF32 sort-scatter) + канонический baseline cert (2× bit-exact) + sign-of-life re-run + L=4 опционально + СТОП.**
+**Строим эталон = CPU-F64 bwdBattleAF64 (все грады формулой, ноль GPU в reference-пути), det-gate bit-exact, F64 finite-diff numerical, GPU-F32-recon переклассифицируется в «первый измеряемый» — A/B vs F64 арбитр.**
 
-Стратегическая сводка (пять пунктов + wrapper-следствие) — у пользователя в предыдущем сообщении. Здесь — только tactical handoff.
+Ревьюер решил: GPU-недетерминизм = физика параллелизма, НЕ дефект. Fallback (rewrite reference bwd на purego CPU-F64) повышается до магистрали.
+
+### 6-шаговая программа fresh-сессии
+
+**Шаг 1. Полный bwdBattleAF64.**
+Вся backward-цепочка cert-формы (L=1, малые размеры: V=32, D=128, HD=128, S=32, B=1, FFN=128) на CPU в float64:
+- dLogits — CE-grad формулой (softmax(logits) − onehot(target))/M
+- top-RMSNorm-grad (формула: dx_j = γ_j·dy_j/rms − x_j·S·rms⁻³/D, S=Σγ_i·x_i·dy_i)
+- FFN-residual add
+- FFN chain: dW2 → dFFNSilu = dFFNOut@W2^T → silu-grad формулой (dsilu/dh = σ + h·σ·(1−σ)) → dFFNHidden → dW1 → dNormed(FFN)
+- RMSNorm2-grad → residual add → dAttnOut
+- attention chain: dQ_buf = dAttnOut@Wo^T → inverse permute → dOF32
+- attnReconstructBwd формулами: dV=P^T@dO, dP=dO@V^T, dS=P*(dP−Σ(P*dP)), dQ=dS@K·scale, dK=dS^T@Q·scale
+- RoPE-bwd формулой + permute-inverse
+- dNormed = dQ@Wq^T + dK@Wk^T + dV@Wv^T
+- weight grads: dWq/dWk/dWv = NormedRecomp^T@dQ/dK/dV; dWo = Q_buf^T@dAttnOut; dW1/dW2 аналогично
+- RMSNorm1-grad → dX_pre_attn
+- dEmbed **последовательный цикл scatter** (детерминизм by construction, НЕ atomicAdd)
+- dWout = sc.Normed^T@dLogits
+
+**Строительный материал уже на диске:**
+- D-hop F64-этажи в cert-test line ~140-280 (dX_ref, dFFNSilu_ref, dFFNHidden_ref)
+- `TestRMSNormGrad_CPUF64_Arbiter` в rmsnorm_grad_arbiter_test.go — F64-формула проверена
+- `TestMatmulPlainT_Unit` cpuRef в matmul_plain_helper_test.go — F64 matmul reference
+
+Никаких GPU-вызовов в этом пути. Файл: `internal/abjexam/battle_a_llm_f64ref.go` (создать).
+
+**Шаг 2. Det-gate на F64-пути.**
+Cert-test:
+- Запустить F64-bwd дважды в процессе + fresh subprocess
+- Сравнить ВСЕ грады (7+ точек) bit-exact
+- **Требование:** max|Δ| = 0.000e+00 exact (не «около»)
+- ПРОГНОЗ: PASS тривиально (последовательный код)
+
+**Шаг 3. F64 finite-diff numerical.**
+- Двусторонний finite-diff на F64-forward: fwdBattleAF64 (тоже написать — используя формулы, ноль GPU)
+- eps = 1e-6
+- Cert F64-ana vs F64-num
+- **ПРОГНОЗ:** relDiff 1e-8..1e-10 на всех 7+ точках
+- Это и есть **настоящий tight-сертификат математики**, без mixed-floor костылей
+
+**Шаг 4. Переклассификация GPU-F32-recon.**
+Из «эталона» в «первый измеряемый»:
+- A/B GPU-F32 (текущий `bwdBattleAF32` в battle_a_llm_f32recon.go) vs CPU-F64 (Шаг 1) по всем точкам
+- Floor двухзонной формулой **записать ДО прогона** (sqrt-накопление, 5-е применение [[feedback-sqrt-vs-linear-accumulator]]):
+  ```
+  floor_abs = C·√N_stages·eps_F32·scale·amplif
+  ```
+- Результат = **документированный floor GPU-recon-пути**
+- Недетерминизм между прогонами задокументировать числом (max|Δ| прогон-к-прогону) как **свойство пути**, не как баг
+
+**Шаг 5. Sign-of-life остаётся на GPU-F32 (скорость).**
+- Перегнать 10-step training через `trainStepBattleAF32`
+- Число в raw: initial loss → after10 loss → Δ
+
+**Шаг 6. Иерархия эталонов в отчёт.**
+```
+CPU-F64 арбитр (bit-det, correctness-only)
+    ↓ A/B (задокументированный floor)
+GPU-F32-recon (первый измеряемый, недетерминистичен свойство пути)
+    ↓ A/B (двухзонный floor 5e-3 abs, FP8-зоны boundary)
+FA-FP8 боевой (следующая сессия — встройка A/B primary vs F64 arbiter)
+```
+
+L=4 — **отдельная задача, НЕ блокирует** (стык контрактов покрыт L=1).
+
+### Что дают на входе
+
+Файлы reference-ветки (сейчас всё GPU-F32):
+- `internal/abjexam/battle_a_llm_f32recon.go` — trainStepBattleAF32 / fwdBattleAF32 / bwdBattleAF32
+- `internal/abjexam/attention_recon.go` — attnReconstructFwd / attnReconstructBwd BH=1
+- `internal/abjexam/battle_a_llm_f32recon_cert_test.go` — cert test с D-hop F64 arbiter (переиспользовать формулы!)
+
+Файлы CPU-F64 assets:
+- `internal/abjexam/rmsnorm_grad_arbiter_test.go` — F64-формула RMSNormGrad (Шаг 1a)
+- `internal/abjexam/matmul_plain_helper_test.go` — F64 matmul cpuRef с trans-flags (Шаг 1 attention matmuls)
+
+### Гейт закрытия сессии
+
+- `bwdBattleAF64` создан и unit-test PASS формула-vs-формула на trivial случаях.
+- `TestALLM_BwdCertF64_MultiLayer` new test с det-gate 2× + fresh subprocess, все Δ=0 exact.
+- F64-ana vs F64-num rel<1e-8 на 7+ точках.
+- A/B GPU-F32-recon vs CPU-F64: floor задокументирован, числа в raw.
+- Sign-of-life re-run: свежее число.
+- Commit + push с hash+raw.
+- HANDOFF + CHRONICLE обновлены поверх этого состояния.
+
+**FA-встройка = следующей fresh-сессией после этой.**
 
 ---
 
