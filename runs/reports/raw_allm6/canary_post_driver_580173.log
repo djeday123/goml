@@ -1,0 +1,14 @@
+=== warmup 10 launches ===
+warmup done
+
+=== FA-canary fwd v121r bh=128 sl=8192 wnd=0 — 5 measurement runs ===
+  run 1:  653.97 T  median=6.7252ms  (sm_clock 2670MHz, 44C)
+  run 2:  654.01 T  median=6.7247ms  (sm_clock 2670MHz, 35C)
+  run 3:  653.85 T  median=6.7264ms  (sm_clock 2677MHz, 42C)
+  run 4:  654.37 T  median=6.7210ms  (sm_clock 2677MHz, 38C)
+  run 5:  654.40 T  median=6.7208ms  (sm_clock 2677MHz, 36C)
+
+=== summary ===
+  n=5  median=654.01T  mean=654.12T  min=653.85T  max=654.40T
+  expected: [652, 656] T (2026-08-03 A-LLM-6: recenter 652+-2 -> [652,656], факт. медианы 653.7-654.0)
+  VERDICT: WITHIN corridor
