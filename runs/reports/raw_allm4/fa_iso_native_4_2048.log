@@ -1,0 +1,13 @@
+    battle_a_llm_fa_isolated_test.go:305: Звено-2 round 1 (fa_forward_train):
+    battle_a_llm_fa_isolated_test.go:277:   O(F16->32)   nan=0 zero=0/1048576 max|.|=1.0000e+00
+    battle_a_llm_fa_isolated_test.go:277:   L            nan=0 zero=0/8192 max|.|=1.8942e+01
+    battle_a_llm_fa_isolated_test.go:277:   O(F16->32)   nan=0 zero=0/1048576 max|.|=1.0000e+00
+    battle_a_llm_fa_isolated_test.go:277:   L            nan=0 zero=0/8192 max|.|=1.8942e+01
+    battle_a_llm_fa_isolated_test.go:277:   O(F16->32)   nan=0 zero=0/1048576 max|.|=1.0000e+00
+    battle_a_llm_fa_isolated_test.go:277:   L            nan=0 zero=0/8192 max|.|=1.8942e+01
+    battle_a_llm_fa_isolated_test.go:376: Звено-3 (bwd-четвёрка):
+    battle_a_llm_fa_isolated_test.go:88:   D            nan=0 zero=0/8192 max|.|=2.3327e-01
+    battle_a_llm_fa_isolated_test.go:88:   dV           nan=0 zero=0/1048576 max|.|=3.4830e-04
+    battle_a_llm_fa_isolated_test.go:88:   dK           nan=0 zero=1048576/1048576 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:88:   dQ           nan=0 zero=1048576/1048576 max|.|=0.0000e+00
+--- PASS: TestALLM_FAChain_Isolated (0.16s)

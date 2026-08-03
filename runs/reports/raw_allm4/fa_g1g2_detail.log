@@ -1,0 +1,32 @@
+=== RUN   TestFABwd_CanonicalChain
+    fa_backward_test.go:253: === A-LLM-1 G2 canonical chain smoke ===
+    fa_backward_test.go:254: Form: bh=128, sl=8192, hd=128, causal=0
+    fa_backward_test.go:265:   [1/4] fa_forward_train PASS -- L produced (G1→G2 live stitch)
+    fa_backward_test.go:274:   [2/4] gt_fa_bwd_d_precompute PASS
+    fa_backward_test.go:286:   [3a/4] gt_fa_bwd_merged PASS (dV + dS_nat + dS_T)
+    fa_backward_test.go:296:   [3b/4] gt_fa_bwd_dk PASS
+    fa_backward_test.go:306:   [4/4] gt_fa_bwd_dq PASS
+    fa_backward_test.go:329:   dV [sample 1000]: min=-2.808e-03 max=2.819e-03 NaN=0 Inf=0
+--- FAIL: TestFABwd_CanonicalChain (1.89s)
+panic: cuMemcpyDtoH: CUDA_ERROR_INVALID_CONTEXT (201) [recovered]
+	panic: cuMemcpyDtoH: CUDA_ERROR_INVALID_CONTEXT (201)
+
+goroutine 18 [running]:
+testing.tRunner.func1.2({0x570040, 0xc000118190})
+	/usr/local/go/src/testing/testing.go:1734 +0x21c
+testing.tRunner.func1()
+	/usr/local/go/src/testing/testing.go:1737 +0x35e
+panic({0x570040?, 0xc000118190?})
+	/usr/local/go/src/runtime/panic.go:792 +0x132
+github.com/djeday123/goml/backend/cuda._download({0x5e8610?, 0xc000014300?}, {0x5e6c00?, 0xc000018380?}, 0x3e8)
+	/data/lib/podman-data/projects/goml/backend/cuda/fa_forward_test.go:324 +0x136
+github.com/djeday123/goml/backend/cuda.TestFABwd_CanonicalChain.func2({0x59b842, 0x2}, {0x5e6c00?, 0xc000018380?}, 0x3e8)
+	/data/lib/podman-data/projects/goml/backend/cuda/fa_backward_test.go:310 +0x58
+github.com/djeday123/goml/backend/cuda.TestFABwd_CanonicalChain(0xc000102540)
+	/data/lib/podman-data/projects/goml/backend/cuda/fa_backward_test.go:338 +0x1767
+testing.tRunner(0xc000102540, 0x5b5fa8)
+	/usr/local/go/src/testing/testing.go:1792 +0xf4
+created by testing.(*T).Run in goroutine 1
+	/usr/local/go/src/testing/testing.go:1851 +0x413
+FAIL	github.com/djeday123/goml/backend/cuda	2.126s
+FAIL

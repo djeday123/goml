@@ -1,0 +1,23 @@
+=== RUN   TestALLM_FAChain_Isolated
+    battle_a_llm_fa_isolated_test.go:99: H1 b.Copy roundtrip: max|Δ|=0.000e+00 (0 = канал чист)
+    battle_a_llm_fa_isolated_test.go:167: Звено-1 round 1: amaxQ=1.0015e-01 (host 1.0015e-01) amaxK=1.0897e-01 (host 1.0897e-01) amaxV=1.0562e-01 (host 1.0562e-01)
+    battle_a_llm_fa_isolated_test.go:167: Звено-1 round 2: amaxQ=1.0015e-01 (host 1.0015e-01) amaxK=1.0897e-01 (host 1.0897e-01) amaxV=1.0562e-01 (host 1.0562e-01)
+    battle_a_llm_fa_isolated_test.go:185: scales: Q=2.2355e-04 K=2.4324e-04 V=2.3575e-04 faScale=4.8062e-09
+    battle_a_llm_fa_isolated_test.go:201: Звено-2 round 1 (fa_forward_train):
+    battle_a_llm_fa_isolated_test.go:73:   O(F16->32)   nan=0 zero=1048576/1048576 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:73:   L            nan=8192 zero=0/8192 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:201: Звено-2 round 2 (fa_forward_train):
+    battle_a_llm_fa_isolated_test.go:73:   O(F16->32)   nan=0 zero=1048576/1048576 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:73:   L            nan=8192 zero=0/8192 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:201: Звено-2 round 3 (fa_forward_train):
+    battle_a_llm_fa_isolated_test.go:73:   O(F16->32)   nan=0 zero=1048576/1048576 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:73:   L            nan=8192 zero=0/8192 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:254: Звено-3 (bwd-четвёрка):
+    battle_a_llm_fa_isolated_test.go:73:   D            nan=8192 zero=0/8192 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:73:   dV           nan=1048576 zero=0/1048576 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:73:   dK           nan=0 zero=1048576/1048576 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:73:   dQ           nan=1048576 zero=0/1048576 max|.|=0.0000e+00
+--- PASS: TestALLM_FAChain_Isolated (0.17s)
+PASS
+=== B2_RUN_COMPLETE ===
+ok  	github.com/djeday123/goml/internal/abjexam	0.375s

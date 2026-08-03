@@ -1,0 +1,14 @@
+=== warmup 10 launches ===
+warmup done
+
+=== FA-canary fwd v121r bh=128 sl=8192 wnd=0 — 5 measurement runs ===
+  run 1:  654.35 T  median=6.7212ms  (sm_clock FailedtoinitializeNVML:Driver/libraryversionmismatchMHz, C)
+  run 2:  653.96 T  median=6.7252ms  (sm_clock FailedtoinitializeNVML:Driver/libraryversionmismatchMHz, C)
+  run 3:  653.97 T  median=6.7251ms  (sm_clock FailedtoinitializeNVML:Driver/libraryversionmismatchMHz, C)
+  run 4:  653.77 T  median=6.7272ms  (sm_clock FailedtoinitializeNVML:Driver/libraryversionmismatchMHz, C)
+  run 5:  654.04 T  median=6.7245ms  (sm_clock FailedtoinitializeNVML:Driver/libraryversionmismatchMHz, C)
+
+=== summary ===
+  n=5  median=653.97T  mean=654.02T  min=653.77T  max=654.35T
+  expected: 652 +/- 2T (champion R03b_impl3 pre-canary)
+  VERDICT: WITHIN corridor

@@ -1,0 +1,25 @@
+    battle_a_llm_fa_isolated_test.go:216: scales: Q=1.0000e+00 K=1.0000e+00 V=1.0000e+00 faScale=8.8388e-02
+    battle_a_llm_fa_isolated_test.go:232: Звено-2 round 1 (fa_forward_train):
+--- FAIL: TestALLM_FAChain_Isolated (2.50s)
+panic: cuMemcpyDtoH: CUDA_ERROR(700) [recovered]
+	panic: cuMemcpyDtoH: CUDA_ERROR(700)
+
+goroutine 19 [running]:
+testing.tRunner.func1.2({0x616e80, 0xc00002a080})
+	/usr/local/go/src/testing/testing.go:1734 +0x21c
+testing.tRunner.func1()
+	/usr/local/go/src/testing/testing.go:1737 +0x35e
+panic({0x616e80?, 0xc00002a080?})
+	/usr/local/go/src/runtime/panic.go:792 +0x132
+github.com/djeday123/goml/internal/abjexam.gpuToHost({0x6c96b0?, 0xc00011e300?}, {0x6c7a60?, 0xc00001a390?}, 0x8000000)
+	/data/lib/podman-data/projects/goml/internal/abjexam/exam.go:341 +0x136
+github.com/djeday123/goml/internal/abjexam.TestALLM_FAChain_Isolated.func2({0x64e12c, 0xa}, {0x6c7a60?, 0xc00001a390?}, 0x8000000)
+	/data/lib/podman-data/projects/goml/internal/abjexam/battle_a_llm_fa_isolated_test.go:74 +0x58
+github.com/djeday123/goml/internal/abjexam.TestALLM_FAChain_Isolated(0xc000102a80)
+	/data/lib/podman-data/projects/goml/internal/abjexam/battle_a_llm_fa_isolated_test.go:233 +0x19df
+testing.tRunner(0xc000102a80, 0x684510)
+	/usr/local/go/src/testing/testing.go:1792 +0xf4
+created by testing.(*T).Run in goroutine 1
+	/usr/local/go/src/testing/testing.go:1851 +0x413
+FAIL	github.com/djeday123/goml/internal/abjexam	2.726s
+FAIL

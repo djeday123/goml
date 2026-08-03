@@ -129,6 +129,12 @@ type battleAF64Grads struct {
 	Layers   []battleAF64LayerG
 	DNormOut []float64 // [D]
 	DWout    []float64 // [D, V]
+	// A-LLM-4: выходы attention-блока слоя 0 (post-softmax-bwd/scale, ДО RoPE-bwd)
+	// для block-level A/B FA-цепочки. Аддитивно; в f64GradsHash НЕ входят
+	// (hash-контракт det-gate неизменен).
+	DQPermAttn []float64 // [BH, S, HD]
+	DKPermAttn []float64 // [BH, S, HD]
+	DVPermAttn []float64 // [BH, S, HD]
 }
 
 // --- Примитивы (последовательные, без map) ---
@@ -565,6 +571,12 @@ func bwdBattleAF64(w *battleAF64Weights, c *battleAF64Cache,
 				dQPerm[bh*S*HD+i] *= scale
 				dKPerm[bh*S*HD+i] *= scale
 			}
+		}
+		// A-LLM-4: снапшот выходов attn-блока слоя 0 ДО RoPE-bwd (block-level A/B).
+		if l == 0 {
+			g.DQPermAttn = append([]float64(nil), dQPerm...)
+			g.DKPermAttn = append([]float64(nil), dKPerm...)
+			g.DVPermAttn = append([]float64(nil), dVPerm...)
 		}
 		// RoPE bwd на dQPerm, dKPerm.
 		ropeGradF64(dQPerm, BH, S, HD, base)

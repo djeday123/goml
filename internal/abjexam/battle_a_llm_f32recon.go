@@ -20,6 +20,7 @@ import (
 	"unsafe"
 
 	"github.com/djeday123/goml/backend"
+	gomlcuda "github.com/djeday123/goml/backend/cuda"
 	gotorchAdapter "github.com/djeday123/goml/backend/gotorch"
 	"github.com/djeday123/goml/core"
 )
@@ -364,6 +365,15 @@ func fwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 // grads.DEmbed/DWout/DNormOut/L[*].D* обнуляются через zeroGrads (RMSNormGrad атомно аккумулирует).
 func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 	bs *BattleABwdScratch, grads *BattleAGrads) error {
+	return bwdBattleAF32Ex(b, st, sc, bs, grads, nil, nil, false)
+}
+
+// bwdBattleAF32Ex -- то же + переключаемый attention-bwd блок (A-LLM-4 Этап 1):
+// useFA=false -> attnReconstructFwd/Bwd (путь как был, бит-в-бит);
+// useFA=true  -> attnFABwdBlock (FA-цепочка D->merged->dk->dq), faCtx и fb обязательны.
+func bwdBattleAF32Ex(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
+	bs *BattleABwdScratch, grads *BattleAGrads,
+	faCtx *gomlcuda.FAContext, fb *faBlockBufs, useFA bool) error {
 	cfg := st.Cfg
 	M := sc.M
 	BH := sc.BH
@@ -618,16 +628,27 @@ func bwdBattleAF32(b backend.Backend, st *BattleAState, sc *BattleAScratchF32,
 			diagAbs("dQ_buf(dA@Wo^T)", bs.DQ, M*D)
 			diagAbs("dOF32(inv-perm)", bs.DOF32, BH*S*HD)
 		}
-		// attnReconstructBwd на per-layer snapshots. Нужен P (пересчитаем).
-		if err := attnReconstructFwd(b, gtB, sc.QPermSnap[l], sc.KPermSnap[l], sc.VPermSnap[l],
-			bs.OReconDbg, bs.SReconTemp, bs.PRecon, bs.QScaledTmp,
-			BH, S, HD, softmaxScale); err != nil {
-			return fmt.Errorf("layer %d recon fwd for P: %w", l, err)
-		}
-		if err := attnReconstructBwd(b, gtB, sc.QPermSnap[l], sc.KPermSnap[l], sc.VPermSnap[l], bs.PRecon,
-			bs.DOF32, bs.DQPerm, bs.DKPerm, bs.DVPerm, bs.DPTemp, bs.DSTemp,
-			BH, S, HD, softmaxScale); err != nil {
-			return fmt.Errorf("layer %d recon bwd: %w", l, err)
+		// Attention-bwd блок: FA-цепочка (A-LLM-4) либо reconstruct (как было).
+		if useFA {
+			scales, err := attnFABwdBlock(b, gtB, faCtx, fb, bs,
+				sc.QPermSnap[l], sc.KPermSnap[l], sc.VPermSnap[l],
+				BH, S, HD, softmaxScale)
+			if err != nil {
+				return fmt.Errorf("layer %d FA-block: %w", l, err)
+			}
+			fb.LastScales = scales
+		} else {
+			// attnReconstructBwd на per-layer snapshots. Нужен P (пересчитаем).
+			if err := attnReconstructFwd(b, gtB, sc.QPermSnap[l], sc.KPermSnap[l], sc.VPermSnap[l],
+				bs.OReconDbg, bs.SReconTemp, bs.PRecon, bs.QScaledTmp,
+				BH, S, HD, softmaxScale); err != nil {
+				return fmt.Errorf("layer %d recon fwd for P: %w", l, err)
+			}
+			if err := attnReconstructBwd(b, gtB, sc.QPermSnap[l], sc.KPermSnap[l], sc.VPermSnap[l], bs.PRecon,
+				bs.DOF32, bs.DQPerm, bs.DKPerm, bs.DVPerm, bs.DPTemp, bs.DSTemp,
+				BH, S, HD, softmaxScale); err != nil {
+				return fmt.Errorf("layer %d recon bwd: %w", l, err)
+			}
 		}
 		// Ход-1а/2а: активирую для локализации звена смерти в attnReconstructBwd.
 		if l == 0 {

@@ -1,0 +1,18 @@
+    battle_a_llm_fa_isolated_test.go:104: H1 b.Copy roundtrip: max|Δ|=0.000e+00 (0 = канал чист)
+    battle_a_llm_fa_isolated_test.go:173: Звено-1 round 1: amaxQ=1.0897e-01 (host 1.0897e-01) amaxK=1.0343e-01 (host 1.0343e-01) amaxV=1.0076e-01 (host 1.0076e-01)
+    battle_a_llm_fa_isolated_test.go:173: Звено-1 round 2: amaxQ=1.0897e-01 (host 1.0897e-01) amaxK=1.0343e-01 (host 1.0343e-01) amaxV=1.0076e-01 (host 1.0076e-01)
+    battle_a_llm_fa_isolated_test.go:191: scales: Q=2.4324e-04 K=2.3088e-04 V=2.2492e-04 faScale=4.9638e-09
+    battle_a_llm_fa_isolated_test.go:207: Звено-2 round 1 (fa_forward_train):
+    battle_a_llm_fa_isolated_test.go:78:   O(F16->32)   nan=0 zero=4194304/4194304 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:78:   L            nan=32768 zero=0/32768 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:207: Звено-2 round 2 (fa_forward_train):
+    battle_a_llm_fa_isolated_test.go:78:   O(F16->32)   nan=0 zero=4194304/4194304 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:78:   L            nan=32768 zero=0/32768 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:207: Звено-2 round 3 (fa_forward_train):
+    battle_a_llm_fa_isolated_test.go:78:   O(F16->32)   nan=0 zero=4194304/4194304 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:78:   L            nan=32768 zero=0/32768 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:260: Звено-3 (bwd-четвёрка):
+    battle_a_llm_fa_isolated_test.go:78:   D            nan=32768 zero=0/32768 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:78:   dV           nan=4194304 zero=0/4194304 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:78:   dK           nan=0 zero=4194304/4194304 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:78:   dQ           nan=4194304 zero=0/4194304 max|.|=0.0000e+00

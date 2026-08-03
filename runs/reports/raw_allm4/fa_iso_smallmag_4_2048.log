@@ -1,0 +1,10 @@
+    battle_a_llm_fa_isolated_test.go:271: REALISH-режим: random e4m3, faScale=1.9400e-06 (боевой класс)
+    battle_a_llm_fa_isolated_test.go:357: Звено-2 round 1 (fa_forward_train):
+    battle_a_llm_fa_isolated_test.go:329:   O(F16->32)   nan=0 zero=0/1048576 max|.|=5.6061e-02
+    battle_a_llm_fa_isolated_test.go:329:   L            nan=0 zero=0/8192 max|.|=7.6242e+00
+    battle_a_llm_fa_isolated_test.go:329:   O(F16->32)   nan=0 zero=0/1048576 max|.|=5.6061e-02
+    battle_a_llm_fa_isolated_test.go:329:   L            nan=0 zero=0/8192 max|.|=7.6242e+00
+    battle_a_llm_fa_isolated_test.go:329:   O(F16->32)   nan=0 zero=0/1048576 max|.|=5.6061e-02
+    battle_a_llm_fa_isolated_test.go:329:   L            nan=0 zero=0/8192 max|.|=7.6242e+00
+    battle_a_llm_fa_isolated_test.go:428: Звено-3 (bwd-четвёрка):
+    battle_a_llm_fa_isolated_test.go:88:   D            nan=0 zero=0/8192 max|.|=3.6260e-03

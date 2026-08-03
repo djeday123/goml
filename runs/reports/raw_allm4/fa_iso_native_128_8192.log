@@ -1,0 +1,17 @@
+    battle_a_llm_fa_isolated_test.go:157: NATIVE-режим: FA-буферы в контексте goml.cuda (до adapter.Enable)
+    battle_a_llm_fa_isolated_test.go:232: CONST-режим: входы FP8=1.0, faScale=softmaxScale
+    battle_a_llm_fa_isolated_test.go:305: Звено-2 round 1 (fa_forward_train):
+    battle_a_llm_fa_isolated_test.go:277:   O(F16->32)   nan=0 zero=0/134217728 max|.|=1.0000e+00
+    battle_a_llm_fa_isolated_test.go:277:   L            nan=0 zero=0/1048576 max|.|=2.0329e+01
+    battle_a_llm_fa_isolated_test.go:305: Звено-2 round 2 (fa_forward_train):
+    battle_a_llm_fa_isolated_test.go:277:   O(F16->32)   nan=0 zero=0/134217728 max|.|=1.0000e+00
+    battle_a_llm_fa_isolated_test.go:277:   L            nan=0 zero=0/1048576 max|.|=2.0329e+01
+    battle_a_llm_fa_isolated_test.go:305: Звено-2 round 3 (fa_forward_train):
+    battle_a_llm_fa_isolated_test.go:277:   O(F16->32)   nan=0 zero=0/134217728 max|.|=1.0000e+00
+    battle_a_llm_fa_isolated_test.go:277:   L            nan=0 zero=0/1048576 max|.|=2.0329e+01
+    battle_a_llm_fa_isolated_test.go:376: Звено-3 (bwd-четвёрка):
+    battle_a_llm_fa_isolated_test.go:88:   D            nan=0 zero=1/1048576 max|.|=3.0534e-01
+    battle_a_llm_fa_isolated_test.go:88:   dV           nan=0 zero=0/134217728 max|.|=2.2403e-04
+    battle_a_llm_fa_isolated_test.go:88:   dK           nan=0 zero=134217728/134217728 max|.|=0.0000e+00
+    battle_a_llm_fa_isolated_test.go:88:   dQ           nan=0 zero=134217728/134217728 max|.|=0.0000e+00
+--- PASS: TestALLM_FAChain_Isolated (6.10s)

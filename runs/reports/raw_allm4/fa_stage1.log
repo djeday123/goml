@@ -1,0 +1,32 @@
+=== RUN   TestALLM_FABlock_Stage1
+[GoML] cuBLASLt wrapper not found: libcublaslt_wrapper.so: cannot open shared object file: No such file or directory
+[GoML] CUDA backend initialized: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (Blackwell, sm_120)
+    battle_a_llm_fa_stage1_test.go:102: F64-арбитр: loss=7.0180480233 (fwd 18.0s, bwd 88.9s)
+    battle_a_llm_fa_stage1_test.go:138: P1 fwd sanity: GPU loss=7.0180477805 vs F64 loss=7.0180480233 (delta=2.428e-07)
+    battle_a_llm_fa_stage1_test.go:201: FP8-скейлы: scaleQ=4.711985e-03 scaleK=4.655452e-03 scaleV=4.814699e-03
+    battle_a_llm_fa_stage1_test.go:202: Пороги зон (по контракту dS direct-cast): T_norm=7.522968e-05 T_subnorm=9.403710e-06
+    battle_a_llm_fa_stage1_test.go:245: BLOCK dQ/FA   : зонаA n=0 worst|Δ|=0.000e+00 | субнорм n=51 worst=0.000e+00 | зонаB n=1048525 worst=0.000e+00 -> PASS
+    battle_a_llm_fa_stage1_test.go:245: BLOCK dQ/recon: зонаA n=0 worst|Δ|=0.000e+00 | субнорм n=51 worst=1.182e-05 | зонаB n=1048525 worst=9.365e-06 -> PASS
+    battle_a_llm_fa_stage1_test.go:245: BLOCK dK/FA   : зонаA n=0 worst|Δ|=0.000e+00 | субнорм n=0 worst=0.000e+00 | зонаB n=1048576 worst=5.254e-06 -> PASS
+    battle_a_llm_fa_stage1_test.go:245: BLOCK dK/recon: зонаA n=0 worst|Δ|=0.000e+00 | субнорм n=0 worst=0.000e+00 | зонаB n=1048576 worst=1.086e-05 -> PASS
+    battle_a_llm_fa_stage1_test.go:245: BLOCK dV/FA   : зонаA n=0 worst|Δ|=0.000e+00 | субнорм n=46355 worst=0.000e+00 | зонаB n=1002221 worst=0.000e+00 -> PASS
+    battle_a_llm_fa_stage1_test.go:245: BLOCK dV/recon: зонаA n=0 worst|Δ|=0.000e+00 | субнорм n=46355 worst=3.632e-05 | зонаB n=1002221 worst=3.490e-05 -> PASS
+    battle_a_llm_fa_stage1_test.go:261: BLOCK dQ FA-vs-recon: max|Δ|=0.000e+00 (справочно; дрожь recon задокументирована)
+    battle_a_llm_fa_stage1_test.go:261: BLOCK dK FA-vs-recon: max|Δ|=1.014e-05 (справочно; дрожь recon задокументирована)
+    battle_a_llm_fa_stage1_test.go:261: BLOCK dV FA-vs-recon: max|Δ|=0.000e+00 (справочно; дрожь recon задокументирована)
+    battle_a_llm_fa_stage1_test.go:320: === CHAIN A/B: 10 точек, PRIMARY vs F64, SECONDARY vs recon ===
+    battle_a_llm_fa_stage1_test.go:346:   Wout(top)+V-канарейка  [indep, зона A] f64=-2.705703e-04 FA|Δ|=1.210e-10 recon|Δ|=1.210e-10 -> PASS
+    battle_a_llm_fa_stage1_test.go:346:   NormOut(g)             [indep, зона A] f64=+1.950622e-03 FA|Δ|=1.045e-03 recon|Δ|=1.417e-03 -> PASS
+    battle_a_llm_fa_stage1_test.go:346:   Wo[L=0]                [indep, зона A] f64=+7.844957e-05 FA|Δ|=3.833e-04 recon|Δ|=7.845e-05 -> PASS
+    battle_a_llm_fa_stage1_test.go:346:   W2[L=0]                [indep, зона sub] f64=-1.182481e-05 FA|Δ|=9.956e-04 recon|Δ|=9.241e-04 -> PASS
+    battle_a_llm_fa_stage1_test.go:346:   Norm2(g)               [indep, зона A] f64=+1.499226e-03 FA|Δ|=1.474e-02 recon|Δ|=1.358e-02 -> PASS
+    battle_a_llm_fa_stage1_test.go:346:   W1[L=0]                [indep, зона sub] f64=-6.278521e-05 FA|Δ|=3.298e-03 recon|Δ|=2.921e-03 -> PASS
+    battle_a_llm_fa_stage1_test.go:346:   Wv[L=0]                [FA-dep, зона A] f64=+7.189487e-04 FA|Δ|=NaN recon|Δ|=1.026e-03 -> PASS
+    battle_a_llm_fa_stage1_test.go:346:   Norm1(g)               [FA-dep, зона A] f64=-7.802844e-04 FA|Δ|=NaN recon|Δ|=7.310e-05 -> PASS
+    battle_a_llm_fa_stage1_test.go:346:   Wq[L=0]                [FA-dep, зона sub] f64=-3.337149e-05 FA|Δ|=NaN recon|Δ|=3.337e-05 -> PASS
+    battle_a_llm_fa_stage1_test.go:346:   Embed[i0,d]            [FA-dep, зона A] f64=+9.375191e-05 FA|Δ|=NaN recon|Δ|=2.425e-03 -> PASS
+    battle_a_llm_fa_stage1_test.go:352: CHAIN A/B PASS: FA-зависимые точки в зоне A внутри floor 5e-3
+--- PASS: TestALLM_FABlock_Stage1 (107.85s)
+PASS
+=== B2_RUN_COMPLETE ===
+ok  	github.com/djeday123/goml/internal/abjexam	108.091s

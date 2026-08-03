@@ -1,0 +1,17 @@
+=== RUN   TestFABwd_Fingerprints
+    fa_backward_test.go:48: === Fingerprint gate (numRegs vs v0.2.0 cert reference) ===
+    fa_backward_test.go:63: kernel_d_precompute      |       38 |     38 | OK
+    fa_backward_test.go:63: kernel_merged_v1         |      252 |    252 | OK
+    fa_backward_test.go:63: kernel_dk_new            |      124 |    124 | OK
+    fa_backward_test.go:63: kernel_dq_new            |       69 |     69 | OK
+--- PASS: TestFABwd_Fingerprints (0.12s)
+=== RUN   TestFABwd_DPrecompute
+    fa_backward_test.go:146: D-precompute smoke (bh=1, sl=128, hd=128): worst |D_gpu-D_ref|=9.537e-07 (rel=2.193e-05)
+    fa_backward_test.go:154:   D[0]=-1.838169 (ref=-1.838169)
+    fa_backward_test.go:154:   D[1]=0.903720 (ref=0.903720)
+    fa_backward_test.go:154:   D[2]=-1.094770 (ref=-1.094770)
+--- PASS: TestFABwd_DPrecompute (0.00s)
+=== RUN   TestFABwd_CanonicalChain
+--- FAIL: TestFABwd_CanonicalChain (1.67s)
+FAIL	github.com/djeday123/goml/backend/cuda	2.021s
+FAIL

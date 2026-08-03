@@ -1,0 +1,6 @@
+    battle_a_llm_fa_isolated_test.go:305: Звено-2 round 1 (fa_forward_train):
+    battle_a_llm_fa_isolated_test.go:277:   O(F16->32)   nan=0 zero=0/4194304 max|.|=1.0000e+00
+    battle_a_llm_fa_isolated_test.go:277:   L            nan=0 zero=0/32768 max|.|=2.0329e+01
+    battle_a_llm_fa_isolated_test.go:277:   O(F16->32)   nan=0 zero=0/4194304 max|.|=1.0000e+00
+    battle_a_llm_fa_isolated_test.go:277:   L            nan=0 zero=0/32768 max|.|=2.0329e+01
+    battle_a_llm_fa_isolated_test.go:277:   O(F16->32)   nan=0 zero=0/4194304 max|.|=1.0000e+00
