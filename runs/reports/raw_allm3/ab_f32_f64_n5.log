@@ -1,0 +1,274 @@
+=== RUN   TestALLM_ABF32vsF64_N5
+[GoML] cuBLASLt wrapper not found: libcublaslt_wrapper.so: cannot open shared object file: No such file or directory
+[GoML] CUDA backend initialized: NVIDIA RTX PRO 6000 Blackwell Workstation Edition (Blackwell, sm_120)
+    battle_a_llm_ab_f32_f64_test.go:56: F64-арбитр: loss=3.4931709252
+Б-1 TOP  GradL(from-CE)   |max|=3.065e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.262e+00
+Б-1 TOP  dWout(1st)       |max|=1.901e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.337e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.876e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=4.531e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=4.531e-02
+DEBUG bwd L=0: |dOF32|=4.531e-02, |dP|=8.128e-02, |dS|=2.666e-03, |dQPerm|=4.934e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=4.923e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=3.453e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=4.923e-04
+Б-1 L=0 dK(post-inv-perm) |max|=3.453e-04
+Б-1 L=0 NormedRecomp1    |max|=3.602e+00
+Б-1 L=0 dWq(final)       |max|=2.120e-03
+    battle_a_llm_ab_f32_f64_test.go:124: GPU run 1: loss=3.4931708053
+Б-1 TOP  GradL(from-CE)   |max|=3.065e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.262e+00
+Б-1 TOP  dWout(1st)       |max|=1.901e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.337e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.876e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=4.531e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=4.531e-02
+DEBUG bwd L=0: |dOF32|=4.531e-02, |dP|=8.128e-02, |dS|=2.666e-03, |dQPerm|=4.934e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=4.923e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=3.453e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=4.923e-04
+Б-1 L=0 dK(post-inv-perm) |max|=3.453e-04
+Б-1 L=0 NormedRecomp1    |max|=3.602e+00
+Б-1 L=0 dWq(final)       |max|=2.120e-03
+    battle_a_llm_ab_f32_f64_test.go:124: GPU run 2: loss=3.4931708053
+Б-1 TOP  GradL(from-CE)   |max|=3.065e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.262e+00
+Б-1 TOP  dWout(1st)       |max|=1.901e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.337e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.876e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=4.531e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=4.531e-02
+DEBUG bwd L=0: |dOF32|=4.531e-02, |dP|=8.128e-02, |dS|=2.666e-03, |dQPerm|=4.934e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=4.923e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=3.453e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=4.923e-04
+Б-1 L=0 dK(post-inv-perm) |max|=3.453e-04
+Б-1 L=0 NormedRecomp1    |max|=3.602e+00
+Б-1 L=0 dWq(final)       |max|=2.120e-03
+    battle_a_llm_ab_f32_f64_test.go:124: GPU run 3: loss=3.4931708053
+Б-1 TOP  GradL(from-CE)   |max|=3.065e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.262e+00
+Б-1 TOP  dWout(1st)       |max|=1.901e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.337e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.876e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=4.531e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=4.531e-02
+DEBUG bwd L=0: |dOF32|=4.531e-02, |dP|=8.128e-02, |dS|=2.650e-03, |dQPerm|=5.847e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=5.234e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=3.425e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=5.234e-04
+Б-1 L=0 dK(post-inv-perm) |max|=3.425e-04
+Б-1 L=0 NormedRecomp1    |max|=3.602e+00
+Б-1 L=0 dWq(final)       |max|=2.521e-03
+    battle_a_llm_ab_f32_f64_test.go:124: GPU run 4: loss=3.4931708053
+Б-1 TOP  GradL(from-CE)   |max|=3.065e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.262e+00
+Б-1 TOP  dWout(1st)       |max|=1.901e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.337e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.876e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=4.531e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=4.531e-02
+DEBUG bwd L=0: |dOF32|=4.531e-02, |dP|=8.128e-02, |dS|=2.650e-03, |dQPerm|=5.847e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=5.234e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=3.425e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=5.234e-04
+Б-1 L=0 dK(post-inv-perm) |max|=3.425e-04
+Б-1 L=0 NormedRecomp1    |max|=3.602e+00
+Б-1 L=0 dWq(final)       |max|=2.521e-03
+    battle_a_llm_ab_f32_f64_test.go:124: GPU run 5: loss=3.4931708053
+    battle_a_llm_ab_f32_f64_test.go:146: === Шаг 4 нон-детерминизм GPU-F32 (N=5, max попарный |Δ|, full-tensor) ===
+    battle_a_llm_ab_f32_f64_test.go:163:   ND DWout      max|Δ|=0.000e+00 (свойство пути, не дефект — вердикт ревьюера 8b3cf23)
+    battle_a_llm_ab_f32_f64_test.go:163:   ND DNormOut   max|Δ|=1.863e-09 (свойство пути, не дефект — вердикт ревьюера 8b3cf23)
+    battle_a_llm_ab_f32_f64_test.go:163:   ND DWq[0]     max|Δ|=3.476e-03 (свойство пути, не дефект — вердикт ревьюера 8b3cf23)
+    battle_a_llm_ab_f32_f64_test.go:163:   ND DWv[0]     max|Δ|=2.365e-03 (свойство пути, не дефект — вердикт ревьюера 8b3cf23)
+    battle_a_llm_ab_f32_f64_test.go:163:   ND DWo[0]     max|Δ|=1.226e-01 (свойство пути, не дефект — вердикт ревьюера 8b3cf23)
+    battle_a_llm_ab_f32_f64_test.go:163:   ND DNorm1[0]  max|Δ|=4.007e-04 (свойство пути, не дефект — вердикт ревьюера 8b3cf23)
+    battle_a_llm_ab_f32_f64_test.go:163:   ND DNorm2[0]  max|Δ|=2.328e-09 (свойство пути, не дефект — вердикт ревьюера 8b3cf23)
+    battle_a_llm_ab_f32_f64_test.go:163:   ND DW1[0]     max|Δ|=0.000e+00 (свойство пути, не дефект — вердикт ревьюера 8b3cf23)
+    battle_a_llm_ab_f32_f64_test.go:163:   ND DW2[0]     max|Δ|=5.833e-02 (свойство пути, не дефект — вердикт ревьюера 8b3cf23)
+    battle_a_llm_ab_f32_f64_test.go:163:   ND DEmbed     max|Δ|=2.188e-02 (свойство пути, не дефект — вердикт ревьюера 8b3cf23)
+    battle_a_llm_ab_f32_f64_test.go:209: === Шаг 4 A/B GPU-F32 vs CPU-F64 (10 точек, все 5 прогонов) ===
+    battle_a_llm_ab_f32_f64_test.go:240:   A/B Wout(top)    f64=-4.972173e-02 worst|Δ|=8.711e-09 (run 1, rel=1.75e-07) formulaFloor=5.917e-06 → FORMULA-PASS
+    battle_a_llm_ab_f32_f64_test.go:240:   A/B NormOut(g)   f64=+1.047900e-02 worst|Δ|=9.121e-04 (run 3, rel=8.70e-02) formulaFloor=1.917e-06 → FORMULA-FAIL (документированный floor = факт. worst)
+    battle_a_llm_ab_f32_f64_test.go:240:   A/B Wo[L=0]      f64=-1.053664e-02 worst|Δ|=1.054e-02 (run 1, rel=1.00e+00) formulaFloor=2.508e-06 → FORMULA-FAIL (документированный floor = факт. worst)
+    battle_a_llm_ab_f32_f64_test.go:240:   A/B W2[L=0]      f64=-2.430254e-03 worst|Δ|=4.932e-03 (run 1, rel=2.03e+00) formulaFloor=1.752e-06 → FORMULA-FAIL (документированный floor = факт. worst)
+    battle_a_llm_ab_f32_f64_test.go:240:   A/B Norm2[0](g)  f64=+7.008711e-03 worst|Δ|=1.944e-03 (run 4, rel=2.77e-01) formulaFloor=1.865e-06 → FORMULA-FAIL (документированный floor = факт. worst)
+    battle_a_llm_ab_f32_f64_test.go:240:   A/B W1[L=0]      f64=-7.551747e-03 worst|Δ|=5.262e-03 (run 1, rel=6.97e-01) formulaFloor=3.735e-06 → FORMULA-FAIL (документированный floor = факт. worst)
+    battle_a_llm_ab_f32_f64_test.go:240:   A/B Wv[L=0]      f64=-7.561453e-03 worst|Δ|=3.073e-03 (run 1, rel=4.06e-01) formulaFloor=1.000e-05 → FORMULA-FAIL (документированный floor = факт. worst)
+    battle_a_llm_ab_f32_f64_test.go:240:   A/B Norm1[0](g)  f64=-6.838197e-03 worst|Δ|=5.116e-03 (run 4, rel=7.48e-01) formulaFloor=1.000e-05 → FORMULA-FAIL (документированный floor = факт. worst)
+    battle_a_llm_ab_f32_f64_test.go:240:   A/B Wq[L=0]      f64=+1.867207e-04 worst|Δ|=1.159e-04 (run 4, rel=6.21e-01) formulaFloor=1.000e-05 → FORMULA-FAIL (документированный floor = факт. worst)
+    battle_a_llm_ab_f32_f64_test.go:240:   A/B Embed[i0,d]  f64=+6.327998e-04 worst|Δ|=1.595e-03 (run 1, rel=2.52e+00) formulaFloor=1.000e-05 → FORMULA-FAIL (документированный floor = факт. worst)
+    battle_a_llm_ab_f32_f64_test.go:243: Шаг 4 итог: formula-floor провален на 9/10 точках; документированный floor пути = worst|Δ| из raw выше
+    battle_a_llm_ab_f32_f64_test.go:246: === Шаг 5 sign-of-life: 10 SGD steps lr=1e-2 ===
+Б-1 TOP  GradL(from-CE)   |max|=3.065e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.262e+00
+Б-1 TOP  dWout(1st)       |max|=1.901e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.337e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.876e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=4.531e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=4.531e-02
+DEBUG bwd L=0: |dOF32|=4.531e-02, |dP|=8.128e-02, |dS|=2.650e-03, |dQPerm|=5.847e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=5.234e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=3.425e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=5.234e-04
+Б-1 L=0 dK(post-inv-perm) |max|=3.425e-04
+Б-1 L=0 NormedRecomp1    |max|=3.602e+00
+Б-1 L=0 dWq(final)       |max|=2.521e-03
+Б-1 TOP  GradL(from-CE)   |max|=3.060e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.253e+00
+Б-1 TOP  dWout(1st)       |max|=1.822e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.337e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.889e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=4.496e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=4.496e-02
+DEBUG bwd L=0: |dOF32|=4.496e-02, |dP|=7.912e-02, |dS|=2.641e-03, |dQPerm|=5.674e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=5.105e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=3.159e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=5.105e-04
+Б-1 L=0 dK(post-inv-perm) |max|=3.159e-04
+Б-1 L=0 NormedRecomp1    |max|=3.594e+00
+Б-1 L=0 dWq(final)       |max|=2.410e-03
+Б-1 TOP  GradL(from-CE)   |max|=3.055e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.396e+00
+Б-1 TOP  dWout(1st)       |max|=1.754e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.336e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.152e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=2.896e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=2.896e-02
+DEBUG bwd L=0: |dOF32|=2.896e-02, |dP|=4.920e-02, |dS|=1.681e-03, |dQPerm|=2.863e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=2.875e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=2.240e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=2.875e-04
+Б-1 L=0 dK(post-inv-perm) |max|=2.240e-04
+Б-1 L=0 NormedRecomp1    |max|=3.569e+00
+Б-1 L=0 dWq(final)       |max|=1.455e-03
+Б-1 TOP  GradL(from-CE)   |max|=3.051e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.494e+00
+Б-1 TOP  dWout(1st)       |max|=1.685e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.333e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.891e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=4.448e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=4.448e-02
+DEBUG bwd L=0: |dOF32|=4.448e-02, |dP|=8.679e-02, |dS|=2.588e-03, |dQPerm|=5.415e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=4.847e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=4.129e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=4.847e-04
+Б-1 L=0 dK(post-inv-perm) |max|=4.129e-04
+Б-1 L=0 NormedRecomp1    |max|=3.578e+00
+Б-1 L=0 dWq(final)       |max|=2.532e-03
+Б-1 TOP  GradL(from-CE)   |max|=3.046e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.625e+00
+Б-1 TOP  dWout(1st)       |max|=1.630e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.333e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.860e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=4.380e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=4.380e-02
+DEBUG bwd L=0: |dOF32|=4.380e-02, |dP|=1.019e-01, |dS|=2.732e-03, |dQPerm|=5.306e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=4.727e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=4.532e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=4.727e-04
+Б-1 L=0 dK(post-inv-perm) |max|=4.532e-04
+Б-1 L=0 NormedRecomp1    |max|=3.574e+00
+Б-1 L=0 dWq(final)       |max|=3.354e-03
+Б-1 TOP  GradL(from-CE)   |max|=3.041e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.712e+00
+Б-1 TOP  dWout(1st)       |max|=1.680e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.328e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.143e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=2.435e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=2.435e-02
+DEBUG bwd L=0: |dOF32|=2.435e-02, |dP|=5.287e-02, |dS|=1.585e-03, |dQPerm|=3.461e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=3.110e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=2.714e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=3.110e-04
+Б-1 L=0 dK(post-inv-perm) |max|=2.714e-04
+Б-1 L=0 NormedRecomp1    |max|=3.588e+00
+Б-1 L=0 dWq(final)       |max|=1.524e-03
+Б-1 TOP  GradL(from-CE)   |max|=3.035e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.750e+00
+Б-1 TOP  dWout(1st)       |max|=1.685e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.328e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.939e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=4.399e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=4.399e-02
+DEBUG bwd L=0: |dOF32|=4.399e-02, |dP|=1.264e-01, |dS|=3.161e-03, |dQPerm|=5.206e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=4.616e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=5.013e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=4.616e-04
+Б-1 L=0 dK(post-inv-perm) |max|=5.013e-04
+Б-1 L=0 NormedRecomp1    |max|=3.594e+00
+Б-1 L=0 dWq(final)       |max|=2.800e-03
+Б-1 TOP  GradL(from-CE)   |max|=3.031e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.811e+00
+Б-1 TOP  dWout(1st)       |max|=1.705e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.319e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.925e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=4.316e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=4.316e-02
+DEBUG bwd L=0: |dOF32|=4.316e-02, |dP|=1.372e-01, |dS|=3.545e-03, |dQPerm|=5.120e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=4.551e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=5.220e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=4.551e-04
+Б-1 L=0 dK(post-inv-perm) |max|=5.220e-04
+Б-1 L=0 NormedRecomp1    |max|=3.610e+00
+Б-1 L=0 dWq(final)       |max|=2.798e-03
+Б-1 TOP  GradL(from-CE)   |max|=3.028e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.845e+00
+Б-1 TOP  dWout(1st)       |max|=1.694e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.323e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.904e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=4.235e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=4.235e-02
+DEBUG bwd L=0: |dOF32|=4.235e-02, |dP|=1.471e-01, |dS|=3.949e-03, |dQPerm|=5.022e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=4.490e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=5.360e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=4.490e-04
+Б-1 L=0 dK(post-inv-perm) |max|=5.360e-04
+Б-1 L=0 NormedRecomp1    |max|=3.626e+00
+Б-1 L=0 dWq(final)       |max|=3.358e-03
+Б-1 TOP  GradL(from-CE)   |max|=3.024e-02
+Б-1 TOP  sc.Normed(fwd)   |max|=3.860e+00
+Б-1 TOP  dWout(1st)       |max|=1.678e-01
+F-PROBE: dNormedTop computed via plain b.MatMul (not MatMulF32Ex)
+Б-1 TOP  dNormedTop(1st)  |max|=2.323e-03
+Б-1 L=0 dAttnOut(post-copy) |max|=1.909e-01
+Б-1 L=0 dQ_buf(dA@Wo^T)  |max|=4.217e-02
+Б-1 L=0 dOF32(inv-perm)  |max|=4.217e-02
+DEBUG bwd L=0: |dOF32|=4.217e-02, |dP|=1.624e-01, |dS|=4.401e-03, |dQPerm|=4.969e-04
+Б-1 L=0 dQPerm(post-RoPE-bwd) |max|=4.500e-04
+Б-1 L=0 dKPerm(post-RoPE-bwd) |max|=5.607e-04
+Б-1 L=0 dQ(post-inv-perm) |max|=4.500e-04
+Б-1 L=0 dK(post-inv-perm) |max|=5.607e-04
+Б-1 L=0 NormedRecomp1    |max|=3.637e+00
+Б-1 L=0 dWq(final)       |max|=2.780e-03
+    battle_a_llm_ab_f32_f64_test.go:259:   step 0: loss=3.4932
+    battle_a_llm_ab_f32_f64_test.go:259:   step 1: loss=3.4932
+    battle_a_llm_ab_f32_f64_test.go:259:   step 2: loss=3.3586
+    battle_a_llm_ab_f32_f64_test.go:259:   step 3: loss=3.2367
+    battle_a_llm_ab_f32_f64_test.go:259:   step 4: loss=3.1506
+    battle_a_llm_ab_f32_f64_test.go:259:   step 5: loss=3.0506
+    battle_a_llm_ab_f32_f64_test.go:259:   step 6: loss=2.9641
+    battle_a_llm_ab_f32_f64_test.go:259:   step 7: loss=2.8938
+    battle_a_llm_ab_f32_f64_test.go:259:   step 8: loss=2.8240
+    battle_a_llm_ab_f32_f64_test.go:259:   step 9: loss=2.7678
+    battle_a_llm_ab_f32_f64_test.go:259:   step 10: loss=2.7121
+    battle_a_llm_ab_f32_f64_test.go:262: Sign-of-life: initial=3.4932 after10=2.7121 Δ=+0.7810
+--- PASS: TestALLM_ABF32vsF64_N5 (0.22s)
+PASS
+=== B2_RUN_COMPLETE ===
+ok  	github.com/djeday123/goml/internal/abjexam	0.417s

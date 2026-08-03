@@ -1,0 +1,61 @@
+=== RUN   TestALLM_F64Ref_Unit
+    battle_a_llm_f64ref_cert_test.go:123: UNIT RoPE fwd+grad orthogonality: max|x-x'|=4.441e-16 (floor 1e-14)
+    battle_a_llm_f64ref_cert_test.go:185: UNIT rmsNormGradF64: maxRel dx=4.313e-08 dgamma=1.214e-08 (floor 1e-6)
+    battle_a_llm_f64ref_cert_test.go:239: UNIT matF64 trans-variants: max|Δ|=0.000e+00 (bit-exact ожидается: одинаковый порядок суммирования)
+--- PASS: TestALLM_F64Ref_Unit (0.00s)
+=== RUN   TestALLM_BwdCertF64_MultiLayer
+    battle_a_llm_f64ref_cert_test.go:265: F64 fwd loss=3.4931709252 (ln(V)=3.4657359028)
+    battle_a_llm_f64ref_cert_test.go:297: === Шаг 2 det-gate (2x in-process, bit-exact) ===
+    battle_a_llm_f64ref_cert_test.go:301:   DWout      bit-diff cells=0 max|Δ|=0.000e+00 (expected 0 / 0.000e+00)
+    battle_a_llm_f64ref_cert_test.go:301:   DNormOut   bit-diff cells=0 max|Δ|=0.000e+00 (expected 0 / 0.000e+00)
+    battle_a_llm_f64ref_cert_test.go:301:   DWq[0]     bit-diff cells=0 max|Δ|=0.000e+00 (expected 0 / 0.000e+00)
+    battle_a_llm_f64ref_cert_test.go:301:   DWk[0]     bit-diff cells=0 max|Δ|=0.000e+00 (expected 0 / 0.000e+00)
+    battle_a_llm_f64ref_cert_test.go:301:   DWv[0]     bit-diff cells=0 max|Δ|=0.000e+00 (expected 0 / 0.000e+00)
+    battle_a_llm_f64ref_cert_test.go:301:   DWo[0]     bit-diff cells=0 max|Δ|=0.000e+00 (expected 0 / 0.000e+00)
+    battle_a_llm_f64ref_cert_test.go:301:   DNorm1[0]  bit-diff cells=0 max|Δ|=0.000e+00 (expected 0 / 0.000e+00)
+    battle_a_llm_f64ref_cert_test.go:301:   DNorm2[0]  bit-diff cells=0 max|Δ|=0.000e+00 (expected 0 / 0.000e+00)
+    battle_a_llm_f64ref_cert_test.go:301:   DW1[0]     bit-diff cells=0 max|Δ|=0.000e+00 (expected 0 / 0.000e+00)
+    battle_a_llm_f64ref_cert_test.go:301:   DW2[0]     bit-diff cells=0 max|Δ|=0.000e+00 (expected 0 / 0.000e+00)
+    battle_a_llm_f64ref_cert_test.go:301:   DEmbed     bit-diff cells=0 max|Δ|=0.000e+00 (expected 0 / 0.000e+00)
+    battle_a_llm_f64ref_cert_test.go:311: Шаг 2 DETERMINISM PASS (in-process): все тензоры bit-exact, max|Δ|=0.000e+00
+    battle_a_llm_f64ref_cert_test.go:318: In-process F64_DET_HASH=7ca2a06774090ed6
+    battle_a_llm_f64ref_cert_test.go:339: Шаг 2 SUBPROCESS DET PASS: child hash 7ca2a06774090ed6 == in-process
+    battle_a_llm_f64ref_cert_test.go:394: === Шаг 3 eps-scan (log-only; разбор шумового пола при малых |g|) ===
+    battle_a_llm_f64ref_cert_test.go:403:   Wout(top)    ana=-4.972173e-02  [eps=1e-03 rel=1.05e-07]  [eps=1e-04 rel=1.17e-09]  [eps=1e-05 rel=4.40e-10]  [eps=1e-06 rel=7.58e-09]
+    battle_a_llm_f64ref_cert_test.go:403:   Wo[L=0]      ana=-1.053664e-02  [eps=1e-03 rel=3.12e-08]  [eps=1e-04 rel=6.33e-10]  [eps=1e-05 rel=3.16e-09]  [eps=1e-06 rel=3.06e-08]
+    battle_a_llm_f64ref_cert_test.go:403:   W2[L=0]      ana=-2.430254e-03  [eps=1e-03 rel=2.77e-07]  [eps=1e-04 rel=4.28e-09]  [eps=1e-05 rel=1.76e-08]  [eps=1e-06 rel=9.20e-08]
+    battle_a_llm_f64ref_cert_test.go:403:   W1[L=0]      ana=-7.551747e-03  [eps=1e-03 rel=1.76e-07]  [eps=1e-04 rel=1.73e-09]  [eps=1e-05 rel=2.68e-09]  [eps=1e-06 rel=5.62e-09]
+    battle_a_llm_f64ref_cert_test.go:403:   Wv[L=0]      ana=-7.561453e-03  [eps=1e-03 rel=2.49e-08]  [eps=1e-04 rel=2.37e-10]  [eps=1e-05 rel=2.99e-09]  [eps=1e-06 rel=1.17e-08]
+    battle_a_llm_f64ref_cert_test.go:403:   Wq[L=0]      ana=+1.867207e-04  [eps=1e-03 rel=3.24e-09]  [eps=1e-04 rel=2.41e-08]  [eps=1e-05 rel=3.69e-07]  [eps=1e-06 rel=1.41e-06]
+    battle_a_llm_f64ref_cert_test.go:403:   Embed[i0,d]  ana=+6.327998e-04  [eps=1e-03 rel=8.92e-05]  [eps=1e-04 rel=8.87e-07]  [eps=1e-05 rel=1.33e-08]  [eps=1e-06 rel=4.84e-08]
+    battle_a_llm_f64ref_cert_test.go:403:   NormOut(g)   ana=+1.047900e-02  [eps=1e-03 rel=1.02e-10]  [eps=1e-04 rel=3.85e-11]  [eps=1e-05 rel=5.97e-10]  [eps=1e-06 rel=2.81e-08]
+    battle_a_llm_f64ref_cert_test.go:403:   Norm1[0](g)  ana=-6.838197e-03  [eps=1e-03 rel=7.36e-09]  [eps=1e-04 rel=4.01e-10]  [eps=1e-05 rel=8.98e-10]  [eps=1e-06 rel=6.73e-08]
+    battle_a_llm_f64ref_cert_test.go:403:   Norm2[0](g)  ana=+7.008711e-03  [eps=1e-03 rel=1.22e-08]  [eps=1e-04 rel=3.06e-10]  [eps=1e-05 rel=3.47e-09]  [eps=1e-06 rel=2.88e-08]
+    battle_a_llm_f64ref_cert_test.go:412: === Шаг 3 гейт ТЗ: eps=1e-6, rel<=1e-8 (запись прогноз-vs-факт, log-only) ===
+    battle_a_llm_f64ref_cert_test.go:423:   TZ-gate Wout(top)    PASS: ana=-4.9721733996e-02 num=-4.9721733619e-02 relDiff=7.585e-09
+    battle_a_llm_f64ref_cert_test.go:423:   TZ-gate Wo[L=0]      PROGNOZ-MISS: ana=-1.0536638551e-02 num=-1.0536638229e-02 relDiff=3.056e-08
+    battle_a_llm_f64ref_cert_test.go:423:   TZ-gate W2[L=0]      PROGNOZ-MISS: ana=-2.4302535555e-03 num=-2.4302533319e-03 relDiff=9.200e-08
+    battle_a_llm_f64ref_cert_test.go:423:   TZ-gate W1[L=0]      PASS: ana=-7.5517466039e-03 num=-7.5517465614e-03 relDiff=5.620e-09
+    battle_a_llm_f64ref_cert_test.go:423:   TZ-gate Wv[L=0]      PROGNOZ-MISS: ana=-7.5614529309e-03 num=-7.5614530193e-03 relDiff=1.169e-08
+    battle_a_llm_f64ref_cert_test.go:423:   TZ-gate Wq[L=0]      PROGNOZ-MISS: ana=+1.8672068108e-04 num=+1.8672041691e-04 relDiff=1.415e-06
+    battle_a_llm_f64ref_cert_test.go:423:   TZ-gate Embed[i0,d]  PROGNOZ-MISS: ana=+6.3279978192e-04 num=+6.3279981255e-04 relDiff=4.841e-08
+    battle_a_llm_f64ref_cert_test.go:423:   TZ-gate NormOut(g)   PROGNOZ-MISS: ana=+1.0478998707e-02 num=+1.0478999002e-02 relDiff=2.814e-08
+    battle_a_llm_f64ref_cert_test.go:423:   TZ-gate Norm1[0](g)  PROGNOZ-MISS: ana=-6.8381973256e-03 num=-6.8381977858e-03 relDiff=6.729e-08
+    battle_a_llm_f64ref_cert_test.go:423:   TZ-gate Norm2[0](g)  PROGNOZ-MISS: ana=+7.0087113690e-03 num=+7.0087111670e-03 relDiff=2.882e-08
+    battle_a_llm_f64ref_cert_test.go:425: Гейт ТЗ @ eps=1e-6: 8/10 промахов (прогноз ТЗ 1e-8..1e-10; два числа зафиксированы выше)
+    battle_a_llm_f64ref_cert_test.go:430: === Шаг 3 cert v2: min(plain-grid, Richardson), гейт rel<=1e-8 ===
+    battle_a_llm_f64ref_cert_test.go:457: CERT-F64v2 Wout(top)    PASS: ana=-4.9721733996e-02 bestRel=2.034e-11 (richardson eps=1e-03)
+    battle_a_llm_f64ref_cert_test.go:457: CERT-F64v2 Wo[L=0]      PASS: ana=-1.0536638551e-02 bestRel=6.932e-11 (richardson eps=1e-03)
+    battle_a_llm_f64ref_cert_test.go:457: CERT-F64v2 W2[L=0]      PASS: ana=-2.4302535555e-03 bestRel=4.461e-10 (richardson eps=1e-03)
+    battle_a_llm_f64ref_cert_test.go:457: CERT-F64v2 W1[L=0]      PASS: ana=-7.5517466039e-03 bestRel=1.544e-11 (richardson eps=1e-03)
+    battle_a_llm_f64ref_cert_test.go:457: CERT-F64v2 Wv[L=0]      PASS: ana=-7.5614529309e-03 bestRel=2.270e-10 (richardson eps=1e-03)
+    battle_a_llm_f64ref_cert_test.go:457: CERT-F64v2 Wq[L=0]      PASS: ana=+1.8672068108e-04 bestRel=3.244e-09 (plain eps=1e-03)
+    battle_a_llm_f64ref_cert_test.go:457: CERT-F64v2 Embed[i0,d]  PASS: ana=+6.3279978192e-04 bestRel=2.182e-10 (richardson eps=1e-03)
+    battle_a_llm_f64ref_cert_test.go:457: CERT-F64v2 NormOut(g)   PASS: ana=+1.0478998707e-02 bestRel=3.849e-11 (plain eps=1e-04)
+    battle_a_llm_f64ref_cert_test.go:457: CERT-F64v2 Norm1[0](g)  PASS: ana=-6.8381973256e-03 bestRel=3.028e-10 (richardson eps=1e-03)
+    battle_a_llm_f64ref_cert_test.go:457: CERT-F64v2 Norm2[0](g)  PASS: ana=+7.0087113690e-03 bestRel=3.057e-10 (plain eps=1e-04)
+    battle_a_llm_f64ref_cert_test.go:464: Шаг 3 F64 CERT v2 PASS: 10/10 rel<=1e-8 (Richardson/optimal-eps instrument)
+--- PASS: TestALLM_BwdCertF64_MultiLayer (0.79s)
+PASS
+=== B2_RUN_COMPLETE ===
+ok  	github.com/djeday123/goml/internal/abjexam	0.994s
