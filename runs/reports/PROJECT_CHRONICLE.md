@@ -292,6 +292,7 @@ Race #1-3 диагностированы. Sync-fix accepted as workaround, но 
 | One-change-at-a-time | 2026-07 | wall-clock only converts на WORK-REDUCTION | v96b/v118/v121 |
 | PTX-ASCII catch | 2026-07-24 (A-1) | non-ASCII in PTX comments | fused CE probe |
 | Race-семейство (4 случая) | 2026-07-29..07-30 | ptx→cublas, sync, streams, «измерительный прибор» | Ход-P (последний) |
+| [[feedback-one-clone-one-session]] | 2026-08-03 (fffe6ea + 81636dd) | Один working tree = одна активная сессия; параллельные темы в разных клонах (координация через origin). Шаблон всех ТЗ: Б-0 проверяет пустой staged; git add только по явному списку; git diff --cached --stat перед каждым коммитом | Поймал свой же пропуск 81636dd первой проверкой |
 | [[feedback-lnv-smoke-weak-gate]] | 2026-08-03 (Н4) | ln(V)-smoke слабый гейт; smoke attention-пути обязан включать чувствительностную пробу (возмущение строки V -> O меняется) | fa_contract_test.go 2в |
 | Мусор=мусор (3 случая) | 2026-07-30 | Wq dead → 50% W1 masked; F-PROBE mismatch; standalone ≠ contextual | Ход A.1, F, B |
 
