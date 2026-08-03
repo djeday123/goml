@@ -1,0 +1,12 @@
+    amax_race_repro_test.go:85: П.2а round  1: amax=2.396485e+00 host-ref=2.396485e+00 -> ЖИВ
+    amax_race_repro_test.go:85: П.2а round  2: amax=2.396485e+00 host-ref=2.396485e+00 -> ЖИВ
+    amax_race_repro_test.go:85: П.2а round  3: amax=2.396485e+00 host-ref=2.396485e+00 -> ЖИВ
+    amax_race_repro_test.go:85: П.2а round  4: amax=2.396485e+00 host-ref=2.396485e+00 -> ЖИВ
+    amax_race_repro_test.go:85: П.2а round  5: amax=2.396485e+00 host-ref=2.396485e+00 -> ЖИВ
+    amax_race_repro_test.go:85: П.2а round  6: amax=2.396485e+00 host-ref=2.396485e+00 -> ЖИВ
+    amax_race_repro_test.go:85: П.2а round  7: amax=2.396485e+00 host-ref=2.396485e+00 -> ЖИВ
+    amax_race_repro_test.go:85: П.2а round  8: amax=2.396485e+00 host-ref=2.396485e+00 -> ЖИВ
+    amax_race_repro_test.go:85: П.2а round  9: amax=2.396485e+00 host-ref=2.396485e+00 -> ЖИВ
+    amax_race_repro_test.go:85: П.2а round 10: amax=2.396485e+00 host-ref=2.396485e+00 -> ЖИВ
+    amax_race_repro_test.go:87: П.2а итог: мёртвых 0/10 (прогноз до прогона: >=1 при живой гонке; 0 = гонка закрыта Н3-Sync'ом A-LLM-5)
+--- PASS: TestALLM_AmaxRaceRepro (0.20s)

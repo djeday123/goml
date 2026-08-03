@@ -31,6 +31,7 @@ package abjexam
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/djeday123/goml/backend"
 	gomlcuda "github.com/djeday123/goml/backend/cuda"
@@ -61,6 +62,9 @@ type faBlockBufs struct {
 	DSnatN, DSTn        backend.Storage // FP8 padded [BH, S, sPad]
 	DVn, DKn, DQn       backend.Storage // F32 [BH, S, HD]
 	LastScales          [3]float32      // (scaleQ, scaleK, scaleV) последнего вызова
+	// П.4г (A-LLM-6): раздельная атрибуция пятой карты блоков.
+	TKernels time.Duration // квант+fa-fwd+D+merged+dk+dq (GPU-стороны)
+	TStaging time.Duration // host-staging D2H/H2D (cert-плата)
 }
 
 func newFABlockBufs(cfg BattleACfg, adB, natB backend.Backend) (*faBlockBufs, error) {
@@ -229,6 +233,7 @@ func attnFABwdBlock(b backend.Backend, gtB *gotorchAdapter.Backend,
 	faScale := softmaxScale * scaleQ * scaleK
 
 	// (a2) Staging FP8 адаптер -> нативный контекст (host-путь; cert-only).
+	tStage := time.Now()
 	if err = faRawStage(b, fb.QFP8a, natB, fb.QFP8n, n); err != nil {
 		return scales, fmt.Errorf("fa-block stage QFP8: %w", err)
 	}
@@ -238,6 +243,7 @@ func attnFABwdBlock(b backend.Backend, gtB *gotorchAdapter.Backend,
 	if err = faRawStage(b, fb.VFP8a, natB, fb.VFP8n, n); err != nil {
 		return scales, fmt.Errorf("fa-block stage VFP8: %w", err)
 	}
+	fb.TStaging += time.Since(tStage)
 
 	// (b) fa_forward_train (нативный контекст) -> O_FP16 + L. Zero-init ДО вызова.
 	zeroNat := func(s backend.Storage, bytes int) error {
@@ -251,20 +257,25 @@ func attnFABwdBlock(b backend.Backend, gtB *gotorchAdapter.Backend,
 	if err = zeroNat(fb.LGPUn, BH*S*4); err != nil {
 		return scales, fmt.Errorf("fa-block zero LGPU: %w", err)
 	}
+	tKern := time.Now()
 	if err = faCtx.ForwardTrain(devPtr(fb.QFP8n), devPtr(fb.KFP8n), devPtr(fb.VFP8n),
 		devPtr(fb.OFP16n), devPtr(fb.LGPUn),
 		int32(BH), int32(S), int32(HD), 0, 0, faScale, 0); err != nil {
 		return scales, fmt.Errorf("fa-block fa_forward_train: %w", err)
 	}
 	syncNat()
+	fb.TKernels += time.Since(tKern)
 
 	// (c) dO: адаптерный DOF32 -> host F16 -> нативный DOF16n.
+	tStage = time.Now()
 	doHost := gpuToHost(b, bs.DOF32, n)
 	if _, err = uploadInto(natB, fb.DOF16n, faF32ToF16Host(doHost)); err != nil {
 		return scales, fmt.Errorf("fa-block dO stage: %w", err)
 	}
+	fb.TStaging += time.Since(tStage)
 
 	// (d) D-precompute (D пишется полностью, zero-init не требует).
+	tKern = time.Now()
 	if err = gomlcuda.FABwdDPrecompute(devPtr(fb.OFP16n), devPtr(fb.DOF16n), devPtr(fb.Dn),
 		BH, S, HD, 0); err != nil {
 		return scales, fmt.Errorf("fa-block d_precompute: %w", err)
@@ -301,8 +312,10 @@ func attnFABwdBlock(b backend.Backend, gtB *gotorchAdapter.Backend,
 		return scales, fmt.Errorf("fa-block dq_new: %w", err)
 	}
 	syncNat()
+	fb.TKernels += time.Since(tKern)
 
 	// (g) Выходы: нативные F32 -> host -> адаптерные контрактные буферы цепочки.
+	tStage = time.Now()
 	if err = faRawStage(natB, fb.DQn, b, bs.DQPerm, n*4); err != nil {
 		return scales, fmt.Errorf("fa-block stage dQ out: %w", err)
 	}
@@ -313,6 +326,7 @@ func attnFABwdBlock(b backend.Backend, gtB *gotorchAdapter.Backend,
 		return scales, fmt.Errorf("fa-block stage dV out: %w", err)
 	}
 	sync()
+	fb.TStaging += time.Since(tStage)
 	// Верификация staging-канала выходов (bit-exact nat -> adapter): дешёвая
 	// плата за пойманные в этой сессии SNaN-порчу и молчаливые не-доезды.
 	natRaw, e1 := faRawBytes(natB, fb.DQn, n*4)

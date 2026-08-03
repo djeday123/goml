@@ -72,7 +72,7 @@ func TestALLM_Fwd_B1_Smoke(t *testing.T) {
 	}
 
 	// Run forward.
-	loss, err := fwdBattleA(adB, st, sc, faCtx, inp, tgt)
+	loss, err := fwdBattleA(adB, st, sc, faCtx, inp, tgt, nil)
 	if err != nil {
 		t.Fatalf("fwdBattleA: %v", err)
 	}
@@ -157,7 +157,7 @@ func TestALLM_Fwd_B4_RepackBitExact(t *testing.T) {
 		t.Fatalf("NewBattleAScratch B=1: %v", err)
 	}
 	defer sc1.FreeAll(adB)
-	loss1, err := fwdBattleA(adB, st1, sc1, faCtx, inpB0, tgtB0)
+	loss1, err := fwdBattleA(adB, st1, sc1, faCtx, inpB0, tgtB0, nil)
 	if err != nil {
 		t.Fatalf("fwdBattleA B=1: %v", err)
 	}
@@ -188,7 +188,7 @@ func TestALLM_Fwd_B4_RepackBitExact(t *testing.T) {
 		t.Fatalf("NewBattleAScratch B=4: %v", err)
 	}
 	defer sc4.FreeAll(adB)
-	loss4, err := fwdBattleA(adB, st4, sc4, faCtx, inp4, tgt4)
+	loss4, err := fwdBattleA(adB, st4, sc4, faCtx, inp4, tgt4, nil)
 	if err != nil {
 		t.Fatalf("fwdBattleA B=4: %v", err)
 	}

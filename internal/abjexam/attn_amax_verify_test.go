@@ -78,7 +78,7 @@ func TestALLM_AmaxVerify_FP8vsF32(t *testing.T) {
 	}
 
 	// Run fwdBattleA — this fills sc.OF32 with post-descale FA output (path A).
-	loss, err := fwdBattleA(adB, st, sc, faCtx, inp, tgt)
+	loss, err := fwdBattleA(adB, st, sc, faCtx, inp, tgt, nil)
 	if err != nil {
 		t.Fatalf("fwdBattleA: %v", err)
 	}

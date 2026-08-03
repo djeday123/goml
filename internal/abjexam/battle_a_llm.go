@@ -333,7 +333,8 @@ func launchTransposeSHD_HSDPtr(b backend.Backend, dstPtr, srcPtr uintptr, S, H, 
 // LockOSThread: caller (test) должен обёртывать. Здесь используется FA-контекст
 // который требует thread pinning.
 func fwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
-	faCtx *gomlcuda.FAContext, inputTokens []int64, targetTokens []int32) (loss float64, err error) {
+	faCtx *gomlcuda.FAContext, inputTokens []int64, targetTokens []int32,
+	snap *BattleASnapScratch) (loss float64, err error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -368,6 +369,13 @@ func fwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 	// -- Layer loop --
 	for l := 0; l < cfg.L; l++ {
 		lw := &st.Layers[l]
+
+		// A-LLM-6 snap: X до RMSNorm1.
+		if snap != nil {
+			if err := b.Copy(snap.XPreAttn[l], sc.X, M*D*4); err != nil {
+				return 0, fmt.Errorf("layer %d snap XPreAttn: %w", l, err)
+			}
+		}
 
 		// 1. RMSNorm(X) -> Normed [M, D]
 		if err := gtB.RMSNormF32(sc.X, lw.Norm1, sc.Normed, M, D, cfg.Eps); err != nil {
@@ -434,6 +442,19 @@ func fwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 		}
 		if err := gtB.RoPEF32(sc.KPerm, sc.KPerm, BH, 1, S, HD, cfg.Base); err != nil {
 			return 0, fmt.Errorf("layer %d RoPE K: %w", l, err)
+		}
+
+		// A-LLM-6 snap: post-RoPE Q/K/V (F32, до квантизации).
+		if snap != nil {
+			if err := b.Copy(snap.QPerm[l], sc.QPerm, BH*S*HD*4); err != nil {
+				return 0, fmt.Errorf("layer %d snap QPerm: %w", l, err)
+			}
+			if err := b.Copy(snap.KPerm[l], sc.KPerm, BH*S*HD*4); err != nil {
+				return 0, fmt.Errorf("layer %d snap KPerm: %w", l, err)
+			}
+			if err := b.Copy(snap.VPerm[l], sc.VPerm, BH*S*HD*4); err != nil {
+				return 0, fmt.Errorf("layer %d snap VPerm: %w", l, err)
+			}
 		}
 
 		// 6. Quantize F32 -> FP8 (per-tensor amax).
@@ -522,6 +543,13 @@ func fwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 			}
 		}
 
+		// A-LLM-6 snap: O_real (после cast + scaleV absorb).
+		if snap != nil {
+			if err := b.Copy(snap.OAttn[l], sc.OF32, BH*S*HD*4); err != nil {
+				return 0, fmt.Errorf("layer %d snap OAttn: %w", l, err)
+			}
+		}
+
 		// 11. Inverse permute OF32 [BH, S, hd] -> [B, S, H, hd] -> [M, D].
 		// [H, S, HD] -> [S, H, HD]: transpose с H<->S параметрами.
 		oBase := devPtr(sc.OF32)
@@ -543,6 +571,13 @@ func fwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 		if err := b.Add(sc.X, sc.X, sc.AttnOut,
 			core.Shape{M, D}, core.Shape{M, D}, core.Shape{M, D}, core.Float32); err != nil {
 			return 0, fmt.Errorf("layer %d residual attn: %w", l, err)
+		}
+
+		// A-LLM-6 snap: X до RMSNorm2.
+		if snap != nil {
+			if err := b.Copy(snap.XPreFFN[l], sc.X, M*D*4); err != nil {
+				return 0, fmt.Errorf("layer %d snap XPreFFN: %w", l, err)
+			}
 		}
 
 		// 14. RMSNorm2(X) -> Normed
@@ -573,6 +608,13 @@ func fwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 		if err := b.Add(sc.X, sc.X, sc.FFNOut,
 			core.Shape{M, D}, core.Shape{M, D}, core.Shape{M, D}, core.Float32); err != nil {
 			return 0, fmt.Errorf("layer %d residual FFN: %w", l, err)
+		}
+	}
+
+	// A-LLM-6 snap: X до top RMSNorm.
+	if snap != nil {
+		if err := b.Copy(snap.XPreTop, sc.X, M*D*4); err != nil {
+			return 0, fmt.Errorf("snap XPreTop: %w", err)
 		}
 	}
 

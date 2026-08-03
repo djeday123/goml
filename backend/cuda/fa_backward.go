@@ -6,6 +6,8 @@ package cuda
 //
 // МАГНИТУДНЫЙ КОНТРАКТ (A-LLM-5, 2026-08-03, Н4): decoded-магнитуда FP8-входов
 // (Q/K/V) обязана быть O(1) — квантизация scale = amax (НЕ amax/448).
+// faScale (softmax*scaleQ*scaleK) must be FP16-normal [6.1e-5, 65504] —
+// scale-узел конвертируется в half2 (_v121r_train_kernel_full.cu:452).
 // Карта аккумуляторов (П.0 A-LLM-5): merged — F32-акк (f32.f16.f16.f32,
 // fa_bwd_merged_v1.cu:43); dk — F32-акки (:51,:66); dq — F16-акк
 // (f16.e4m3.e4m3.f16, fa_bwd_dq_new.cu:47, packed): требует

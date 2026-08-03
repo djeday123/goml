@@ -1,0 +1,30 @@
+=== RUN   TestALLM_Stage2_InterPath
+    battle_a_llm_stage2_test.go:180: === 4б смоук inter-path: bwdBattleA(recon) vs bwdBattleAF32 (общие входы) ===
+    battle_a_llm_stage2_test.go:202:   DWout     worst|Δ|=3.725e-09 NaN=0 (floor 1.0e-04) -> PASS
+    battle_a_llm_stage2_test.go:202:   DNormOut  worst|Δ|=1.513e-09 NaN=0 (floor 1.0e-03) -> PASS
+    battle_a_llm_stage2_test.go:202:   DWo       worst|Δ|=1.658e-01 NaN=0 (floor 1.3e-01) -> FAIL
+    battle_a_llm_stage2_test.go:202:   DW2       worst|Δ|=6.690e-02 NaN=0 (floor 6.0e-02) -> FAIL
+    battle_a_llm_stage2_test.go:202:   DNorm2    worst|Δ|=2.643e-02 NaN=0 (floor 2.0e-03) -> FAIL
+    battle_a_llm_stage2_test.go:202:   DW1       worst|Δ|=5.702e-02 NaN=0 (floor 1.0e-04) -> FAIL
+    battle_a_llm_stage2_test.go:202:   DWv       worst|Δ|=1.845e-01 NaN=0 (floor 3.0e-03) -> FAIL
+    battle_a_llm_stage2_test.go:202:   DNorm1    worst|Δ|=3.254e-02 NaN=0 (floor 1.0e-03) -> FAIL
+    battle_a_llm_stage2_test.go:202:   DWq       worst|Δ|=0.000e+00 NaN=0 (floor 4.0e-03) -> PASS
+    battle_a_llm_stage2_test.go:202:   DEmbed    worst|Δ|=1.871e+01 NaN=0 (floor 3.0e-02) -> FAIL
+    battle_a_llm_stage2_test.go:205: 4б смоук: 7/10 FAIL
+    battle_a_llm_stage2_test.go:219: === 4б FA-путь в боевой обвязке (vs recon-путь; скейлы=[1 1 1]) ===
+    battle_a_llm_stage2_test.go:240:   DWout     worst|FA-recon|=0.000e+00 NaN=0 -> OK
+    battle_a_llm_stage2_test.go:240:   DNormOut  worst|FA-recon|=1.397e-09 NaN=0 -> OK
+    battle_a_llm_stage2_test.go:240:   DWo       worst|FA-recon|=1.977e+01 NaN=0 -> OK
+    battle_a_llm_stage2_test.go:240:   DW2       worst|FA-recon|=2.971e+00 NaN=0 -> OK
+    battle_a_llm_stage2_test.go:240:   DNorm2    worst|FA-recon|=5.286e-01 NaN=0 -> OK
+    battle_a_llm_stage2_test.go:240:   DW1       worst|FA-recon|=1.292e+00 NaN=0 -> OK
+    battle_a_llm_stage2_test.go:240:   DWv       worst|FA-recon|=2.270e+01 NaN=0 -> OK
+    battle_a_llm_stage2_test.go:240:   DNorm1    worst|FA-recon|=4.855e+00 NaN=0 -> OK
+    battle_a_llm_stage2_test.go:240:   DWq       worst|FA-recon|=0.000e+00 NaN=0 -> OK
+    battle_a_llm_stage2_test.go:240:   DEmbed    worst|FA-recon|=1.634e+03 NaN=0 -> OK
+    battle_a_llm_stage2_test.go:245: 4б FA-путь: NaN-гейт чист; расхождения = зоны Stage1-класса (dS-стирание legit)
+--- FAIL: TestALLM_Stage2_InterPath (1.08s)
+FAIL
+=== B2_RUN_COMPLETE ===
+FAIL	github.com/djeday123/goml/internal/abjexam	1.298s
+FAIL

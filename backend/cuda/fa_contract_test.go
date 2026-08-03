@@ -221,6 +221,11 @@ func TestFAContract_FullRangeInputs(t *testing.T) {
 				maxDec = d
 			}
 		}
+		// П.3 (A-LLM-6): faScale обязан быть FP16-normal [6.1e-5, 65504].
+		t.Logf("  [bh=%d sl=%d] faScale=%.6e (FP16-normal гейт [6.1e-5, 65504])", f.bh, f.sl, softmaxScale)
+		if softmaxScale < 6.1e-5 || softmaxScale > 65504 {
+			t.Errorf("faScale %.3e вне FP16-normal диапазона", softmaxScale)
+		}
 		oH, lH, bwd := faContractChainRun(t, b, faCtx, q, k, v, f.bh, f.sl, hd, softmaxScale)
 		statBad := func(name string, h []float32) (nan int, mx float64) {
 			for _, x := range h {

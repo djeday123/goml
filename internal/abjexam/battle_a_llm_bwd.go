@@ -307,8 +307,12 @@ func zeroGrads(b backend.Backend, grads *BattleAGrads) error {
 // LockOSThread: caller responsibility (fwdBattleA locks; keep pinned through bwd).
 func bwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 	bs *BattleABwdScratch, grads *BattleAGrads,
-	faCtx *gomlcuda.FAContext, inputTokens []int64, attnPath AttnBwdPath) error {
-	_ = faCtx // used in AttnBwdFA path
+	faCtx *gomlcuda.FAContext, inputTokens []int64, attnPath AttnBwdPath,
+	snap *BattleASnapScratch, fb *faBlockBufs) error {
+	// A-LLM-6 П.4а: снапшот-математика обязательна (v1-упрощения удалены).
+	if snap == nil {
+		return fmt.Errorf("bwdBattleA: snap обязателен (v1-путь без снапшотов удалён — caveat-1 класс)")
+	}
 	cfg := st.Cfg
 	M := sc.M
 	BH := sc.BH
@@ -341,7 +345,7 @@ func bwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 	// Actually sc.X after fwd is the input to final RMSNorm. Fwd wrote:
 	//   final Normed = RMSNorm(sc.X, st.NormOut)
 	// So RMSNormGradF32(x=sc.X, gamma=st.NormOut, dy=bs.DNormedTop, dx=bs.DX, dgamma=grads.DNormOut).
-	if err := gtB.RMSNormGradF32(sc.X, st.NormOut, bs.DNormedTop, bs.DX, grads.DNormOut, M, D, cfg.Eps); err != nil {
+	if err := gtB.RMSNormGradF32(snap.XPreTop, st.NormOut, bs.DNormedTop, bs.DX, grads.DNormOut, M, D, cfg.Eps); err != nil {
 		return fmt.Errorf("final RMSNormGrad: %w", err)
 	}
 
@@ -359,6 +363,20 @@ func bwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 		if err := gtB.MatMulF32Ex(bs.DFFNOut, lw.W2, bs.DFFNSilu, M, FFN, D, false, true); err != nil {
 			return fmt.Errorf("layer %d dFFNSilu: %w", l, err)
 		}
+		// A-LLM-6: recompute Normed2/FFN-цепочки из snap.XPreFFN[l] (зеркало
+		// bwdBattleAF32; v1 брал sc.Normed/sc.FFNSilu последнего звена).
+		if err := gtB.RMSNormF32(snap.XPreFFN[l], lw.Norm2, bs.NormedRecomp, M, D, cfg.Eps); err != nil {
+			return fmt.Errorf("layer %d recompute Normed2: %w", l, err)
+		}
+		if err := b.MatMul(sc.FFNHidden, bs.NormedRecomp, lw.W1, core.Shape{M, D}, core.Shape{D, FFN}, core.Float32); err != nil {
+			return fmt.Errorf("layer %d recompute FFN W1: %w", l, err)
+		}
+		if err := b.Sigmoid(sc.FFNSigmoid, sc.FFNHidden, core.Shape{M, FFN}, core.Float32); err != nil {
+			return fmt.Errorf("layer %d recompute Sigmoid: %w", l, err)
+		}
+		if err := b.Mul(sc.FFNSilu, sc.FFNHidden, sc.FFNSigmoid, core.Shape{M, FFN}, core.Shape{M, FFN}, core.Shape{M, FFN}, core.Float32); err != nil {
+			return fmt.Errorf("layer %d recompute Silu: %w", l, err)
+		}
 		// dW2 = FFNSilu^T @ dFFNOut    [FFN, D]
 		if err := gtB.MatMulF32Ex(sc.FFNSilu, bs.DFFNOut, lg.DW2, FFN, D, M, true, false); err != nil {
 			return fmt.Errorf("layer %d dW2: %w", l, err)
@@ -373,24 +391,15 @@ func bwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 		}
 		// dW1 = Normed^T @ dFFNHidden    [D, FFN]
 		//
-		// PROBLEM: sc.Normed at this point holds the LAST-layer's normed (from top-final RMSNorm).
-		// We need per-layer Normed saved. For now, RECOMPUTE Normed2 = RMSNorm(X_pre_ffn, Norm2).
-		// But X_pre_ffn was X BEFORE FFN residual, we lost it (X += FFNOut is destructive).
-		//
-		// SIMPLIFICATION for first working version: recompute Normed2 by running RMSNorm again on sc.X.
-		// This isn't quite right (sc.X is post-all-layers now due to residuals). Full correctness
-		// requires per-layer X snapshots. Deferred to next iteration -- for now, use sc.Normed as-is
-		// (last-layer Normed) to unblock chain.
-		//
-		// TODO(A-LLM-2 v2): save per-layer X_pre_ffn snapshot for exact bwd.
-		if err := gtB.MatMulF32Ex(sc.Normed, bs.DFFNHidden, lg.DW1, D, FFN, M, true, false); err != nil {
+		// A-LLM-6: dW1 = Normed2^T @ dFFNHidden (recompute выше; v1-TODO закрыт).
+		if err := gtB.MatMulF32Ex(bs.NormedRecomp, bs.DFFNHidden, lg.DW1, D, FFN, M, true, false); err != nil {
 			return fmt.Errorf("layer %d dW1: %w", l, err)
 		}
 		// dRMSNorm2: dx += residual (dNormed goes back through RMSNorm2 to give dX_pre_norm2).
 		// RMSNormGrad writes dx OVERWRITING. We need dx += rmsnorm_grad. Since dX still holds the
 		// residual grad from downstream, we need to accumulate: temp = rmsnorm_grad(...), dX += temp.
 		// For simplicity in v1 -- write to DAttnOut buffer (reused), then Add.
-		if err := gtB.RMSNormGradF32(sc.X, lw.Norm2, bs.DNormed, bs.DAttnOut, lg.DNorm2, M, D, cfg.Eps); err != nil {
+		if err := gtB.RMSNormGradF32(snap.XPreFFN[l], lw.Norm2, bs.DNormed, bs.DAttnOut, lg.DNorm2, M, D, cfg.Eps); err != nil {
 			return fmt.Errorf("layer %d RMSNormGrad2: %w", l, err)
 		}
 		if err := b.Add(bs.DX, bs.DX, bs.DAttnOut, core.Shape{M, D}, core.Shape{M, D}, core.Shape{M, D}, core.Float32); err != nil {
@@ -405,7 +414,19 @@ func bwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 		if err := gtB.MatMulF32Ex(bs.DAttnOut, lw.Wo, bs.DQ, M, D, D, false, true); err != nil {
 			return fmt.Errorf("layer %d dQ_buf(Wo): %w", l, err)
 		}
-		// dWo = Q_buf^T @ dAttnOut  [D, D]. Q_buf lives in sc.Q (reused as invperm output in fwd).
+		// A-LLM-6: Q_buf recompute inv-perm из snap.OAttn[l] (v1 полагался на
+		// остаточное содержимое sc.Q — валидно только для L=1 и хрупко).
+		{
+			oSnapBase := devPtr(snap.OAttn[l])
+			qBufBase := devPtr(sc.Q)
+			bStride := uintptr(S * D * 4)
+			for bi := 0; bi < B; bi++ {
+				off := uintptr(bi) * bStride
+				if err := launchTransposeSHD_HSDPtr(b, qBufBase+off, oSnapBase+off, H, S, HD); err != nil {
+					return fmt.Errorf("layer %d Q_buf recompute batch %d: %w", l, bi, err)
+				}
+			}
+		}
 		if err := gtB.MatMulF32Ex(sc.Q, bs.DAttnOut, lg.DWo, D, D, M, true, false); err != nil {
 			return fmt.Errorf("layer %d dWo: %w", l, err)
 		}
@@ -436,21 +457,30 @@ func bwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 		// Attention bwd -- pick path.
 		switch attnPath {
 		case AttnBwdF32Recon:
-			// Recompute P via attnReconstructFwd on saved QPerm/KPerm/VPerm (F32 post-RoPE).
-			if err := attnReconstructFwd(b, gtB, sc.QPerm, sc.KPerm, sc.VPerm,
+			// A-LLM-6: P recompute на СНАПШОТАХ слоя l (v1 брал sc.*Perm последнего).
+			if err := attnReconstructFwd(b, gtB, snap.QPerm[l], snap.KPerm[l], snap.VPerm[l],
 				bs.OReconDbg, bs.SReconTemp, bs.PRecon, bs.QScaledTmp,
 				BH, S, HD, softmaxScale); err != nil {
 				return fmt.Errorf("layer %d recon fwd: %w", l, err)
 			}
-			// Apply reconstruct-bwd with dO = bs.DOF32 (already scaled back).
-			if err := attnReconstructBwd(b, gtB, sc.QPerm, sc.KPerm, sc.VPerm, bs.PRecon,
+			if err := attnReconstructBwd(b, gtB, snap.QPerm[l], snap.KPerm[l], snap.VPerm[l], bs.PRecon,
 				bs.DOF32, bs.DQPerm, bs.DKPerm, bs.DVPerm, bs.DPTemp, bs.DSTemp,
 				BH, S, HD, softmaxScale); err != nil {
 				return fmt.Errorf("layer %d recon bwd: %w", l, err)
 			}
 		case AttnBwdFA:
-			// FA-bwd chain (deferred to next iteration -- placeholder).
-			return fmt.Errorf("layer %d AttnBwdFA path not implemented in v1", l)
+			// A-LLM-6 П.4а: сертифицированный FA-блок (A-LLM-5), native+staging.
+			if fb == nil || faCtx == nil {
+				return fmt.Errorf("layer %d AttnBwdFA: fb/faCtx обязательны", l)
+			}
+			t0 := timeNow()
+			scales, err := attnFABwdBlock(b, gtB, faCtx, fb, bs,
+				snap.QPerm[l], snap.KPerm[l], snap.VPerm[l], BH, S, HD, softmaxScale)
+			if err != nil {
+				return fmt.Errorf("layer %d FA-block: %w", l, err)
+			}
+			fb.LastScales = scales
+			snap.TFABlockKernels += timeSince(t0) // разделение staging/kernels внутри блока — П.4г строка карты
 		}
 
 		// RoPE bwd on dQPerm, dKPerm in-place (dV не проходит через RoPE).
@@ -500,19 +530,22 @@ func bwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 			return fmt.Errorf("layer %d dNormed sum V: %w", l, err)
 		}
 
-		// Weight grads: dWq = Normed^T @ dQ; dWk = Normed^T @ dK; dWv = Normed^T @ dV.
-		if err := gtB.MatMulF32Ex(sc.Normed, bs.DQ, lg.DWq, D, D, M, true, false); err != nil {
+		// A-LLM-6: recompute Normed1 из snap.XPreAttn[l] (v1 брал sc.Normed top).
+		if err := gtB.RMSNormF32(snap.XPreAttn[l], lw.Norm1, bs.NormedRecomp, M, D, cfg.Eps); err != nil {
+			return fmt.Errorf("layer %d recompute Normed1: %w", l, err)
+		}
+		if err := gtB.MatMulF32Ex(bs.NormedRecomp, bs.DQ, lg.DWq, D, D, M, true, false); err != nil {
 			return fmt.Errorf("layer %d dWq: %w", l, err)
 		}
-		if err := gtB.MatMulF32Ex(sc.Normed, bs.DK, lg.DWk, D, D, M, true, false); err != nil {
+		if err := gtB.MatMulF32Ex(bs.NormedRecomp, bs.DK, lg.DWk, D, D, M, true, false); err != nil {
 			return fmt.Errorf("layer %d dWk: %w", l, err)
 		}
-		if err := gtB.MatMulF32Ex(sc.Normed, bs.DV, lg.DWv, D, D, M, true, false); err != nil {
+		if err := gtB.MatMulF32Ex(bs.NormedRecomp, bs.DV, lg.DWv, D, D, M, true, false); err != nil {
 			return fmt.Errorf("layer %d dWv: %w", l, err)
 		}
 
 		// dRMSNorm1: dx = rmsnorm_grad(...). Accumulate into DX via DAttnOut.
-		if err := gtB.RMSNormGradF32(sc.X, lw.Norm1, bs.DNormed, bs.DAttnOut, lg.DNorm1, M, D, cfg.Eps); err != nil {
+		if err := gtB.RMSNormGradF32(snap.XPreAttn[l], lw.Norm1, bs.DNormed, bs.DAttnOut, lg.DNorm1, M, D, cfg.Eps); err != nil {
 			return fmt.Errorf("layer %d RMSNormGrad1: %w", l, err)
 		}
 		if err := b.Add(bs.DX, bs.DX, bs.DAttnOut, core.Shape{M, D}, core.Shape{M, D}, core.Shape{M, D}, core.Float32); err != nil {

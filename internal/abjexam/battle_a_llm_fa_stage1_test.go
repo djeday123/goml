@@ -261,8 +261,13 @@ func TestALLM_FABlock_Stage1(t *testing.T) {
 		ref := f64Block[bn]
 		for _, pn := range pathNames {
 			gpu := gpuBlocks[pn][bn]
-			var nA, nSub, nB, nNaN int
+			var nA, nSub, nB, nNaN, nZero int
 			var worstA, worstSub, worstB float64
+			for i := range gpu {
+				if gpu[i] == 0 {
+					nZero++
+				}
+			}
 			for i := range ref {
 				gv := float64(gpu[i])
 				if math.IsNaN(gv) {
@@ -294,8 +299,8 @@ func TestALLM_FABlock_Stage1(t *testing.T) {
 				verdict = "FAIL (zone-A floor 5e-3 или NaN)"
 				zoneAFail++
 			}
-			t.Logf("BLOCK %s/%-5s: NaN=%d | зонаA n=%d worst|Δ|=%.3e | субнорм n=%d worst=%.3e | зонаB n=%d worst=%.3e -> %s",
-				bn, pn, nNaN, nA, worstA, nSub, worstSub, nB, worstB, verdict)
+			t.Logf("BLOCK %s/%-5s: NaN=%d zero=%d/%d | зонаA n=%d worst|Δ|=%.3e | субнорм n=%d worst=%.3e | зонаB n=%d worst=%.3e -> %s",
+				bn, pn, nNaN, nZero, len(gpu), nA, worstA, nSub, worstSub, nB, worstB, verdict)
 		}
 	}
 	if zoneAFail > 0 {

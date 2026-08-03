@@ -1,0 +1,4 @@
+    slice_channel_diag_test.go:58: П.1а(i) gpuToHost(slice): max|Δ|=0.000e+00 -> ПАТТЕРН (жив)
+    slice_channel_diag_test.go:82: П.1а(ii) b.MatMul(I, slice): max|Δ|=0.000e+00 -> ПРОИЗВЕДЕНИЕ (жив)
+    slice_channel_diag_test.go:101: П.1а(iii) b.Copy(tmp,slice)+gpuToHost(tmp): max|Δ|=0.000e+00 -> ЖИВ
+--- PASS: TestALLM_SliceChannelDiag (0.15s)

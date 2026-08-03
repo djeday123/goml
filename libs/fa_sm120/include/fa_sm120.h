@@ -18,6 +18,9 @@
  *   (mma f16.e4m3.e4m3.f16): full-range e4m3 inputs (+-448) overflow the
  *   65504 FP16 ceiling (single product up to ~2e5) -> inf/NaN O and L.
  *   Guaranteed bound under contract: |S_acc| <= hd <= 128 (margin ~512x).
+ *   faScale (softmax_scale*scale_Q*scale_K) must be FP16-normal:
+ *   [6.1e-5, 65504] — the scale node is converted to half2 inside the
+ *   kernel (_v121r_train_kernel_full.cu:452).
  *   Scale node is FP16 too: composed scale*log2(e) must lie in FP16 normal
  *   range [6.1e-5, 65504].
  * Supported: hd ∈ {64, 128}; window ∈ {0..seq_len}; causal ∈ {0, 1}.

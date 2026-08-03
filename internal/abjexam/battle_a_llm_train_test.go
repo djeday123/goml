@@ -71,6 +71,11 @@ func TestALLM_TrainStep_SignOfLife_F32Recon(t *testing.T) {
 		t.Fatalf("NewBattleAGrads: %v", err)
 	}
 	defer grads.FreeAll(adB)
+	snapTr, err := NewBattleASnapScratch(cfg, adB)
+	if err != nil {
+		t.Fatalf("NewBattleASnapScratch: %v", err)
+	}
+	defer snapTr.FreeAll(adB)
 
 	// Fixed batch (learn to predict shifted-by-one).
 	rTok := rand.New(rand.NewSource(99))
@@ -91,7 +96,7 @@ func TestALLM_TrainStep_SignOfLife_F32Recon(t *testing.T) {
 
 	losses := make([]float64, nSteps)
 	for step := 0; step < nSteps; step++ {
-		loss, err := trainStepBattleA(adB, st, sc, bs, grads, faCtx, inp, tgt, lr, AttnBwdF32Recon)
+		loss, err := trainStepBattleA(adB, st, sc, bs, grads, faCtx, inp, tgt, lr, AttnBwdF32Recon, snapTr, nil)
 		if err != nil {
 			t.Fatalf("step %d: %v", step, err)
 		}

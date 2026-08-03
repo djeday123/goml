@@ -71,15 +71,16 @@ func applySGD(b backend.Backend, st *BattleAState, grads *BattleAGrads, lr float
 func trainStepBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 	bs *BattleABwdScratch, grads *BattleAGrads,
 	faCtx *gomlcuda.FAContext, inputTokens []int64, targetTokens []int32,
-	lr float32, attnPath AttnBwdPath) (float64, error) {
-	loss, err := fwdBattleA(b, st, sc, faCtx, inputTokens, targetTokens)
+	lr float32, attnPath AttnBwdPath,
+	snap *BattleASnapScratch, fb *faBlockBufs) (float64, error) {
+	loss, err := fwdBattleA(b, st, sc, faCtx, inputTokens, targetTokens, snap)
 	if err != nil {
 		return 0, fmt.Errorf("fwd: %w", err)
 	}
 	if err := zeroGrads(b, grads); err != nil {
 		return 0, fmt.Errorf("zero grads: %w", err)
 	}
-	if err := bwdBattleA(b, st, sc, bs, grads, faCtx, inputTokens, attnPath); err != nil {
+	if err := bwdBattleA(b, st, sc, bs, grads, faCtx, inputTokens, attnPath, snap, fb); err != nil {
 		return 0, fmt.Errorf("bwd: %w", err)
 	}
 	if err := applySGD(b, st, grads, lr); err != nil {
