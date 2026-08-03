@@ -326,8 +326,9 @@ Race #1-3 диагностированы. Sync-fix accepted as workaround, но 
 
 | Долг | Ссылка | Приоритет |
 |------|--------|-----------|
-| **Wrapper-следствие (gt_gemm_ex non-det + context-dep zero)** | `9e1e3f0`, HANDOFF | **CRITICAL** — блокирует FA-встройку |
-| **cublasSgemm determinism** — standalone probe нужен | HANDOFF section "Non-determinism пути" | **CRITICAL** — вторая часть wrapper-следствия |
+| **GPU-bwd нон-детерминизм (экс "wrapper-следствие")** | `2d576c1` A/B N=5, raw_allm3 | ПЕРЕКЛАССИФИЦИРОВАН (П-6б, 2026-08-03): свойство пути, задокументирован числом (DWq 3.5e-3, DW2 5.8e-2, DEmbed 2.2e-2, DWo процессо-зависимо 0..1.2e-1). НЕ блокирует FA-встройку — эталон = CPU-F64 |
+| **cublasSgemm determinism** | `2d576c1`: fwd bit-det 5/5, bwd плавает | ПЕРЕКЛАССИФИЦИРОВАН (П-6б, 2026-08-03): часть свойства пути; standalone probe снят с CRITICAL |
+| **Causal=1 не сертифицирован** (ядра реализуют: fa_bwd_merged_v1.cu:146,242; все cert causal=0) | `2d576c1` П-5 raw, A_LLM3_f64ref.md | HIGH — сертификация causal=1 + causal-ветка F64-эталона перед автогрессивным LM |
 | **EmbeddingGradF32 atomicAdd → sort-scatter** | HANDOFF, ptx_kernels.go embedding kernel | HIGH |
 | **6 MatMulF32Ex в BH>1 attention_recon** | attention_recon.go L115,121,221,224,238,241 | HIGH (при multi-head cert) |
 | **warmup-звено A-LLM-3** | User strategy — F16 first N steps + FP8 by |grad|-median | HIGH (после встройки) |
@@ -351,3 +352,11 @@ Race #1-3 диагностированы. Sync-fix accepted as workaround, но 
 ## 2026-08-02 (`9e1e3f0`) — де-wrapper v2 + determinism-gate
 
 Full de-wrapper 10 MatMulF32Ex → plain b.MatMul в bwdBattleAF32 + attention_recon BH=1 fwd. Unit-test `TestMatmulPlainT_Unit` PASS 17/17 (helper математически correct). Cert run-1 воспроизвёл efd833c 5/7 tight; **determinism-gate FAIL** (dEmbed |Δ|=9.4e-02 между run-1 и run-2 в том же процессе). Sign-of-life LIVE Δ+0.804. Заключение: non-determinism ГЛУБЖЕ gt_gemm_ex — cublasSgemm или EmbeddingGradF32 atomicAdd. Артефакты: `HANDOFF_ref_dewrapper.md`, `PROJECT_CHRONICLE.md` (этот файл). Открытый долг wrapper повышен до CRITICAL, FA-встройка блокирована.
+
+## 2026-08-02 16:20 (`8b3cf23`) — ревьюерская сессия: смена магистрали на CPU-F64
+
+(Параграф добавлен задним числом 2026-08-03 по П-6а — living-doc правило было нарушено в день установления.) Ревьюер переопределил задание: GPU-недетерминизм = физика параллелизма, НЕ дефект; fallback (reference bwd на CPU-F64) повышен до магистрали. 6-шаговая программа: bwdBattleAF64 формулами → det-gate bit-exact → F64 finite-diff → переклассификация GPU-F32-recon в «первый измеряемый» → sign-of-life → иерархия эталонов. Артефакт: `8b3cf23` (HANDOFF, doc-only). Позже тем же днём: ревью-дополнение П-0..П-6 принято Вугаром, вписано в HANDOFF коммитом `3770056` (усиления: dgamma зеркалированием PTX; causal-контракт — обязательный пункт сессии).
+
+## 2026-08-03 (`2d576c1`) — A-LLM-3: CPU-F64 эталон, det-gate PASS, GPU-F32 переклассифицирован
+
+`battle_a_llm_f64ref.go`: полный fwd/bwd cert-формы в F64, ноль GPU, dgamma зеркалирован с PTX (формула совпала с учебником), без causal mask, без map-итераций. Шаг 2 PASS: все 11 тензоров bit-exact Δ=0.000e+00 в процессе + fresh subprocess (hash 7ca2a06774090ed6). Шаг 3: гейт ТЗ eps=1e-6 — прогноз-промах 8/10 (шумовой пол δ_L≈1 ulp; контр-прогноз исполнителя записан до прогона); исправлен инструмент (Richardson, eps²-модель подтверждена скейлингом 100.6×/декаду), **CERT v2 PASS 10/10 rel≤1e-8** (лучшие точки 1e-11). Санити: F64 ana == канон efd833c до 6-7 знаков. Шаг 4: A/B N=5 — fwd bit-det 5/5, bwd нон-детерминизм задокументирован (DWq 3.5e-3, DW2 5.8e-2, DEmbed 2.2e-2, DWo процессо-зависимо 0..1.2e-1, мёртвая cert-точка Wo в одном прогоне); formula-floor провален 9/10 (прогнозировано) — floor пути = worst|Δ| из raw. Sign-of-life 3.4932→2.7121 Δ=+0.7810. П-5: стек когерентен в causal=0 (raw grep). Отчёт: `A_LLM3_f64ref.md`, raw: `raw_allm3/`. Иерархия действует: CPU-F64 арбитр → GPU-F32-recon (первый измеряемый) → FA-FP8 (встройка = следующая сессия).

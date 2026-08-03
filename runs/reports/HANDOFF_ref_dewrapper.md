@@ -13,13 +13,21 @@
 ```bash
 cd /data/lib/podman-data/projects/goml
 git log -1
-# ожидается subject: "HANDOFF: reviewer addendum П-0..П-6 (doc-only, Б-0 шапка синхронизирована)"
-# это doc-only коммит; цепочка вниз: 8b3cf23 -> 18ff979 (оба doc-only) -> 9e1e3f0 (последний КОДОВЫЙ коммит)
-# проверка: git log -4 --oneline должен содержать 8b3cf23, 18ff979, 9e1e3f0
+# ожидается subject: "A-LLM-3 session close: отчёт + хроника + HANDOFF (эталон = CPU-F64)"
+# это doc-only коммит; цепочка вниз: 2d576c1 (КОДОВЫЙ, A-LLM-3 F64-эталон) -> 3770056 ->
+# 8b3cf23 -> 18ff979 (doc-only) -> 9e1e3f0
+# проверка: git log -5 --oneline должен содержать 2d576c1 и 3770056
 
 git status --short
 # ожидается: только untracked wilds (~475 файлов: libs/*, runs/archive/*, runs/_canary_5run_fwd.sh) — не мешают
 # модифицированных tracked файлов быть НЕ должно (ноль строк без префикса ??)
+
+# Повторный прогон последнего зелёного (СМЕНИЛСЯ после A-LLM-3):
+env GOTORCH_LIBS_DIR=/data/lib/podman-data/projects/gotorch/v6/libs \
+  go test -run 'TestALLM_BwdCertF64_MultiLayer$' -count=1 -timeout 300s -v ./internal/abjexam/
+# ожидается: PASS — det-gate bit-exact (Δ=0.000e+00, subprocess hash 7ca2a06774090ed6),
+# CERT v2 10/10 rel<=1e-8. Прогонять МОЖНО без GPU (путь чисто CPU; GPU нужен только
+# для TestALLM_ABF32vsF64_N5).
 
 # Повторный прогон последнего зелёного теста:
 env GOTORCH_LIBS_DIR=/data/lib/podman-data/projects/gotorch/v6/libs \
@@ -327,3 +335,39 @@ CRITICAL" и "cublasSgemm determinism CRITICAL" в "свойство пути, �
 
 Порядок сессии: F64-эталон -> детерминизм-гейт -> F64-num cert 10 точек -> переклассификация
 GPU-F32 с N=5 -> sign-of-life -> HANDOFF+хроника поверх стабильного -> СТОП.
+
+---
+
+## ЗАКРЫТИЕ A-LLM-3 (2026-08-03, кодовый commit 2d576c1) — living-doc
+
+Программа выше ВЫПОЛНЕНА ЦЕЛИКОМ (Шаги 1-6 + П-1..П-6). Полный отчёт с raw:
+runs/reports/A_LLM3_f64ref.md; сырьё: runs/reports/raw_allm3/*.log.
+
+Итог одной строкой: эталон = CPU-F64 (battle_a_llm_f64ref.go), det-gate bit-exact
+PASS (Δ=0.000e+00 в процессе + fresh subprocess), CERT v2 PASS 10/10 rel<=1e-8
+(Richardson-инструмент; гейт ТЗ eps=1e-6 — задокументированный прогноз-промах 8/10,
+шумовой пол δ_L ~ 1 ulp), GPU-F32-recon переклассифицирован в "первый измеряемый"
+(fwd bit-det, bwd нон-детерминизм задокументирован числом по N=5), sign-of-life
+3.4932 -> 2.7121 (Δ=+0.7810), стек когерентен в causal=0 (П-5 raw grep).
+
+Изменения этого HANDOFF: Б-0 шапка перенацелена на новое состояние (последний
+зелёный = TestALLM_BwdCertF64_MultiLayer, работает без GPU); эта секция добавлена.
+CHRONICLE: добавлены параграфы за 8b3cf23 (задним числом, П-6а) и за 2d576c1;
+реестр долгов: две CRITICAL-строки переклассифицированы в "свойство пути" (П-6б),
+добавлен долг "causal=1 не сертифицирован" (HIGH).
+
+## ЗАДАНИЕ СЛЕДУЮЩЕЙ FRESH-СЕССИИ: FA-встройка (A/B primary vs F64-арбитр)
+
+Рамки (решение по П-5): non-causal режим ядер (causal=0) — стек уже когерентен.
+Скелет (детальное ТЗ выдаёт ревьюер перед стартом):
+1. Цепочка D -> merged -> dk_new -> dq_new через gt_fa_bwd_* (биндинги
+   backend/cuda/fa_backward.go, контракт v0.2.0).
+2. Zero-init контракт 3/4 ядер ([[feedback-fa-buffers-zero-init]]: OFP16/LGPU
+   и bwd-выходы перед вызовом).
+3. dO-cast F32 -> F16; L из fa_forward_train напрямую; обратный repack выходов.
+4. A/B двухзонный floor 5e-3 abs + FP8-зоны (|grad| ниже FP8-младшего разряда:
+   FA ноль-класс при живом эталоне = граница, не провал). PRIMARY сравнение
+   vs CPU-F64 арбитр (bwdBattleAF64), GPU-F32-recon — вторая колонка.
+5. Скорость: 30-run, CV-gate <1% ([[feedback-cv-gate-strict]]).
+6. Канарейка FA: коридор [652, 656] T перед/после пересборок .so.
+7. СТОП по гейту: A/B числа в raw + commit + push + HANDOFF/CHRONICLE поверх.
