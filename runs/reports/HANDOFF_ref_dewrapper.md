@@ -13,10 +13,10 @@
 ```bash
 cd /data/lib/podman-data/projects/goml
 git log -1
-# ожидается subject: "HANDOFF: ТЗ A-LLM-4 FA-встройка (финал, ревью принято)"
-# это doc-only коммит; цепочка вниз: f340ab9 (doc) -> 2d576c1 (КОДОВЫЙ, A-LLM-3
-# F64-эталон) -> 3770056 -> 8b3cf23 -> 18ff979 -> 9e1e3f0
-# проверка: git log -6 --oneline должен содержать f340ab9 и 2d576c1
+# ожидается subject: "A-LLM-4 session close: отчёт шести локализаций + HANDOFF/хроника"
+# это doc-only коммит; цепочка вниз: c319212 (КОДОВЫЙ, A-LLM-4 локализации) ->
+# a51b042 -> f340ab9 -> 2d576c1 (A-LLM-3 F64-эталон) -> ...
+# проверка: git log -6 --oneline должен содержать c319212 и 2d576c1
 
 git status --short
 # ожидается: только untracked wilds (~475 файлов: libs/*, runs/archive/*, runs/_canary_5run_fwd.sh) — не мешают
@@ -455,3 +455,35 @@ FA-F16-вход (карточка долга в хронике — после wa
 Этап 2 траектория + скорость в raw (или стоп-линия с фактом); канарейка 2x в raw;
 отчёт runs/reports/A_LLM4_fa_integration.md; commit(ы) + push с hash+raw;
 HANDOFF Б-0 шапка перенацелена + параграф хроники; СТОП.
+
+---
+
+## ЗАКРЫТИЕ A-LLM-4 (2026-08-03, кодовый commit c319212) — living-doc
+
+Сессия закрыта СТОП-ЛИНИЕЙ штатно: Этап 1 НЕ сертифицирован — блокирован
+находкой Н4 (контракт магнитуды v121r: FP16-S-accum требует decoded O(1),
+боевой квант amax/448 нарушает; решающие репро в raw_allm4). Шесть корневых
+локализаций (Н1-Н6, отчёт A_LLM4_fa_integration.md) — включая корень
+исторического FA-out-zero (Н1: адаптерные аллокации невалидны для FA-.so;
+лечение native+host-staging подтверждено) и выстрел реестрового долга
+wrapper-BH>1 (Н5). Этап 2 не начинался. Канарейка WITHIN (653.83 -> 653.97).
+Последний зелёный для Б-0 НЕ сменился: TestALLM_BwdCertF64_MultiLayer.
+Stage1-тест — known-red за env-гейтом GOML_FA_STAGE1=1.
+
+## ЗАДАНИЕ СЛЕДУЮЩЕЙ FRESH-СЕССИИ: A-LLM-5 — достройка Этапа 1 (квант-контракт O(1))
+
+Скелет (детальное ТЗ выдаёт ревьюер; фактура в A_LLM4_fa_integration.md):
+1. Квантизация с целевой decoded-магнитудой O(1): scale = amax (не amax/448);
+   вариант — host-квант в cert-блоке (staging уже host). Пересчитать и записать
+   ДО прогона новую scale-конвенцию (faScale, scale_dq, scale_dk).
+2. Пересертифицировать изолированную цепочку native+small-mag (проба уже живая:
+   fa_iso_smallmag) числом, не только живостью: мини-CPU-ref на dV/dQ/dK.
+3. Де-wrapper BH>1 в attention_recon (долг Н5, 6 вызовов -> plain) — иначе
+   SECONDARY-арбитр мёртв на multi-head.
+4. Stage1 A/B по ТЗ A-LLM-4 (двухзонный floor, те же 10 точек) — снять env-гейт
+   known-red.
+5. Этап 2 — только после зелёного Этапа 1 (та же стоп-линия).
+6. Карточки долгов (внесены в хронику): квант-контракт боевого fwdBattleA
+   (amax/448 -> O(1), CRITICAL); amax-гонка fwdBattleA шаг 6 (HIGH);
+   механика адаптер-vs-FA-.so аллокаций (MID, для скоростного пути);
+   fa_forward_train диспетчер train-ядер (MID).
