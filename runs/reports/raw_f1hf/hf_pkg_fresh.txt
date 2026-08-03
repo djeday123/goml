@@ -1,0 +1,13 @@
+=== RUN   TestSafeTensorsTinyLlama
+    safetensors_test.go:118: загружено тензоров: 201, элементов: 1100048384 (1.100B параметров)
+    safetensors_test.go:130: md5(model.safetensors) = 59e1605b3af5f1673eb8396251d6bc46
+--- PASS: TestSafeTensorsTinyLlama (4.38s)
+=== RUN   TestF16ToF32
+--- PASS: TestF16ToF32 (0.00s)
+=== RUN   TestBF16ToF32
+--- PASS: TestBF16ToF32 (0.00s)
+=== RUN   TestLlamaTokenizerVsHFRef
+    tokenizer_llama_test.go:93: ГЕЙТ I.3 PASS: 100/100 encode==HF, 100/100 decode==HF, BOS-проба OK
+--- PASS: TestLlamaTokenizerVsHFRef (0.04s)
+PASS
+ok  	github.com/djeday123/goml/hf	4.421s

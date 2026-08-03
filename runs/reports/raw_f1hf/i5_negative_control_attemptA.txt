@@ -1,0 +1,28 @@
+=== RUN   TestLlamaHFF64NegativeControl
+    llama_hf_f64_smoke_test.go:162: порча: Layers[0].Wq[0] -1.48773193e-03 -> 9.98512268e-01 (+1.0)
+    llama_hf_f64_smoke_test.go:167: set    rank id       ours(порчен.)  HF ref(F32)    rel
+    llama_hf_f64_smoke_test.go:175: top10  0    3681     13.38848431    13.38848686    1.910e-07
+    llama_hf_f64_smoke_test.go:175: top10  1    5982     12.26868532    12.26868439    7.616e-08
+    llama_hf_f64_smoke_test.go:175: top10  2    29901    10.23590441    10.23590660    2.136e-07
+    llama_hf_f64_smoke_test.go:175: top10  3    278      10.22723122    10.22723103    1.922e-08
+    llama_hf_f64_smoke_test.go:175: top10  4    29973    10.20011479    10.20011997    5.082e-07
+    llama_hf_f64_smoke_test.go:175: top10  5    29892    9.95985034     9.95985413     3.797e-07
+    llama_hf_f64_smoke_test.go:175: top10  6    29889    9.82532408     9.82532597     1.921e-07
+    llama_hf_f64_smoke_test.go:175: top10  7    13       9.65255659     9.65255737     8.152e-08
+    llama_hf_f64_smoke_test.go:175: top10  8    903      9.63229081     9.63228893     1.948e-07
+    llama_hf_f64_smoke_test.go:175: top10  9    263      9.62549429     9.62549591     1.689e-07
+    llama_hf_f64_smoke_test.go:182: first8 0    0        -7.38562544    -7.38562489    7.474e-08
+    llama_hf_f64_smoke_test.go:182: first8 1    1        -6.96889915    -6.96890020    1.512e-07
+    llama_hf_f64_smoke_test.go:182: first8 2    2        8.28721498     8.28721523     3.095e-08
+    llama_hf_f64_smoke_test.go:182: first8 3    3        -4.32730583    -4.32730770    4.326e-07
+    llama_hf_f64_smoke_test.go:182: first8 4    4        -4.18296460    -4.18296576    2.759e-07
+    llama_hf_f64_smoke_test.go:182: first8 5    5        -5.22184657    -5.22184467    3.629e-07
+    llama_hf_f64_smoke_test.go:182: first8 6    6        -6.21321183    -6.21321154    4.797e-08
+    llama_hf_f64_smoke_test.go:182: first8 7    7        -6.04327789    -6.04327869    1.331e-07
+    llama_hf_f64_smoke_test.go:186: worst rel (top-10 + first8) = 5.082e-07, floor = 1e-03
+    llama_hf_f64_smoke_test.go:188: ОТРИЦАТЕЛЬНЫЙ КОНТРОЛЬ ПРОВАЛЕН: порча веса невидима гейту, worst rel 5.082e-07 <= 1e-03
+--- FAIL: TestLlamaHFF64NegativeControl (6.95s)
+FAIL
+=== B2_RUN_COMPLETE ===
+FAIL	github.com/djeday123/goml/internal/abjexam	7.309s
+FAIL

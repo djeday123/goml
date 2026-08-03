@@ -1,0 +1,29 @@
+=== RUN   TestLlamaHFF64SmokeVsHFRef
+    llama_hf_f64_smoke_test.go:79: веса загружены за 3.304462221s, forward 6 токенов за 3.70811733s
+    llama_hf_f64_smoke_test.go:89: промпт: "The capital of France is" -> ids [1 450 7483 310 3444 338]
+    llama_hf_f64_smoke_test.go:92: set    rank id       token            ours(F64)      HF ref(F32)    rel
+    llama_hf_f64_smoke_test.go:100: top10  0    3681     "Paris"          13.38848375    13.38848686    2.322e-07
+    llama_hf_f64_smoke_test.go:100: top10  1    5982     "located"        12.26868441    12.26868439    1.753e-09
+    llama_hf_f64_smoke_test.go:100: top10  2    29901    ":"              10.23590544    10.23590660    1.132e-07
+    llama_hf_f64_smoke_test.go:100: top10  3    278      "the"            10.22723123    10.22723103    2.013e-08
+    llama_hf_f64_smoke_test.go:100: top10  4    29973    "?"              10.20011699    10.20011997    2.920e-07
+    llama_hf_f64_smoke_test.go:100: top10  5    29892    ","              9.95985180     9.95985413     2.336e-07
+    llama_hf_f64_smoke_test.go:100: top10  6    29889    "."              9.82532447     9.82532597     1.527e-07
+    llama_hf_f64_smoke_test.go:100: top10  7    13       "\n"             9.65255683     9.65255737     5.611e-08
+    llama_hf_f64_smoke_test.go:100: top10  8    903      "_"              9.63229002     9.63228893     1.125e-07
+    llama_hf_f64_smoke_test.go:100: top10  9    263      "a"              9.62549408     9.62549591     1.906e-07
+    llama_hf_f64_smoke_test.go:108: greedy next token: "Paris"
+    llama_hf_f64_smoke_test.go:114: first8 0    0        -                -7.38562597    -7.38562489    1.473e-07
+    llama_hf_f64_smoke_test.go:114: first8 1    1        -                -6.96889970    -6.96890020    7.227e-08
+    llama_hf_f64_smoke_test.go:114: first8 2    2        -                8.28721516     8.28721523     8.933e-09
+    llama_hf_f64_smoke_test.go:114: first8 3    3        -                -4.32730655    -4.32730770    2.666e-07
+    llama_hf_f64_smoke_test.go:114: first8 4    4        -                -4.18296397    -4.18296576    4.279e-07
+    llama_hf_f64_smoke_test.go:114: first8 5    5        -                -5.22184687    -5.22184467    4.213e-07
+    llama_hf_f64_smoke_test.go:114: first8 6    6        -                -6.21321234    -6.21321154    1.292e-07
+    llama_hf_f64_smoke_test.go:114: first8 7    7        -                -6.04327778    -6.04327869    1.514e-07
+    llama_hf_f64_smoke_test.go:117: worst rel (top-10 + first8) = 4.279e-07, floor = 1e-03
+    llama_hf_f64_smoke_test.go:121: ГЕЙТ I.5 PASS
+--- PASS: TestLlamaHFF64SmokeVsHFRef (7.06s)
+PASS
+=== B2_RUN_COMPLETE ===
+ok  	github.com/djeday123/goml/internal/abjexam	7.406s
