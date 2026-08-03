@@ -364,7 +364,6 @@ func fwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 
 	// FA scale composition base: softmax_scale = 1/sqrt(hd).
 	softmaxScale := float32(1.0 / math.Sqrt(float64(HD)))
-	e4m3Max := float32(448.0)
 
 	// -- Layer loop --
 	for l := 0; l < cfg.L; l++ {
@@ -445,19 +444,28 @@ func fwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 		uploadInto(b, sc.AmaxQ, zeroF)
 		uploadInto(b, sc.AmaxK, zeroF)
 		uploadInto(b, sc.AmaxV, zeroF)
-		if err := gtB.QuantizeF32ToF8E4M3(sc.QPerm, sc.QFP8, sc.ScaleQ, sc.AmaxQ, nElem); err != nil {
+		// Н3-фикс (A-LLM-5): zero-upload амаксов ОБЯЗАН завершиться до quantize —
+		// без Sync копия под нагрузкой исполнялась после ядра и затирала amax
+		// (наблюдалось: amax=0 -> FP8-нули; A_LLM4 Н3).
+		if s, ok := b.(interface{ Sync() error }); ok {
+			s.Sync()
+		}
+		// A-LLM-5 квант-контракт O(1): Unit-вариант (scale = amax, decoded <= 1) —
+		// FP16-акки v121r (QK/O MMA f16.e4m3.e4m3.f16) переполняются на decoded
+		// +-448 старой конвенции amax/448 (Н4).
+		if err := gtB.QuantizeF32ToF8E4M3Unit(sc.QPerm, sc.QFP8, sc.ScaleQ, sc.AmaxQ, nElem); err != nil {
 			return 0, fmt.Errorf("layer %d Q quantize: %w", l, err)
 		}
 		if s, ok := b.(interface{ Sync() error }); ok {
 			s.Sync()
 		}
-		if err := gtB.QuantizeF32ToF8E4M3(sc.KPerm, sc.KFP8, sc.ScaleK, sc.AmaxK, nElem); err != nil {
+		if err := gtB.QuantizeF32ToF8E4M3Unit(sc.KPerm, sc.KFP8, sc.ScaleK, sc.AmaxK, nElem); err != nil {
 			return 0, fmt.Errorf("layer %d K quantize: %w", l, err)
 		}
 		if s, ok := b.(interface{ Sync() error }); ok {
 			s.Sync()
 		}
-		if err := gtB.QuantizeF32ToF8E4M3(sc.VPerm, sc.VFP8, sc.ScaleV, sc.AmaxV, nElem); err != nil {
+		if err := gtB.QuantizeF32ToF8E4M3Unit(sc.VPerm, sc.VFP8, sc.ScaleV, sc.AmaxV, nElem); err != nil {
 			return 0, fmt.Errorf("layer %d V quantize: %w", l, err)
 		}
 		if s, ok := b.(interface{ Sync() error }); ok {
@@ -465,18 +473,16 @@ func fwdBattleA(b backend.Backend, st *BattleAState, sc *BattleAScratch,
 		}
 
 		// 7. Read scales (host) to compose FA scale.
-		// scale_Q = amax_Q / E4M3_MAX. Kernel scale param = softmax_scale * scale_Q * scale_K.
+		// Новая конвенция (A-LLM-5): scale_X = amax_X (decoded O(1)).
+		// Kernel scale param = softmax_scale * scale_Q * scale_K.
 		// V-descale absorb: launcher hardcodes v_descale=1.0; O = P @ V где V raw fp8_decode.
-		// Значит O_kernel = P @ V_decoded. Реальный V_f32 = V_decoded * scale_V.
-		// Финальный O_f32 = O_kernel * scale_V. Дом-множитель scale_V применим post-hoc
-		// (multiplication by constant) — либо inline в scale, либо после FA.
-		// SIMPLIFICATION: применяем scale_V post-hoc к OF32 через Mul на scalar.
+		// O_kernel = P @ V_decoded; O_f32 = O_kernel * scale_V post-hoc (Mul scalar).
 		amaxHost := gpuToHost(b, sc.AmaxQ, 1)
 		amaxK := gpuToHost(b, sc.AmaxK, 1)
 		amaxV := gpuToHost(b, sc.AmaxV, 1)
-		scaleQ := amaxHost[0] / e4m3Max
-		scaleK := amaxK[0] / e4m3Max
-		scaleV := amaxV[0] / e4m3Max
+		scaleQ := amaxHost[0]
+		scaleK := amaxK[0]
+		scaleV := amaxV[0]
 		if scaleQ <= 0 {
 			scaleQ = 1.0
 		}

@@ -11,6 +11,15 @@
  * Все указатели — device memory (CUDA). Inputs Q,K,V e4m3 (uint8), output O fp16.
  * Layout: tightly packed [batch_heads, seq_len, head_dim] row-major.
  *
+ *
+ * MAGNITUDE CONTRACT (A-LLM-5, 2026-08-03, goml A_LLM4 H4):
+ *   Decoded input magnitude MUST be O(1): quantize with scale = amax
+ *   (NOT amax/448). Internal QK/O MMAs accumulate in FP16
+ *   (mma f16.e4m3.e4m3.f16): full-range e4m3 inputs (+-448) overflow the
+ *   65504 FP16 ceiling (single product up to ~2e5) -> inf/NaN O and L.
+ *   Guaranteed bound under contract: |S_acc| <= hd <= 128 (margin ~512x).
+ *   Scale node is FP16 too: composed scale*log2(e) must lie in FP16 normal
+ *   range [6.1e-5, 65504].
  * Supported: hd ∈ {64, 128}; window ∈ {0..seq_len}; causal ∈ {0, 1}.
  * NOT supported (yet): backward, hd ∉ {64,128}, sparse, non-dense strides,
  *                      multi-GPU, mixed-precision other than e4m3/fp16.

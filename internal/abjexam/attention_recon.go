@@ -42,6 +42,52 @@ func launchSoftmaxBwd(b backend.Backend, PPtr, dPPtr, dSPtr uintptr, rows, cols 
 	return l.Launch("softmax_bwd_f32", uint32(rows), 1, 1, 1, 1, 1, params)
 }
 
+// plainMatMulF32 — A-LLM-5 П.5 (де-wrapper BH>1, долг Н5): plain b.MatMul +
+// host-transpose по флагам. Тот же паттерн, что BH=1-ветка (Ход-2/де-wrapper v2);
+// wrapper MatMulF32Ex в BH>1-петлях давал context-dep exact-zero (dQ/dK мертвы
+// на BH=4 — подтверждено A-LLM-4 Н5). CERT-ONLY: D2H/H2D на транспонируемых входах.
+func plainMatMulF32(b backend.Backend, dst, aStor, bStor backend.Storage,
+	m, n, k int, transA, transB bool) error {
+	hostTr := func(h []float32, rows, cols int) []float32 {
+		t := make([]float32, rows*cols)
+		for i := 0; i < rows; i++ {
+			for j := 0; j < cols; j++ {
+				t[j*rows+i] = h[i*cols+j]
+			}
+		}
+		return t
+	}
+	var aUse backend.Storage = aStor
+	var bUse backend.Storage = bStor
+	if transA {
+		aH := gpuToHost(b, aStor, k*m) // stored [k,m]
+		aT := hostTr(aH, k, m)
+		tmp, err := b.Alloc(m * k * 4)
+		if err != nil {
+			return err
+		}
+		defer b.Free(tmp)
+		if _, err := uploadInto(b, tmp, f32ToBytes(aT)); err != nil {
+			return err
+		}
+		aUse = tmp
+	}
+	if transB {
+		bH := gpuToHost(b, bStor, n*k) // stored [n,k]
+		bT := hostTr(bH, n, k)
+		tmp, err := b.Alloc(k * n * 4)
+		if err != nil {
+			return err
+		}
+		defer b.Free(tmp)
+		if _, err := uploadInto(b, tmp, f32ToBytes(bT)); err != nil {
+			return err
+		}
+		bUse = tmp
+	}
+	return b.MatMul(dst, aUse, bUse, core.Shape{m, k}, core.Shape{k, n}, core.Float32)
+}
+
 // attnReconstructFwd -- F32 reference forward.
 //   Q, K, V: [BH, S, HD] F32.
 //   O: [BH, S, HD] F32 (out).
@@ -112,13 +158,14 @@ func attnReconstructFwd(b backend.Backend, gtB *gotorchAdapter.Backend,
 		sb := &sliceStore{ptr: sBase + uintptr(bi)*ssStride, byteLen: S * S * 4}
 		pb := &sliceStore{ptr: pBase + uintptr(bi)*ssStride, byteLen: S * S * 4}
 
-		if err := gtB.MatMulF32Ex(qsb, kb, sb, S, S, HD, false, true); err != nil {
+		// A-LLM-5 П.5: де-wrapper (plain b.MatMul, ex-MatMulF32Ex).
+		if err := plainMatMulF32(b, sb, qsb, kb, S, S, HD, false, true); err != nil {
 			return fmt.Errorf("attn recon fwd batch %d: S=QK^T: %w", bi, err)
 		}
 		if err := b.Softmax(pb, sb, core.Shape{S, S}, -1, core.Float32); err != nil {
 			return fmt.Errorf("attn recon fwd batch %d: softmax: %w", bi, err)
 		}
-		if err := gtB.MatMulF32Ex(pb, vb, ob, S, HD, S, false, false); err != nil {
+		if err := plainMatMulF32(b, ob, pb, vb, S, HD, S, false, false); err != nil {
 			return fmt.Errorf("attn recon fwd batch %d: O=P@V: %w", bi, err)
 		}
 	}
@@ -218,10 +265,11 @@ func attnReconstructBwd(b backend.Backend, gtB *gotorchAdapter.Backend,
 			dvb := &sliceStore{ptr: dvBase + uintptr(bi)*qkvStride, byteLen: S * HD * 4}
 			dpb := &sliceStore{ptr: dpBase + uintptr(bi)*ssStride, byteLen: S * S * 4}
 
-			if err := gtB.MatMulF32Ex(pb, dob, dvb, S, HD, S, true, false); err != nil {
+			// A-LLM-5 П.5: де-wrapper.
+			if err := plainMatMulF32(b, dvb, pb, dob, S, HD, S, true, false); err != nil {
 				return fmt.Errorf("attn recon bwd batch %d: dV=P^T@dO: %w", bi, err)
 			}
-			if err := gtB.MatMulF32Ex(dob, vb, dpb, S, S, HD, false, true); err != nil {
+			if err := plainMatMulF32(b, dpb, dob, vb, S, S, HD, false, true); err != nil {
 				return fmt.Errorf("attn recon bwd batch %d: dP=dO@V^T: %w", bi, err)
 			}
 		}
@@ -235,10 +283,11 @@ func attnReconstructBwd(b backend.Backend, gtB *gotorchAdapter.Backend,
 			dkb := &sliceStore{ptr: dkBase + uintptr(bi)*qkvStride, byteLen: S * HD * 4}
 			dsb := &sliceStore{ptr: dsBase + uintptr(bi)*ssStride, byteLen: S * S * 4}
 
-			if err := gtB.MatMulF32Ex(dsb, kb, dqb, S, HD, S, false, false); err != nil {
+			// A-LLM-5 П.5: де-wrapper.
+			if err := plainMatMulF32(b, dqb, dsb, kb, S, HD, S, false, false); err != nil {
 				return fmt.Errorf("attn recon bwd batch %d: dQ=dS@K: %w", bi, err)
 			}
-			if err := gtB.MatMulF32Ex(dsb, qb, dkb, S, HD, S, true, false); err != nil {
+			if err := plainMatMulF32(b, dkb, dsb, qb, S, HD, S, true, false); err != nil {
 				return fmt.Errorf("attn recon bwd batch %d: dK=dS^T@Q: %w", bi, err)
 			}
 		}

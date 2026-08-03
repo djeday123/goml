@@ -60,13 +60,9 @@ func TestALLM_FABlock_Stage1(t *testing.T) {
 	if testing.Short() {
 		t.Skip("short")
 	}
-	// ИЗВЕСТНЫЙ RED (A-LLM-4, 2026-08-03): цепочка блокирована контрактом
-	// магнитуды v121r-ядер (FP16-S-accum требует decoded O(1); боевой квантизатор
-	// amax/448 даёт decoded до +-448 -> NaN). Локализация: A_LLM4_fa_integration.md.
-	// Достройка (host-квант O(1) + пересчёт scale_dq/dk) — следующая сессия.
-	if os.Getenv("GOML_FA_STAGE1") != "1" {
-		t.Skip("known-red до достройки квант-контракта; включить: GOML_FA_STAGE1=1")
-	}
+	// A-LLM-5: env-гейт known-red СНЯТ — квант-контракт O(1) внедрён
+	// (Unit-квантизатор, scale=amax), рекерты 6а-6г зелёные.
+	_ = os.Getenv
 	gomlB, err := backend.Get(backend.CUDA)
 	if err != nil {
 		t.Skipf("CUDA unavailable: %v", err)

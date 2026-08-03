@@ -1,0 +1,15 @@
+    fa_backward_test.go:64: kernel_d_precompute      |       38 |     38 | OK
+    fa_backward_test.go:64: kernel_merged_v1         |      252 |    252 | OK
+    fa_backward_test.go:64: kernel_dk_new            |      124 |    124 | OK
+    fa_backward_test.go:64: kernel_dq_new            |       69 |     69 | OK
+--- PASS: TestFABwd_Fingerprints (0.11s)
+    fa_backward_test.go:147: D-precompute smoke (bh=1, sl=128, hd=128): worst |D_gpu-D_ref|=9.537e-07 (rel=2.193e-05)
+--- PASS: TestFABwd_DPrecompute (0.00s)
+    fa_backward_test.go:334:   dV [sample 1000]: min=-2.808e-03 max=2.819e-03 NaN=0 Inf=0
+--- PASS: TestFABwd_CanonicalChain (1.83s)
+    fa_forward_test.go:181: uniform L test: shape=[bh=3, sl=280], ref=16.948498, worst |L_gpu-L_ref|=4.087e-03 (rel=2.412e-04)
+--- PASS: TestFAForwardTrain_L_Uniform (0.00s)
+    fa_forward_test.go:271:   row 0: L[0]=16.952585 L[end]=16.952585 ref=16.948498, worst |diff|=4.087e-03 (rel=2.412e-04)
+    fa_forward_test.go:271:   row 1: L[0]=28.270378 L[end]=28.270378 ref=28.262207, worst |diff|=8.171e-03 (rel=2.891e-04)
+    fa_forward_test.go:271:   row 2: L[0]=50.905964 L[end]=50.905964 ref=50.889622, worst |diff|=1.634e-02 (rel=3.211e-04)
+--- PASS: TestFAForwardTrain_L_Layout (0.00s)

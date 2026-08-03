@@ -11,6 +11,7 @@ package cuda
 import (
 	"math"
 	"math/rand"
+	"runtime"
 	"testing"
 	"unsafe"
 
@@ -163,6 +164,10 @@ func TestFABwd_CanonicalChain(t *testing.T) {
 	if testing.Short() {
 		t.Skip("short mode — canonical form allocates ~700 MB, takes ~50 ms compute")
 	}
+	// A-LLM-5 6а: без пина горутина мигрирует между downloads ->
+	// CUDA_ERROR_INVALID_CONTEXT в _download ([[feedback-lockosthread-battle-scale]]).
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	if err := FABwdLoad(); err != nil {
 		t.Skipf("libfa_bwd_sm120.so unavailable: %v", err)
 	}

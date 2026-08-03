@@ -1,0 +1,44 @@
+=== RUN   TestALLM_FABlock_Stage1
+    battle_a_llm_fa_stage1_test.go:106: F64-арбитр: loss=7.0180480233 (fwd 17.5s, bwd 80.3s)
+    battle_a_llm_fa_stage1_test.go:144: P1 fwd sanity: GPU loss=7.0180477973 vs F64 loss=7.0180480233 (delta=2.260e-07)
+    battle_a_llm_fa_stage1_test.go:238: DIAG FA-цепочка (после standalone block, нативный контекст):
+    battle_a_llm_fa_stage1_test.go:236:   DIAG L          nan=0/8192 zero=0 max|.|=7.625e+00
+    battle_a_llm_fa_stage1_test.go:236:   DIAG D          nan=0/8192 zero=8192 max|.|=0.000e+00
+    battle_a_llm_fa_stage1_test.go:220:   DIAG dO_F32     nan=0/1048576 zero=0 max|.|=9.251e-03
+    battle_a_llm_fa_stage1_test.go:236:   DIAG dQ(FA)     nan=0/1048576 zero=1048576 max|.|=0.000e+00
+    battle_a_llm_fa_stage1_test.go:236:   DIAG dK(FA)     nan=0/1048576 zero=1048576 max|.|=0.000e+00
+    battle_a_llm_fa_stage1_test.go:236:   DIAG dV(FA)     nan=0/1048576 zero=0 max|.|=4.017e-05
+    battle_a_llm_fa_stage1_test.go:248: FP8-скейлы: scaleQ=1.000000e+00 scaleK=1.000000e+00 scaleV=1.000000e+00
+    battle_a_llm_fa_stage1_test.go:249: Пороги зон (по контракту dS direct-cast): T_norm=1.562500e-02 T_subnorm=1.953125e-03
+    battle_a_llm_fa_stage1_test.go:297: BLOCK dQ/FA   : NaN=0 | зонаA n=0 worst|Δ|=0.000e+00 | субнорм n=0 worst=0.000e+00 | зонаB n=1048576 worst=1.182e-05 -> PASS
+    battle_a_llm_fa_stage1_test.go:297: BLOCK dQ/recon: NaN=0 | зонаA n=0 worst|Δ|=0.000e+00 | субнорм n=0 worst=0.000e+00 | зонаB n=1048576 worst=1.182e-05 -> PASS
+    battle_a_llm_fa_stage1_test.go:297: BLOCK dK/FA   : NaN=0 | зонаA n=0 worst|Δ|=0.000e+00 | субнорм n=0 worst=0.000e+00 | зонаB n=1048576 worst=5.254e-06 -> PASS
+    battle_a_llm_fa_stage1_test.go:297: BLOCK dK/recon: NaN=0 | зонаA n=0 worst|Δ|=0.000e+00 | субнорм n=0 worst=0.000e+00 | зонаB n=1048576 worst=5.254e-06 -> PASS
+    battle_a_llm_fa_stage1_test.go:297: BLOCK dV/FA   : NaN=0 | зонаA n=0 worst|Δ|=0.000e+00 | субнорм n=0 worst=0.000e+00 | зонаB n=1048576 worst=4.174e-05 -> PASS
+    battle_a_llm_fa_stage1_test.go:297: BLOCK dV/recon: NaN=0 | зонаA n=0 worst|Δ|=0.000e+00 | субнорм n=0 worst=0.000e+00 | зонаB n=1048576 worst=4.113e-05 -> PASS
+    battle_a_llm_fa_stage1_test.go:313: BLOCK dQ FA-vs-recon: max|Δ|=0.000e+00 (справочно; дрожь recon задокументирована)
+    battle_a_llm_fa_stage1_test.go:313: BLOCK dK FA-vs-recon: max|Δ|=0.000e+00 (справочно; дрожь recon задокументирована)
+    battle_a_llm_fa_stage1_test.go:313: BLOCK dV FA-vs-recon: max|Δ|=1.744e-06 (справочно; дрожь recon задокументирована)
+    battle_a_llm_fa_stage1_test.go:330: DIAG chain-FA (после bwdEx useFA=true): scales=[2.110969 2.0856423 2.1569853]
+    battle_a_llm_fa_stage1_test.go:220:   DIAG ch.DQPerm  nan=0/1048576 zero=1048576 max|.|=0.000e+00
+    battle_a_llm_fa_stage1_test.go:220:   DIAG ch.DKPerm  nan=0/1048576 zero=1048576 max|.|=0.000e+00
+    battle_a_llm_fa_stage1_test.go:220:   DIAG ch.DVPerm  nan=0/1048576 zero=0 max|.|=3.968e-05
+    battle_a_llm_fa_stage1_test.go:220:   DIAG ch.DQ(inv) nan=0/1048576 zero=1048576 max|.|=0.000e+00
+    battle_a_llm_fa_stage1_test.go:220:   DIAG ch.DNormed nan=0/1048576 zero=0 max|.|=2.131e-05
+    battle_a_llm_fa_stage1_test.go:220:   DIAG ch.DWq     nan=0/262144 zero=262144 max|.|=0.000e+00
+    battle_a_llm_fa_stage1_test.go:380: === CHAIN A/B: 10 точек, PRIMARY vs F64, SECONDARY vs recon ===
+    battle_a_llm_fa_stage1_test.go:409:   Wout(top)+V-канарейка  [indep, зона B] f64=-2.705703e-04 FA|Δ|=2.374e-10 recon|Δ|=2.374e-10 -> PASS
+    battle_a_llm_fa_stage1_test.go:409:   NormOut(g)             [indep, зона B] f64=+1.950622e-03 FA|Δ|=1.045e-03 recon|Δ|=1.045e-03 -> PASS
+    battle_a_llm_fa_stage1_test.go:409:   Wo[L=0]                [indep, зона B] f64=+7.844957e-05 FA|Δ|=1.817e-05 recon|Δ|=1.442e-03 -> PASS
+    battle_a_llm_fa_stage1_test.go:409:   W2[L=0]                [indep, зона B] f64=-1.182481e-05 FA|Δ|=9.956e-04 recon|Δ|=7.502e-04 -> PASS
+    battle_a_llm_fa_stage1_test.go:409:   Norm2(g)               [indep, зона B] f64=+1.499226e-03 FA|Δ|=1.474e-02 recon|Δ|=1.474e-02 -> PASS
+    battle_a_llm_fa_stage1_test.go:409:   W1[L=0]                [indep, зона B] f64=-6.278521e-05 FA|Δ|=3.298e-03 recon|Δ|=3.298e-03 -> PASS
+    battle_a_llm_fa_stage1_test.go:409:   Wv[L=0]                [FA-dep, зона B] f64=+7.189487e-04 FA|Δ|=1.087e-03 recon|Δ|=1.367e-03 -> PASS
+    battle_a_llm_fa_stage1_test.go:409:   Norm1(g)               [FA-dep, зона B] f64=-7.802844e-04 FA|Δ|=2.704e-03 recon|Δ|=9.755e-04 -> PASS
+    battle_a_llm_fa_stage1_test.go:409:   Wq[L=0]                [FA-dep, зона B] f64=-3.337149e-05 FA|Δ|=3.337e-05 recon|Δ|=3.337e-05 -> PASS
+    battle_a_llm_fa_stage1_test.go:409:   Embed[i0,d]            [FA-dep, зона B] f64=+9.375191e-05 FA|Δ|=2.548e-03 recon|Δ|=2.663e-03 -> PASS
+    battle_a_llm_fa_stage1_test.go:415: CHAIN A/B PASS: FA-зависимые точки в зоне A внутри floor 5e-3
+--- PASS: TestALLM_FABlock_Stage1 (99.57s)
+PASS
+=== B2_RUN_COMPLETE ===
+ok  	github.com/djeday123/goml/internal/abjexam	99.791s

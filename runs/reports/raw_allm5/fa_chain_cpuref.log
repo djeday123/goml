@@ -1,0 +1,8 @@
+    fa_chain_cpuref_test.go:285: CHAIN-REF O   worst|GPU-F64ref|=3.1734e-03 (floor 5e-03) -> PASS
+    fa_chain_cpuref_test.go:285: CHAIN-REF L   worst|GPU-F64ref|=3.6549e-04 (floor 5e-03) -> PASS
+    fa_chain_cpuref_test.go:285: CHAIN-REF D   worst|GPU-F64ref|=1.1072e-04 (floor 5e-03) -> PASS
+    fa_chain_cpuref_test.go:285: CHAIN-REF dV  worst|GPU-F64ref|=7.8245e-07 (floor 5e-03) -> PASS
+    fa_chain_cpuref_test.go:285: CHAIN-REF dK  worst|GPU-F64ref|=2.1188e-04 (floor 5e-03) -> PASS
+    fa_chain_cpuref_test.go:285: CHAIN-REF dQ  worst|GPU-F64ref|=2.4101e-04 (floor 5e-03) -> PASS
+    fa_chain_cpuref_test.go:290: П.6г PASS: вся цепочка (O/L/D/dV/dK/dQ) в floor 5e-3 vs CPU-F64 ref
+--- PASS: TestFABwd_ChainVsCPURef (0.13s)

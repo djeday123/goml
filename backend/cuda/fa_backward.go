@@ -3,6 +3,16 @@ package cuda
 // A-LLM-1 G2 (2026-07-25): purego binding для libfa_bwd_sm120.so —
 // backward chain wrappers (D + merged + dk + dq).
 // Тонкие обёртки поверх v0.2.0 launchers. Только развёртка аргументов, без логики.
+//
+// МАГНИТУДНЫЙ КОНТРАКТ (A-LLM-5, 2026-08-03, Н4): decoded-магнитуда FP8-входов
+// (Q/K/V) обязана быть O(1) — квантизация scale = amax (НЕ amax/448).
+// Карта аккумуляторов (П.0 A-LLM-5): merged — F32-акк (f32.f16.f16.f32,
+// fa_bwd_merged_v1.cu:43); dk — F32-акки (:51,:66); dq — F16-акк
+// (f16.e4m3.e4m3.f16, fa_bwd_dq_new.cu:47, packed): требует
+// sum_j |dS[i,j]|*|Kd| < 65504 — при O(1)-входах и P-нормировке
+// (sum_j P_ij = 1) запас >= 12x наивный / ~1e4x фактический.
+// dS в dSnat/dST квантизуется direct-cast e4m3 БЕЗ amax-скейла: порог
+// стирания в kernel-units 2^-9 (субнорм) / 2^-6 (норм).
 
 import (
 	"fmt"

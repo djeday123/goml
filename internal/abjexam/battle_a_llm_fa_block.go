@@ -167,7 +167,6 @@ func attnFABwdBlock(b backend.Backend, gtB *gotorchAdapter.Backend,
 	BH, S, HD int, softmaxScale float32) (scales [3]float32, err error) {
 
 	n := BH * S * HD
-	e4m3Max := float32(448.0)
 	natB := fb.natB
 	sync := func() {
 		if s, ok := b.(interface{ Sync() error }); ok {
@@ -196,24 +195,27 @@ func attnFABwdBlock(b backend.Backend, gtB *gotorchAdapter.Backend,
 	// исполняется ПОСЛЕ ядра и затирает amax (наблюдалось: amax=0 -> FP8-нули).
 	// NB: та же скрытая гонка есть в боевом fwdBattleA (шаг 6) — в отчёт.
 	sync()
-	if err = gtB.QuantizeF32ToF8E4M3(Qsnap, fb.QFP8a, fb.ScaleQ, fb.AmaxQ, n); err != nil {
+	// A-LLM-5 квант-контракт O(1): Unit-вариант (scale = amax, decoded <= 1) —
+	// контракт FP16-акков v121r (QK/O MMA f16.e4m3.e4m3.f16, П.0a).
+	if err = gtB.QuantizeF32ToF8E4M3Unit(Qsnap, fb.QFP8a, fb.ScaleQ, fb.AmaxQ, n); err != nil {
 		return scales, fmt.Errorf("fa-block quantize Q: %w", err)
 	}
 	sync()
-	if err = gtB.QuantizeF32ToF8E4M3(Ksnap, fb.KFP8a, fb.ScaleK, fb.AmaxK, n); err != nil {
+	if err = gtB.QuantizeF32ToF8E4M3Unit(Ksnap, fb.KFP8a, fb.ScaleK, fb.AmaxK, n); err != nil {
 		return scales, fmt.Errorf("fa-block quantize K: %w", err)
 	}
 	sync()
-	if err = gtB.QuantizeF32ToF8E4M3(Vsnap, fb.VFP8a, fb.ScaleV, fb.AmaxV, n); err != nil {
+	if err = gtB.QuantizeF32ToF8E4M3Unit(Vsnap, fb.VFP8a, fb.ScaleV, fb.AmaxV, n); err != nil {
 		return scales, fmt.Errorf("fa-block quantize V: %w", err)
 	}
 	sync()
 	amaxQ := gpuToHost(b, fb.AmaxQ, 1)[0]
 	amaxK := gpuToHost(b, fb.AmaxK, 1)[0]
 	amaxV := gpuToHost(b, fb.AmaxV, 1)[0]
-	scaleQ := amaxQ / e4m3Max
-	scaleK := amaxK / e4m3Max
-	scaleV := amaxV / e4m3Max
+	// Новая конвенция: scale_X = amax_X (decoded O(1)).
+	scaleQ := amaxQ
+	scaleK := amaxK
+	scaleV := amaxV
 	if scaleQ <= 0 {
 		scaleQ = 1.0
 	}

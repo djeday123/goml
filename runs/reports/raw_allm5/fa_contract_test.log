@@ -1,0 +1,23 @@
+=== RUN   TestFAContract_FullRangeInputs
+    fa_contract_test.go:233:   [bh=4 sl=2048] O: bad=0 max|.|=2.7832e-02
+    fa_contract_test.go:233:   [bh=4 sl=2048] L: bad=0 max|.|=7.6429e+00
+    fa_contract_test.go:240:   [bh=4 sl=2048] maxDecoded=1.0000, L-граница прогноза=18.938, факт max L=7.643
+    fa_contract_test.go:251:   [bh=4 sl=2048] bwd D: nan=0 inf=0
+    fa_contract_test.go:251:   [bh=4 sl=2048] bwd dV: nan=0 inf=0
+    fa_contract_test.go:251:   [bh=4 sl=2048] bwd dK: nan=0 inf=0
+    fa_contract_test.go:251:   [bh=4 sl=2048] bwd dQ: nan=0 inf=0
+    fa_contract_test.go:270:   [bh=4 sl=2048] чувствительность: max|dO| после возмущения строки V = 6.5613e-04
+    fa_contract_test.go:303:   НЕГАТИВ (документированная ловушка, log-only): full-range decoded -> O bad=1048576/1048576, L bad=8192/8192
+    fa_contract_test.go:307: КОНТРАКТ [bh=4 sl=2048] PASS: цепочка живая на O(1)-входах, L в границе
+    fa_contract_test.go:233:   [bh=128 sl=8192] O: bad=0 max|.|=1.8204e-02
+    fa_contract_test.go:233:   [bh=128 sl=8192] L: bad=0 max|.|=9.0276e+00
+    fa_contract_test.go:240:   [bh=128 sl=8192] maxDecoded=1.0000, L-граница прогноза=20.325, факт max L=9.028
+    fa_contract_test.go:251:   [bh=128 sl=8192] bwd dQ: nan=0 inf=0
+    fa_contract_test.go:251:   [bh=128 sl=8192] bwd D: nan=0 inf=0
+    fa_contract_test.go:251:   [bh=128 sl=8192] bwd dV: nan=0 inf=0
+    fa_contract_test.go:251:   [bh=128 sl=8192] bwd dK: nan=0 inf=0
+    fa_contract_test.go:270:   [bh=128 sl=8192] чувствительность: max|dO| после возмущения строки V = 6.6948e-04
+    fa_contract_test.go:307: КОНТРАКТ [bh=128 sl=8192] PASS: цепочка живая на O(1)-входах, L в границе
+--- PASS: TestFAContract_FullRangeInputs (33.01s)
+PASS
+ok  	github.com/djeday123/goml/backend/cuda	33.391s
