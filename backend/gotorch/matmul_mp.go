@@ -66,6 +66,13 @@ func (b *Backend) QuantizeF32ToF8E4M3(src, dst, scale, amax backend.Storage, n i
 	return b.gt.QuantizeF32ToF8E4M3(wrapForeign(src), wrapForeign(dst),
 		wrapForeign(scale), wrapForeign(amax), n)
 }
+
+// QuantizeF32ToF8E4M3Unit -- A-LLM-5 квант-контракт O(1): scale = amax,
+// decoded |dst| <= 1 (контракт FP16-акков FA-ядер, Н4).
+func (b *Backend) QuantizeF32ToF8E4M3Unit(src, dst, scale, amax backend.Storage, n int) error {
+	return b.gt.QuantizeF32ToF8E4M3Unit(wrapForeign(src), wrapForeign(dst),
+		wrapForeign(scale), wrapForeign(amax), n)
+}
 func (b *Backend) CastF8E4M3ToF32(src, dst, scale backend.Storage, n int) error {
 	return b.gt.CastF8E4M3ToF32(wrapForeign(src), wrapForeign(dst),
 		wrapForeign(scale), n)
