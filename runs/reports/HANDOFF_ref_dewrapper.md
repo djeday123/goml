@@ -13,10 +13,10 @@
 ```bash
 cd /data/lib/podman-data/projects/goml
 git log -1
-# ожидается subject: "A-LLM-3 session close: отчёт + хроника + HANDOFF (эталон = CPU-F64)"
-# это doc-only коммит; цепочка вниз: 2d576c1 (КОДОВЫЙ, A-LLM-3 F64-эталон) -> 3770056 ->
-# 8b3cf23 -> 18ff979 (doc-only) -> 9e1e3f0
-# проверка: git log -5 --oneline должен содержать 2d576c1 и 3770056
+# ожидается subject: "HANDOFF: ТЗ A-LLM-4 FA-встройка (финал, ревью принято)"
+# это doc-only коммит; цепочка вниз: f340ab9 (doc) -> 2d576c1 (КОДОВЫЙ, A-LLM-3
+# F64-эталон) -> 3770056 -> 8b3cf23 -> 18ff979 -> 9e1e3f0
+# проверка: git log -6 --oneline должен содержать f340ab9 и 2d576c1
 
 git status --short
 # ожидается: только untracked wilds (~475 файлов: libs/*, runs/archive/*, runs/_canary_5run_fwd.sh) — не мешают
@@ -356,18 +356,102 @@ CHRONICLE: добавлены параграфы за 8b3cf23 (задним чи
 реестр долгов: две CRITICAL-строки переклассифицированы в "свойство пути" (П-6б),
 добавлен долг "causal=1 не сертифицирован" (HIGH).
 
-## ЗАДАНИЕ СЛЕДУЮЩЕЙ FRESH-СЕССИИ: FA-встройка (A/B primary vs F64-арбитр)
+## ТЗ A-LLM-4: FA-ВСТРОЙКА — ФИНАЛ (скелет выше ЗАМЕЩЁН этим ТЗ; ревью принято 2026-08-03)
 
-Рамки (решение по П-5): non-causal режим ядер (causal=0) — стек уже когерентен.
-Скелет (детальное ТЗ выдаёт ревьюер перед стартом):
-1. Цепочка D -> merged -> dk_new -> dq_new через gt_fa_bwd_* (биндинги
-   backend/cuda/fa_backward.go, контракт v0.2.0).
-2. Zero-init контракт 3/4 ядер ([[feedback-fa-buffers-zero-init]]: OFP16/LGPU
-   и bwd-выходы перед вызовом).
-3. dO-cast F32 -> F16; L из fa_forward_train напрямую; обратный repack выходов.
-4. A/B двухзонный floor 5e-3 abs + FP8-зоны (|grad| ниже FP8-младшего разряда:
-   FA ноль-класс при живом эталоне = граница, не провал). PRIMARY сравнение
-   vs CPU-F64 арбитр (bwdBattleAF64), GPU-F32-recon — вторая колонка.
-5. Скорость: 30-run, CV-gate <1% ([[feedback-cv-gate-strict]]).
-6. Канарейка FA: коридор [652, 656] T перед/после пересборок .so.
-7. СТОП по гейту: A/B числа в raw + commit + push + HANDOFF/CHRONICLE поверх.
+Разведка ревьюера (факты диска, легли в структуру):
+- МИНА 1: bwdBattleA v1 (battle_a_llm_bwd.go:308+) математически некорректен по
+  собственным TODO: dW1/dWq/dWk/dWv берут sc.Normed последнего звена, RMSNormGrad1/2
+  берут sc.X пост-всех-слоёв. Неверно даже при L=1. Встройка в v1 = A/B умирает
+  по вине обвязки.
+- МИНА 2: снапшоты в общем BattleAScratch триггерили FA-instability
+  ([[feedback-fa-fwd-scratch-alloc-instability]]) — "просто починить v1" заряжено.
+- Зеро-init требуют ровно 3/4 ядер: dV/dK/dQ ("must be zero-init" в сигнатурах
+  fa_backward.go:112/133/152); d_precompute пишет D полностью.
+- dSnat/dST: FP8 padded stride_ds=(sl+15)&~15. Буферы DFA_*, DOFP16 уже в
+  BattleABwdScratch. CastF32ToF16 в адаптере есть. Заглушка: battle_a_llm_bwd.go:451.
+- Канарейка-скрипт существует: runs/_canary_5run_fwd.sh.
+
+СКОУП: цепочка gt_fa_bwd_d_precompute -> merged -> dk_new -> dq_new
+(fa_backward.go:93/112/133/152, контракт v0.2.0) в attention-bwd, non-causal
+(causal=0, window=0 — П-5). GPU-F32-recon и CPU-F64 пути НЕ трогаются. ДВУХЭТАПНО.
+
+=== ЭТАП 1. FA-блок в эталонной обвязке (сертификация цепочки) ===
+
+1.1. Третий attention-путь в f32recon-стеке (флаг или AttnBwdPath). Fwd НЕ меняется
+     (attnReconstructFwd, снапшоты безопасны). На bwd вместо attnReconstructBwd:
+     (a) QPermSnap/KPermSnap/VPermSnap F32 -> FP8 (квантизатор боевого fwdBattleA;
+         amax-скейлы в лог);
+     (b) fa_forward_train(FP8 -> O_FP16, L_F32), L напрямую (G1-cert);
+         zero-init OFP16/LGPU ДО вызова ([[feedback-fa-buffers-zero-init]]);
+     (c) dO: DOF32 -> CastF32ToF16 -> DOFP16;
+     (d) gt_fa_bwd_d_precompute(O_FP16, dO_FP16 -> D_F32);
+     (e) zero-init DFA_dVF32/dKF32/dQF32 (3/4 контракт; факт "кто требует" в отчёт);
+     (f) merged -> dSnat/dST(FP8 padded)+dV; dk_new -> dK; dq_new -> dQ;
+         scale-конвенция как в канонической цепочке fa_backward_test.go:255-305;
+     (g) repack dQ/dK/dV F32 [BH,S,HD] -> дальше цепочка как есть (RoPE-bwd ->
+         inv-permute зеркалом форвардного).
+1.2. Stream-дисциплина: все вызовы stream=0; ВСЕ A/B-чтения после Sync.
+1.3. Форма A/B (решение ревью): B=1 H=4 HD=128 S=2048 D=512 FFN=2048 L=1, V=1024.
+     Обоснование: V влияет только на CE-хвост и масштаб dLogits, контракты
+     FA-цепочки от V не зависят. УСИЛЕНИЕ: Wout-точка в A/B-таблице играет роль
+     канарейки согласованности форм — если V-урезка сломала обвязку, Wout покажет
+     первым (дешёвый).
+1.4. A/B шага-1, двухарбитровый, поэлементный по 10 точкам A-LLM-3 + full-tensor
+     max|delta| по dQ/dK/dV блока:
+     - PRIMARY vs CPU-F64 (bwdBattleAF64 на той же форме, seed-зеркало весов/токенов);
+     - SECONDARY vs GPU-F32-recon (та же обвязка, путь recon) — санити с учётом
+       задокументированной дрожи (raw_allm3).
+     Двухзонный floor (записать ДО прогона, в тесте):
+     - scale = amax/448 (per-tensor, из квантизации);
+     - T_norm = scale * 2^-6 (наименьшее НОРМАЛЬНОЕ e4m3 относительно скейла);
+     - T_subnorm = scale * 2^-9 (субнормальный пол);
+     - ОБА числа в лог. Зона A (|grad_F64| >= T_norm): floor 5e-3 abs.
+       Зона B (|grad_F64| < T_norm): "FA ноль-класс при живом арбитре =
+       документированная граница cold-start", отдельные строки, не FAIL.
+       Клетки между T_subnorm и T_norm — отдельная строка "субнормальная зона"
+       (бесплатная детализация для будущего warmup-критерия: его порог
+       переключения будет считаться той же формулой).
+     ПРОГНОЗ (до прогона): зона A проходит с запасом класса B-impl-4 (1.4e-7 vs
+     5e-3); dQ/dK частично в зоне B (тройное явление cold-start).
+
+=== ЭТАП 2. Боевой путь ===
+
+2.1. Довести bwdBattleA до зеркала bwdBattleAF32: per-layer снапшоты В ОТДЕЛЬНОМ
+     scratch (НЕ в BattleAScratch — мина 2); убрать v1-упрощения. Реализовать
+     case AttnBwdFA сертифицированным блоком Этапа 1.
+2.2. Смоук: bwdBattleA(recon-путь) vs bwdBattleAF32 — 10 точек, inter-path floor
+     записать до прогона.
+2.3. trainStepBattleA E2E, боевая форма (V=32000, L=1): траектория 20 шагов
+     FA-путь vs GPU-F32-recon-путь. Плато-паттерн на FA-пути в первых шагах =
+     ПРАВИЛЬНОСТЬ (cold-start; warmup-звено следующей сессией). Ножницы
+     траекторий числом: per-step delta-loss таблица в raw.
+2.4. Скорость: (a) свежий шаг-до на GPU-F32-recon пути (свой hash, raw);
+     (b) ПРОГНОЗ шага-после ДО прогона по карте блоков: grep Stage5 в
+     gotorch/v6/runs/reports/A_LLM1.md (класс ~109ms) + канон FA-bwd 42.346ms
+     bh=128/sl=8192 (A_LLM1.md:43). Масштабирование на bh=4/sl=2048 дать ВИЛКОЙ:
+     [идеальный скейлинг ~bh*sl^2; скейлинг с SM-недогрузом — 4 блока bh-параллелизма
+     на 128 SM, утилизация падает]. Факт покажет, где мы; это же число — первый
+     аргумент карточки долга "FA-F16-вход".
+     (c) 30-run, CV-gate <1%; два числа при промахе прогноза;
+     (d) пятая карта блоков (+2-й метод при блоке >2x или >50% wall).
+2.5. СТОП-ЛИНИЯ (усиленная форма, ревью): FA-instability при снапшот-scratch
+     (NaN/zero O при живом Этапе 1) = СТОП + полный факт в отчёт (форма, момент,
+     что в буферах) + сессия закрывается ШТАТНО с Этапом 1 как деливераблом;
+     Этап 2 уезжает в следующую с отдельным разбором. Героизм в конце контекстного
+     окна — источник половины фантомов.
+
+КАНАРЕЙКА: runs/_canary_5run_fwd.sh до Этапа 1 и после Этапа 2; коридор [652,656] T.
+Вне коридора — стоп до разбора.
+
+РЕГРЕССИЯ ПЕРЕД ЗАКРЫТИЕМ (-count=1, все PASS): TestALLM_BwdCertF64_MultiLayer,
+TestALLM_F64Ref_Unit, TestALLM_ABF32vsF64_N5, TestMatmulPlainT_Unit.
+
+ЯВНО НЕ В ЭТОЙ СЕССИИ: warmup-звено (следующая; критерий переключения записать до
+реализации); causal=1 сертификация (долг HIGH); wrapper-репро-охота (свойство
+пути); L=4-init (sqrt(2L)); оптимизация скорости FA-блока (сначала корректность);
+FA-F16-вход (карточка долга в хронике — после warmup-теста).
+
+ГЕЙТ ЗАКРЫТИЯ: A/B Этапа 1 — числа в raw по обеим зонам + субнормальной + вердикт;
+Этап 2 траектория + скорость в raw (или стоп-линия с фактом); канарейка 2x в raw;
+отчёт runs/reports/A_LLM4_fa_integration.md; commit(ы) + push с hash+raw;
+HANDOFF Б-0 шапка перенацелена + параграф хроники; СТОП.
