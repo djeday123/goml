@@ -1,0 +1,24 @@
+=== 062 морозилка-ревизия ABBA: 052-Q-ping-pong (cand md5 8456c8) vs 040 sealed (base 7d1a13) ===
+gate-тишина OK
+-- warmup 4 --
+warmup=1 temp=33C BASE: bench_merged: avg_ms=24.889  tflops_3mma=265.06
+warmup=2 temp=45C CAND: bench_merged: avg_ms=24.879  tflops_3mma=265.17
+warmup=3 temp=44C BASE: bench_merged: avg_ms=24.902  tflops_3mma=264.92
+warmup=4 temp=43C CAND: bench_merged: avg_ms=24.883  tflops_3mma=265.12
+-- 16 timed (8 pairs) --
+timed=1 temp=44C BASE: bench_merged: avg_ms=24.921  tflops_3mma=264.72
+timed=2 temp=43C CAND: bench_merged: avg_ms=24.918  tflops_3mma=264.75
+timed=3 temp=46C CAND: bench_merged: avg_ms=24.936  tflops_3mma=264.56
+timed=4 temp=43C BASE: bench_merged: avg_ms=24.959  tflops_3mma=264.31
+timed=5 temp=46C BASE: bench_merged: avg_ms=24.968  tflops_3mma=264.22
+timed=6 temp=45C CAND: bench_merged: avg_ms=24.955  tflops_3mma=264.36
+timed=7 temp=45C CAND: bench_merged: avg_ms=24.956  tflops_3mma=264.35
+timed=8 temp=44C BASE: bench_merged: avg_ms=24.978  tflops_3mma=264.12
+timed=9 temp=46C BASE: bench_merged: avg_ms=24.992  tflops_3mma=263.97
+timed=10 temp=48C CAND: bench_merged: avg_ms=24.954  tflops_3mma=264.37
+timed=11 temp=46C CAND: bench_merged: avg_ms=24.971  tflops_3mma=264.19
+timed=12 temp=45C BASE: bench_merged: avg_ms=24.987  tflops_3mma=264.02
+timed=13 temp=44C BASE: bench_merged: avg_ms=24.995  tflops_3mma=263.93
+timed=14 temp=46C CAND: bench_merged: avg_ms=24.986  tflops_3mma=264.03
+timed=15 temp=46C CAND: bench_merged: avg_ms=24.982  tflops_3mma=264.07
+timed=16 temp=46C BASE: bench_merged: avg_ms=25.004  tflops_3mma=263.84

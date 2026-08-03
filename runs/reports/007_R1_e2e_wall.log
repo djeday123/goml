@@ -1,0 +1,32 @@
+# 007 R1 E2E canonical (bh=128 sl=8192 hd=128 causal=0, warmup=5 iters=20)
+# Kernels: D → ds_gen(006-II) → dV(sealed p1) → dk_new(005a) → dq_new(005b)
+
+## Fingerprint gate (EXPECT-dict abort)
+kernel_d_precompute    numRegs= 38 (expected  38) OK
+kernel_ds_gen          numRegs=130 (expected 130) OK
+kernel_dv_mma_p1       numRegs=129 (expected 129) OK
+kernel_dk_new          numRegs= 96 (expected  96) OK
+kernel_dq_new          numRegs= 56 (expected  56) OK
+
+## 007-A Sequential 5-run (single stream, cudaEvent per-kernel)
+run 1: total=59.069  D=0.342 ds_gen=20.673 dV=19.709 dk_new=9.636 dq_new=8.709
+run 2: total=59.189  D=0.343 ds_gen=20.719 dV=19.743 dk_new=9.656 dq_new=8.728
+run 3: total=59.310  D=0.343 ds_gen=20.768 dV=19.774 dk_new=9.678 dq_new=8.748
+run 4: total=59.427  D=0.343 ds_gen=20.812 dV=19.811 dk_new=9.697 dq_new=8.764
+run 5: total=59.511  D=0.343 ds_gen=20.840 dV=19.838 dk_new=9.710 dq_new=8.780
+median: 59.310 ms   CV: 0.30%
+per-kernel median: 0.343 / 20.768 / 19.774 / 9.678 / 8.748  → sum 59.311 (overhead ≈ 0.00 ms)
+
+## 007-B Streams 5-run (D → sA[ds_gen→dk_new] || sB[dV→dq_new])
+run 1: 58.992
+run 2: 59.118
+run 3: 59.225
+run 4: 59.348
+run 5: 59.415
+median: 59.225 ms   CV: 0.28%
+
+## Attribution
+Δ streams vs sequential: -0.085 ms (-0.14%) = NOISE. НЕТ реального overlap.
+Причина: канонический grid = bh*n_qt = 128*64 = 8192 blocks (dk_new) до 16384 (ds_gen),
+        обе кёрнела заполняют GPU до макса (2-3 blocks/SM × 188 SMs = 376-565 concurrent слотов);
+        streams только очередят волны, а не параллелят их. Проекция 30.35 ms = max()-оптимизм.

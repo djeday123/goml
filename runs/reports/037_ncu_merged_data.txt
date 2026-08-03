@@ -1,0 +1,70 @@
+=== STALL FULL ===
+==PROF== Connected to process 428635 (/data/lib/podman-data/projects/goml/libs/r2c_merged_wall)
+==PROF== Profiling "kernel_merged_v1": 0%....50%....100% - 7 passes
+bench_merged: FINGERPRINT kernel_merged_v1: numRegs=253, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256
+bench_merged: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_merged: avg_ms=31.215  tflops_3mma=211.34
+==PROF== Disconnected from process 428635
+[428635] r2c_merged_wall@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    --------------------------------------------------------------- ----------- ------------
+    Metric Name                                                     Metric Unit Metric Value
+    --------------------------------------------------------------- ----------- ------------
+    smsp__warp_issue_stalled_barrier_per_warp_active.pct                      %         2.59
+    smsp__warp_issue_stalled_dispatch_stall_per_warp_active.pct               %         0.83
+    smsp__warp_issue_stalled_drain_per_warp_active.pct                        %         0.02
+    smsp__warp_issue_stalled_imc_miss_per_warp_active.pct                            (!) n/a
+    smsp__warp_issue_stalled_lg_throttle_per_warp_active.pct                  %         0.11
+    smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct              %         5.18
+    smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct           %         3.91
+    smsp__warp_issue_stalled_membar_per_warp_active.pct                       %            0
+    smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct                 %        24.43
+    smsp__warp_issue_stalled_misc_per_warp_active.pct                         %            0
+    smsp__warp_issue_stalled_no_instruction_per_warp_active.pct               %         0.51
+    smsp__warp_issue_stalled_not_selected_per_warp_active.pct                 %         5.23
+    smsp__warp_issue_stalled_selected_per_warp_active.pct                     %        18.15
+    smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct             %        10.89
+    smsp__warp_issue_stalled_tex_throttle_per_warp_active.pct                 %            0
+    smsp__warp_issue_stalled_wait_per_warp_active.pct                         %        27.20
+    --------------------------------------------------------------- ----------- ------------
+
+
+=== LSU / CONFLICTS ===
+bench_merged: avg_ms=31.278  tflops_3mma=210.92
+==PROF== Disconnected from process 428917
+[428917] r2c_merged_wall@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- -------------
+    Metric Name                                              Metric Unit  Metric Value
+    -------------------------------------------------------- ----------- -------------
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum               240,573,023
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                47,246,396
+    l1tex__data_pipe_lsu_wavefronts_mem_shared.sum                       5,611,411,582
+    smsp__inst_executed_shared_loads.sum                                       (!) n/a
+    smsp__inst_executed_shared_stores.sum                                      (!) n/a
+    -------------------------------------------------------- ----------- -------------
+
+
+=== L2 / DRAM / OCC ===
+bench_merged: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_merged: avg_ms=31.392  tflops_3mma=210.15
+==PROF== Disconnected from process 429197
+[429197] r2c_merged_wall@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------- ----------- -------------
+    Metric Name                                        Metric Unit  Metric Value
+    -------------------------------------------------- ----------- -------------
+    dram__bytes.sum                                          Gbyte         18.55
+    dram__throughput.avg.pct_of_peak_sustained_elapsed           %         23.86
+    gpc__cycles_elapsed.avg.per_second                         Ghz          1.59
+    l1tex__t_sector_hit_rate.pct                                 %          2.47
+    lts__t_sector_hit_rate.pct                                   %         86.45
+    sm__average_warps_active_ratio.ratio                                 (!) n/a
+    sm__cycles_active.avg                                    cycle 71,489,745.21
+    sm__warps_active.avg.pct_of_peak_sustained_active            %         16.59
+    smsp__thread_inst_executed_per_inst_executed.ratio                        32
+    -------------------------------------------------- ----------- -------------
+

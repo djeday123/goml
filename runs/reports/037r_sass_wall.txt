@@ -1,0 +1,12 @@
+=== SASS marker check r2c_merged_wall (Jul 6 07:14) ===
+kernel_merged_v1 mangled name search
+
+STG.E.SYS.128 count (drain dS_nat + dS_T если pre-cut):
+2
+STG.E.b64 count:
+0
+STS instr counts:
+32
+Individual STG types:
+     64 STG.E
+      2 STG.E.128

@@ -1,0 +1,14 @@
+[F1     bh=1 sl= 128 caus=0 wnd=0] compared=16384 mismatched=0 sent_ref=0 sent_gen=0  PASS
+[F2     bh=1 sl= 128 caus=1 wnd=0] compared=12288 mismatched=0 sent_ref=0 sent_gen=0  PASS
+[F3     bh=2 sl= 256 caus=0 wnd=0] compared=131072 mismatched=0 sent_ref=0 sent_gen=0  PASS
+[F4     bh=2 sl= 256 caus=1 wnd=0] compared=81920 mismatched=0 sent_ref=0 sent_gen=0  PASS
+[F5     bh=4 sl= 384 caus=0 wnd=0] compared=589824 mismatched=0 sent_ref=0 sent_gen=0  PASS
+[F6     bh=4 sl= 384 caus=1 wnd=0] compared=344064 mismatched=0 sent_ref=0 sent_gen=0  PASS
+[F7     bh=1 sl= 512 caus=0 wnd=128] compared=262144 mismatched=0 sent_ref=0 sent_gen=0  PASS
+[F8     bh=1 sl= 512 caus=1 wnd=128] compared=147456 mismatched=0 sent_ref=0 sent_gen=0  PASS
+[F9     bh=1 sl=2048 caus=0 wnd=0] compared=4194304 mismatched=0 sent_ref=0 sent_gen=0  PASS
+[F10    bh=1 sl=2048 caus=1 wnd=0] compared=2162688 mismatched=0 sent_ref=0 sent_gen=0  PASS
+[CANARY bh=1 sl= 300 caus=0 wnd=96] compared=90000 mismatched=0 sent_ref=0 sent_gen=0  PASS
+
+=== SUMMARY ===
+    forms bit-exact: 11 / 11

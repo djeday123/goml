@@ -1,0 +1,15 @@
+r1b_dk_bit_exact: FINGERPRINT kernel_dk_new: numRegs=96, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=640
+[F1     bh=1 sl= 128 caus=0 wnd=0] total=16384 mism=0 max_abs_diff=0.000e+00  BIT-EXACT
+[F2     bh=1 sl= 128 caus=1 wnd=0] total=16384 mism=0 max_abs_diff=0.000e+00  BIT-EXACT
+[F3     bh=2 sl= 256 caus=0 wnd=0] total=65536 mism=0 max_abs_diff=0.000e+00  BIT-EXACT
+[F4     bh=2 sl= 256 caus=1 wnd=0] total=65536 mism=0 max_abs_diff=0.000e+00  BIT-EXACT
+[F5     bh=4 sl= 384 caus=0 wnd=0] total=196608 mism=0 max_abs_diff=0.000e+00  BIT-EXACT
+[F6     bh=4 sl= 384 caus=1 wnd=0] total=196608 mism=0 max_abs_diff=0.000e+00  BIT-EXACT
+[F7     bh=1 sl= 512 caus=0 wnd=128] total=65536 mism=0 max_abs_diff=0.000e+00  BIT-EXACT
+[F8     bh=1 sl= 512 caus=1 wnd=128] total=65536 mism=0 max_abs_diff=0.000e+00  BIT-EXACT
+[F9     bh=1 sl=2048 caus=0 wnd=0] total=262144 mism=0 max_abs_diff=0.000e+00  BIT-EXACT
+[F10    bh=1 sl=2048 caus=1 wnd=0] total=262144 mism=0 max_abs_diff=0.000e+00  BIT-EXACT
+[CANARY bh=1 sl= 300 caus=0 wnd=96] total=38400 mism=28800 max_abs_diff=4.714e+01  MISMATCH
+
+=== SUMMARY ===
+    forms bit-exact: 10 / 11

@@ -1,0 +1,23 @@
+=== 059 B-fix RETEST clean stand: base(040 252r) vs cand(056 B-fix 251r cp.async-analog) ===
+-- warmup 4 --
+warmup=1 temp=33C BASE: bench_merged: avg_ms=24.909  tflops_3mma=264.85
+warmup=2 temp=41C CAND: bench_merged: avg_ms=25.276  tflops_3mma=261.01
+warmup=3 temp=41C BASE: bench_merged: avg_ms=24.928  tflops_3mma=264.65
+warmup=4 temp=46C CAND: bench_merged: avg_ms=25.286  tflops_3mma=260.90
+-- 16 timed (8 pairs) --
+timed=1 temp=43C BASE: bench_merged: avg_ms=24.929  tflops_3mma=264.64
+timed=2 temp=42C CAND: bench_merged: avg_ms=25.311  tflops_3mma=260.64
+timed=3 temp=47C CAND: bench_merged: avg_ms=25.327  tflops_3mma=260.47
+timed=4 temp=44C BASE: bench_merged: avg_ms=24.956  tflops_3mma=264.35
+timed=5 temp=43C BASE: bench_merged: avg_ms=24.944  tflops_3mma=264.48
+timed=6 temp=45C CAND: bench_merged: avg_ms=25.324  tflops_3mma=260.51
+timed=7 temp=44C CAND: bench_merged: avg_ms=25.328  tflops_3mma=260.46
+timed=8 temp=44C BASE: bench_merged: avg_ms=24.952  tflops_3mma=264.40
+timed=9 temp=43C BASE: bench_merged: avg_ms=24.958  tflops_3mma=264.33
+timed=10 temp=45C CAND: bench_merged: avg_ms=25.337  tflops_3mma=260.37
+timed=11 temp=42C CAND: bench_merged: avg_ms=25.308  tflops_3mma=260.67
+timed=12 temp=45C BASE: bench_merged: avg_ms=24.955  tflops_3mma=264.36
+timed=13 temp=44C BASE: bench_merged: avg_ms=24.970  tflops_3mma=264.20
+timed=14 temp=47C CAND: bench_merged: avg_ms=25.319  tflops_3mma=260.56
+timed=15 temp=45C CAND: bench_merged: avg_ms=25.313  tflops_3mma=260.62
+timed=16 temp=43C BASE: bench_merged: avg_ms=24.992  tflops_3mma=263.96

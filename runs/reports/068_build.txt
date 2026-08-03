@@ -1,0 +1,480 @@
+=== Makefile.bench_r2c_e2e ===
+rm -f bench_r2c_e2e bench_r2c_e2e_build.log
+/usr/local/cuda-13.1/bin/nvcc -O3 -gencode arch=compute_120a,code=sm_120a -std=c++17 -Xptxas=-v -lineinfo bench_r2c_e2e.cu fa_bwd_merged_v1.cu fa_bwd_dq.cu fa_bwd_dq_new.cu fa_bwd_dk.cu fa_bwd_dk_new.cu fa_bwd_dv_mma_p1.cu fa_bwd_ds_gen.cu -o bench_r2c_e2e 2>&1 | tee bench_r2c_e2e_build.log
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+fa_bwd_merged_v1.cu(364): warning #177-D: variable "ja_hi" was declared but never referenced
+              int ja_hi = ni_a * 8 + l_mod4 * 2 + 1;
+                  ^
+
+fa_bwd_merged_v1.cu(365): warning #177-D: variable "jb_hi" was declared but never referenced
+              int jb_hi = ni_b * 8 + l_mod4 * 2 + 1;
+                  ^
+
+fa_bwd_merged_v1.cu(81): warning #177-D: variable "SMDS_T_STAGE_STRIDE" was declared but never referenced
+      constexpr int SMDS_T_STAGE_STRIDE = 80;
+                    ^
+
+fa_bwd_merged_v1.cu(114): warning #177-D: variable "smdS_T_stage" was declared but never referenced
+      uint8_t *smdS_T_stage = reinterpret_cast<uint8_t*>(smD + Br);
+               ^
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN16fa_bwd_merged_v116kernel_merged_v1EPKhS1_S1_PK6__halfPKfS6_PhS7_Pfiiiiif' for 'sm_120a'
+ptxas info    : Function properties for _ZN16fa_bwd_merged_v116kernel_merged_v1EPKhS1_S1_PK6__halfPKfS6_PhS7_Pfiiiiif
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 252 registers, used 1 barriers
+ptxas info    : Compile time = 80.750 ms
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+fa_bwd_dq.cu(278): warning #177-D: variable "m_lo" was declared but never referenced
+              int m_lo = wid * 16 + l_div4 + 0;
+                  ^
+
+fa_bwd_dq.cu(279): warning #177-D: variable "m_hi" was declared but never referenced
+              int m_hi = wid * 16 + l_div4 + 8;
+                  ^
+
+fa_bwd_dq.cu(585): warning #177-D: variable "Bc" was declared but never referenced
+      const int Bc = 64;
+                ^
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN9fa_bwd_dq9kernel_dqEPKhS1_S1_PK6__halfPKfS6_Pfiiiiif' for 'sm_120a'
+ptxas info    : Function properties for _ZN9fa_bwd_dq9kernel_dqEPKhS1_S1_PK6__halfPKfS6_Pfiiiiif
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 161 registers, used 1 barriers
+ptxas info    : Compile time = 69.589 ms
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+fa_bwd_dq_new.cu(69): warning #177-D: variable "KS_QK" was declared but never referenced
+      constexpr int KS_QK = Hd / 32;
+                    ^
+
+fa_bwd_dq_new.cu(347): warning #177-D: variable "Bc" was declared but never referenced
+      const int Bc = 64;
+                ^
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN13fa_bwd_dq_new13kernel_dq_newEPKhS1_Pfiiiiif' for 'sm_120a'
+ptxas info    : Function properties for _ZN13fa_bwd_dq_new13kernel_dq_newEPKhS1_Pfiiiiif
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 69 registers, used 1 barriers
+ptxas info    : Compile time = 21.222 ms
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN9fa_bwd_dk19kernel_d_precomputeEPK6__halfS2_Pfiii' for 'sm_120a'
+ptxas info    : Function properties for _ZN9fa_bwd_dk19kernel_d_precomputeEPK6__halfS2_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 38 registers, used 0 barriers
+ptxas info    : Compile time = 5.643 ms
+ptxas info    : Compiling entry function '_ZN9fa_bwd_dk9kernel_dkEPKhS1_S1_PK6__halfPKfS6_Pfiiiiif' for 'sm_120a'
+ptxas info    : Function properties for _ZN9fa_bwd_dk9kernel_dkEPKhS1_S1_PK6__halfPKfS6_Pfiiiiif
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 248 registers, used 1 barriers
+ptxas info    : Compile time = 70.515 ms
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+fa_bwd_dk_new.cu(256): warning #550-D: variable "Dlo0" was set but never used
+                  uint32_t B0a_lo, B0b_lo, Dlo0, Dlo1;
+                                           ^
+
+fa_bwd_dk_new.cu(256): warning #550-D: variable "Dlo1" was set but never used
+                  uint32_t B0a_lo, B0b_lo, Dlo0, Dlo1;
+                                                 ^
+
+fa_bwd_dk_new.cu(264): warning #550-D: variable "Dhi0" was set but never used
+                  uint32_t B0a_hi, B0b_hi, Dhi0, Dhi1;
+                                           ^
+
+fa_bwd_dk_new.cu(264): warning #550-D: variable "Dhi1" was set but never used
+                  uint32_t B0a_hi, B0b_hi, Dhi0, Dhi1;
+                                                 ^
+
+fa_bwd_dk_new.cu(61): warning #177-D: variable "QT_STRIDE" was declared but never referenced
+      constexpr int QT_STRIDE = 68;
+                    ^
+
+fa_bwd_dk_new.cu(64): warning #177-D: variable "KS_QK" was declared but never referenced
+      constexpr int KS_QK = Hd / 32;
+                    ^
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN13fa_bwd_dk_new13kernel_dk_newEPKhS1_Pfiiiiif' for 'sm_120a'
+ptxas info    : Function properties for _ZN13fa_bwd_dk_new13kernel_dk_newEPKhS1_Pfiiiiif
+    80 bytes stack frame, 144 bytes spill stores, 144 bytes spill loads
+ptxas info    : Used 96 registers, used 1 barriers, 80 bytes cumulative stack size
+ptxas info    : Compile time = 23.537 ms
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN16fa_bwd_dv_mma_p116kernel_dv_mma_p1EPKhS1_PK6__halfPKfPfiiiiif' for 'sm_120a'
+ptxas info    : Function properties for _ZN16fa_bwd_dv_mma_p116kernel_dv_mma_p1EPKhS1_PK6__halfPKfPfiiiiif
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 129 registers, used 1 barriers
+ptxas info    : Compile time = 63.635 ms
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+fa_bwd_ds_gen.cu(301): warning #177-D: variable "m_lo" was declared but never referenced
+              int m_lo = wid * 16 + l_div4 + 0;
+                  ^
+
+fa_bwd_ds_gen.cu(302): warning #177-D: variable "m_hi" was declared but never referenced
+              int m_hi = wid * 16 + l_div4 + 8;
+                  ^
+
+fa_bwd_ds_gen.cu(482): warning #177-D: variable "ja_g_lo" was declared but never referenced
+              int ja_g_lo = kt_base + ja_lo;
+                  ^
+
+fa_bwd_ds_gen.cu(483): warning #177-D: variable "ja_g_hi" was declared but never referenced
+              int ja_g_hi = kt_base + ja_hi;
+                  ^
+
+fa_bwd_ds_gen.cu(484): warning #177-D: variable "jb_g_lo" was declared but never referenced
+              int jb_g_lo = kt_base + jb_lo;
+                  ^
+
+fa_bwd_ds_gen.cu(485): warning #177-D: variable "jb_g_hi" was declared but never referenced
+              int jb_g_hi = kt_base + jb_hi;
+                  ^
+
+fa_bwd_ds_gen.cu(486): warning #177-D: variable "ilo_ok" was declared but never referenced
+              bool ilo_ok = (i_g_lo < sl);
+                   ^
+
+fa_bwd_ds_gen.cu(487): warning #177-D: variable "ihi_ok" was declared but never referenced
+              bool ihi_ok = (i_g_hi < sl);
+                   ^
+
+fa_bwd_ds_gen.cu(144): warning #177-D: variable "NI_DQ" was declared but never referenced
+      constexpr int NI_DQ = Hd / 8;
+                    ^
+
+fa_bwd_ds_gen.cu(145): warning #177-D: variable "KB_DQ" was declared but never referenced
+      constexpr int KB_DQ = Bc / 32;
+                    ^
+
+fa_bwd_ds_gen.cu(181): warning #177-D: variable "smdS" was declared but never referenced
+      uint8_t *smdS = smV;
+               ^
+
+fa_bwd_ds_gen.cu(575): warning #177-D: variable "Bc" was declared but never referenced
+      const int Bc = 64;
+                ^
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN13fa_bwd_ds_gen13kernel_ds_genEPKhS1_S1_PK6__halfPKfS6_PhS7_iiiiif' for 'sm_120a'
+ptxas info    : Function properties for _ZN13fa_bwd_ds_gen13kernel_ds_genEPKhS1_S1_PK6__halfPKfS6_PhS7_iiiiif
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 130 registers, used 1 barriers
+ptxas info    : Compile time = 53.875 ms
+=== Makefile.r2c_merged_bit_exact ===
+rm -f r2c_merged_bit_exact r2c_merged_build.log
+/usr/local/cuda-13.1/bin/nvcc -O3 -gencode arch=compute_120a,code=sm_120a -std=c++17 -Xptxas=-v r2c_merged_bit_exact.cu fa_bwd_merged_v1.cu fa_bwd_ds_gen.cu fa_bwd_dv_mma_p1.cu fa_bwd_dk.cu -o r2c_merged_bit_exact 2>&1 | tee r2c_merged_build.log
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+r2c_merged_bit_exact.cu(155): warning #177-D: variable "cmp_u8" was declared but never referenced
+          auto cmp_u8 = [&](const char *tag, uint8_t *a, uint8_t *b, size_t n) -> size_t {
+               ^
+
+r2c_merged_bit_exact.cu(175): warning #177-D: variable "m_dsT" was declared but never referenced
+          size_t m_ds = 0, m_dsT = 0;
+                           ^
+
+ptxas info    : 0 bytes gmem
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+fa_bwd_merged_v1.cu(364): warning #177-D: variable "ja_hi" was declared but never referenced
+              int ja_hi = ni_a * 8 + l_mod4 * 2 + 1;
+                  ^
+
+fa_bwd_merged_v1.cu(365): warning #177-D: variable "jb_hi" was declared but never referenced
+              int jb_hi = ni_b * 8 + l_mod4 * 2 + 1;
+                  ^
+
+fa_bwd_merged_v1.cu(81): warning #177-D: variable "SMDS_T_STAGE_STRIDE" was declared but never referenced
+      constexpr int SMDS_T_STAGE_STRIDE = 80;
+                    ^
+
+fa_bwd_merged_v1.cu(114): warning #177-D: variable "smdS_T_stage" was declared but never referenced
+      uint8_t *smdS_T_stage = reinterpret_cast<uint8_t*>(smD + Br);
+               ^
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN16fa_bwd_merged_v116kernel_merged_v1EPKhS1_S1_PK6__halfPKfS6_PhS7_Pfiiiiif' for 'sm_120a'
+ptxas info    : Function properties for _ZN16fa_bwd_merged_v116kernel_merged_v1EPKhS1_S1_PK6__halfPKfS6_PhS7_Pfiiiiif
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 252 registers, used 1 barriers
+ptxas info    : Compile time = 80.056 ms
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+fa_bwd_ds_gen.cu(301): warning #177-D: variable "m_lo" was declared but never referenced
+              int m_lo = wid * 16 + l_div4 + 0;
+                  ^
+
+fa_bwd_ds_gen.cu(302): warning #177-D: variable "m_hi" was declared but never referenced
+              int m_hi = wid * 16 + l_div4 + 8;
+                  ^
+
+fa_bwd_ds_gen.cu(482): warning #177-D: variable "ja_g_lo" was declared but never referenced
+              int ja_g_lo = kt_base + ja_lo;
+                  ^
+
+fa_bwd_ds_gen.cu(483): warning #177-D: variable "ja_g_hi" was declared but never referenced
+              int ja_g_hi = kt_base + ja_hi;
+                  ^
+
+fa_bwd_ds_gen.cu(484): warning #177-D: variable "jb_g_lo" was declared but never referenced
+              int jb_g_lo = kt_base + jb_lo;
+                  ^
+
+fa_bwd_ds_gen.cu(485): warning #177-D: variable "jb_g_hi" was declared but never referenced
+              int jb_g_hi = kt_base + jb_hi;
+                  ^
+
+fa_bwd_ds_gen.cu(486): warning #177-D: variable "ilo_ok" was declared but never referenced
+              bool ilo_ok = (i_g_lo < sl);
+                   ^
+
+fa_bwd_ds_gen.cu(487): warning #177-D: variable "ihi_ok" was declared but never referenced
+              bool ihi_ok = (i_g_hi < sl);
+                   ^
+
+fa_bwd_ds_gen.cu(144): warning #177-D: variable "NI_DQ" was declared but never referenced
+      constexpr int NI_DQ = Hd / 8;
+                    ^
+
+fa_bwd_ds_gen.cu(145): warning #177-D: variable "KB_DQ" was declared but never referenced
+      constexpr int KB_DQ = Bc / 32;
+                    ^
+
+fa_bwd_ds_gen.cu(181): warning #177-D: variable "smdS" was declared but never referenced
+      uint8_t *smdS = smV;
+               ^
+
+fa_bwd_ds_gen.cu(575): warning #177-D: variable "Bc" was declared but never referenced
+      const int Bc = 64;
+                ^
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN13fa_bwd_ds_gen13kernel_ds_genEPKhS1_S1_PK6__halfPKfS6_PhS7_iiiiif' for 'sm_120a'
+ptxas info    : Function properties for _ZN13fa_bwd_ds_gen13kernel_ds_genEPKhS1_S1_PK6__halfPKfS6_PhS7_iiiiif
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 130 registers, used 1 barriers
+ptxas info    : Compile time = 51.405 ms
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN16fa_bwd_dv_mma_p116kernel_dv_mma_p1EPKhS1_PK6__halfPKfPfiiiiif' for 'sm_120a'
+ptxas info    : Function properties for _ZN16fa_bwd_dv_mma_p116kernel_dv_mma_p1EPKhS1_PK6__halfPKfPfiiiiif
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 129 registers, used 1 barriers
+ptxas info    : Compile time = 61.440 ms
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN9fa_bwd_dk19kernel_d_precomputeEPK6__halfS2_Pfiii' for 'sm_120a'
+ptxas info    : Function properties for _ZN9fa_bwd_dk19kernel_d_precomputeEPK6__halfS2_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 38 registers, used 0 barriers
+ptxas info    : Compile time = 5.909 ms
+ptxas info    : Compiling entry function '_ZN9fa_bwd_dk9kernel_dkEPKhS1_S1_PK6__halfPKfS6_Pfiiiiif' for 'sm_120a'
+ptxas info    : Function properties for _ZN9fa_bwd_dk9kernel_dkEPKhS1_S1_PK6__halfPKfS6_Pfiiiiif
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 248 registers, used 1 barriers
+ptxas info    : Compile time = 72.034 ms
+=== Makefile.r1b_dk_bit_exact ===
+rm -f r1b_dk_bit_exact r1b_dk_build.log
+/usr/local/cuda-13.1/bin/nvcc -O3 -gencode arch=compute_120a,code=sm_120a -std=c++17 -Xptxas=-v r1b_dk_bit_exact.cu fa_bwd_ds_gen.cu fa_bwd_dk.cu fa_bwd_dk_new.cu -o r1b_dk_bit_exact 2>&1 | tee r1b_dk_build.log
+r1b_dk_bit_exact.cu:15: warning: "CK" redefined
+   15 | #define CK(c) do { cudaError_t e = (c); if (e != cudaSuccess) { \
+      | 
+In file included from r1b_dk_bit_exact.cu:13:
+fa_bwd_common.cuh:43: note: this is the location of the previous definition
+   43 | #define CK(c) do { cudaError_t e = (c); if (e != cudaSuccess) { \
+      | 
+r1b_dk_bit_exact.cu:15: warning: "CK" redefined
+   15 | #define CK(c) do { cudaError_t e = (c); if (e != cudaSuccess) { \
+      | 
+In file included from r1b_dk_bit_exact.cu:13:
+fa_bwd_common.cuh:43: note: this is the location of the previous definition
+   43 | #define CK(c) do { cudaError_t e = (c); if (e != cudaSuccess) { \
+      | 
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+fa_bwd_ds_gen.cu(301): warning #177-D: variable "m_lo" was declared but never referenced
+              int m_lo = wid * 16 + l_div4 + 0;
+                  ^
+
+fa_bwd_ds_gen.cu(302): warning #177-D: variable "m_hi" was declared but never referenced
+              int m_hi = wid * 16 + l_div4 + 8;
+                  ^
+
+fa_bwd_ds_gen.cu(482): warning #177-D: variable "ja_g_lo" was declared but never referenced
+              int ja_g_lo = kt_base + ja_lo;
+                  ^
+
+fa_bwd_ds_gen.cu(483): warning #177-D: variable "ja_g_hi" was declared but never referenced
+              int ja_g_hi = kt_base + ja_hi;
+                  ^
+
+fa_bwd_ds_gen.cu(484): warning #177-D: variable "jb_g_lo" was declared but never referenced
+              int jb_g_lo = kt_base + jb_lo;
+                  ^
+
+fa_bwd_ds_gen.cu(485): warning #177-D: variable "jb_g_hi" was declared but never referenced
+              int jb_g_hi = kt_base + jb_hi;
+                  ^
+
+fa_bwd_ds_gen.cu(486): warning #177-D: variable "ilo_ok" was declared but never referenced
+              bool ilo_ok = (i_g_lo < sl);
+                   ^
+
+fa_bwd_ds_gen.cu(487): warning #177-D: variable "ihi_ok" was declared but never referenced
+              bool ihi_ok = (i_g_hi < sl);
+                   ^
+
+fa_bwd_ds_gen.cu(144): warning #177-D: variable "NI_DQ" was declared but never referenced
+      constexpr int NI_DQ = Hd / 8;
+                    ^
+
+fa_bwd_ds_gen.cu(145): warning #177-D: variable "KB_DQ" was declared but never referenced
+      constexpr int KB_DQ = Bc / 32;
+                    ^
+
+fa_bwd_ds_gen.cu(181): warning #177-D: variable "smdS" was declared but never referenced
+      uint8_t *smdS = smV;
+               ^
+
+fa_bwd_ds_gen.cu(575): warning #177-D: variable "Bc" was declared but never referenced
+      const int Bc = 64;
+                ^
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN13fa_bwd_ds_gen13kernel_ds_genEPKhS1_S1_PK6__halfPKfS6_PhS7_iiiiif' for 'sm_120a'
+ptxas info    : Function properties for _ZN13fa_bwd_ds_gen13kernel_ds_genEPKhS1_S1_PK6__halfPKfS6_PhS7_iiiiif
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 130 registers, used 1 barriers
+ptxas info    : Compile time = 51.230 ms
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN9fa_bwd_dk19kernel_d_precomputeEPK6__halfS2_Pfiii' for 'sm_120a'
+ptxas info    : Function properties for _ZN9fa_bwd_dk19kernel_d_precomputeEPK6__halfS2_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 38 registers, used 0 barriers
+ptxas info    : Compile time = 5.908 ms
+ptxas info    : Compiling entry function '_ZN9fa_bwd_dk9kernel_dkEPKhS1_S1_PK6__halfPKfS6_Pfiiiiif' for 'sm_120a'
+ptxas info    : Function properties for _ZN9fa_bwd_dk9kernel_dkEPKhS1_S1_PK6__halfPKfS6_Pfiiiiif
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 248 registers, used 1 barriers
+ptxas info    : Compile time = 71.220 ms
+fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+fa_bwd_dk_new.cu(256): warning #550-D: variable "Dlo0" was set but never used
+                  uint32_t B0a_lo, B0b_lo, Dlo0, Dlo1;
+                                           ^
+
+fa_bwd_dk_new.cu(256): warning #550-D: variable "Dlo1" was set but never used
+                  uint32_t B0a_lo, B0b_lo, Dlo0, Dlo1;
+                                                 ^
+
+fa_bwd_dk_new.cu(264): warning #550-D: variable "Dhi0" was set but never used
+                  uint32_t B0a_hi, B0b_hi, Dhi0, Dhi1;
+                                           ^
+
+fa_bwd_dk_new.cu(264): warning #550-D: variable "Dhi1" was set but never used
+                  uint32_t B0a_hi, B0b_hi, Dhi0, Dhi1;
+                                                 ^
+
+fa_bwd_dk_new.cu(61): warning #177-D: variable "QT_STRIDE" was declared but never referenced
+      constexpr int QT_STRIDE = 68;
+                    ^
+
+fa_bwd_dk_new.cu(64): warning #177-D: variable "KS_QK" was declared but never referenced
+      constexpr int KS_QK = Hd / 32;
+                    ^
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN13fa_bwd_dk_new13kernel_dk_newEPKhS1_Pfiiiiif' for 'sm_120a'
+ptxas info    : Function properties for _ZN13fa_bwd_dk_new13kernel_dk_newEPKhS1_Pfiiiiif
+    80 bytes stack frame, 144 bytes spill stores, 144 bytes spill loads
+ptxas info    : Used 96 registers, used 1 barriers, 80 bytes cumulative stack size
+ptxas info    : Compile time = 23.152 ms
+done

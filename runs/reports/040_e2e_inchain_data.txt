@@ -1,0 +1,6 @@
+=== 040 E2E 5-run in-chain (isolated + full chain) ===
+run=1 temp=49C mode=in-chain   D=0.342  merged=25.019  dk_new=10.386  dq_new=8.736  total=44.483  overhead=0.000
+run=2 temp=46C mode=in-chain   D=0.341  merged=25.022  dk_new=10.392  dq_new=8.736  total=44.492  overhead=-0.000
+run=3 temp=45C mode=in-chain   D=0.341  merged=25.001  dk_new=10.381  dq_new=8.728  total=44.451  overhead=-0.000
+run=4 temp=45C mode=in-chain   D=0.342  merged=25.015  dk_new=10.389  dq_new=8.732  total=44.478  overhead=-0.000
+run=5 temp=46C mode=in-chain   D=0.342  merged=25.025  dk_new=10.395  dq_new=8.742  total=44.503  overhead=-0.000

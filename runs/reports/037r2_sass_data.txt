@@ -1,0 +1,26 @@
+bench_merged: FINGERPRINT kernel_merged_v1: numRegs=254, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256
+GATE OK: numRegs=254 matches EXPECT=254
+
+== Functions in fresh binary ==
+34:		Function : _ZN16fa_bwd_merged_v116kernel_merged_v1EPKhS1_S1_PK6__halfPKfS6_PhS7_Pfiiiiif
+5170:		Function : _ZN9fa_bwd_dk19kernel_d_precomputeEPK6__halfS2_Pfiii
+5703:		Function : _ZN9fa_bwd_dk9kernel_dkEPKhS1_S1_PK6__halfPKfS6_Pfiiiiif
+kernel_merged_v1 SASS lines: [34, 5170)
+
+-- STG per kernel_merged_v1 --
+     64 STG.E
+      1 STG.E.128
+-- STS per kernel_merged_v1 --
+     10 STS.E.BYPASS.128
+     48 STS.U16
+-- LDS per kernel_merged_v1 --
+      1 LDS.128
+    384 LDS.U16
+-- LDG per kernel_merged_v1 --
+      2 LDG.E.CONSTANT
+-- BAR per kernel_merged_v1 --
+9
+-- SHFL per kernel_merged_v1 --
+0
+-- CP.ASYNC per kernel_merged_v1 --
+     10 LDGSTS.E.BYPASS.128

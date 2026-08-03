@@ -1,0 +1,51 @@
+=== r2c_merged_wall (Jul 6 07:14) ===
+
+Fatbin elf code:
+================
+arch = sm_120a
+code version = [1,8]
+host = linux
+compile_size = 64bit
+
+Resource usage:
+ Common:
+  GLOBAL:0
+
+Fatbin elf code:
+================
+arch = sm_120a
+code version = [1,8]
+host = linux
+compile_size = 64bit
+
+Resource usage:
+ Common:
+  GLOBAL:0
+
+Fatbin elf code:
+================
+arch = sm_120a
+code version = [1,8]
+host = linux
+compile_size = 64bit
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _ZN16fa_bwd_merged_v116kernel_merged_v1EPKhS1_S1_PK6__halfPKfS6_PhS7_Pfiiiiif:
+  REG:253 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:992 TEXTURE:0 SURFACE:0 SAMPLER:0
+
+Fatbin elf code:
+================
+arch = sm_120a
+code version = [1,8]
+host = linux
+compile_size = 64bit
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _ZN9fa_bwd_dk19kernel_d_precomputeEPK6__halfS2_Pfiii:
+  REG:38 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:932 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN9fa_bwd_dk9kernel_dkEPKhS1_S1_PK6__halfPKfS6_Pfiiiiif:
+  REG:248 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:976 TEXTURE:0 SURFACE:0 SAMPLER:0

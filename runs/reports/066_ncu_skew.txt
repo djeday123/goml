@@ -1,0 +1,120 @@
+=========================================
+===== MODE=NC (CAUSAL=0) =====
+=========================================
+----- kernel_merged_v1 -----
+  Sequential vs 16N^2d: 325.66 T (vs sealed 285.44 T)
+  Sequential vs 10N^2d: 203.54 T (R2C honest, first == fused-min)
+==PROF== Disconnected from process 1144411
+[1144411] bench_r2c_e2e@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------- ----------- --------------
+    Metric Name                      Metric Unit   Metric Value
+    -------------------------------- ----------- --------------
+    launch__block_size                                      128
+    launch__grid_size                                    16,384
+    launch__waves_per_multiprocessor                      43.57
+    sm__cycles_active.avg                  cycle  54,763,032.12
+    sm__cycles_active.max                  cycle     55,285,963
+    sm__cycles_active.min                  cycle     54,553,369
+    sm__cycles_active.sum                  cycle 10,295,450,039
+    -------------------------------- ----------- --------------
+
+----- kernel_dk_new -----
+  Sequential vs 16N^2d: 325.66 T (vs sealed 285.44 T)
+  Sequential vs 10N^2d: 203.54 T (R2C honest, first == fused-min)
+==PROF== Disconnected from process 1144642
+[1144642] bench_r2c_e2e@127.0.0.1
+  kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------- ----------- -------------
+    Metric Name                      Metric Unit  Metric Value
+    -------------------------------- ----------- -------------
+    launch__block_size                                     128
+    launch__grid_size                                   16,384
+    launch__waves_per_multiprocessor                     21.79
+    sm__cycles_active.avg                  cycle 15,445,227.62
+    sm__cycles_active.max                  cycle    15,627,766
+    sm__cycles_active.min                  cycle    15,211,787
+    sm__cycles_active.sum                  cycle 2,903,702,793
+    -------------------------------- ----------- -------------
+
+----- kernel_dq_new -----
+  Sequential vs 16N^2d: 325.64 T (vs sealed 285.44 T)
+  Sequential vs 10N^2d: 203.52 T (R2C honest, first == fused-min)
+==PROF== Disconnected from process 1144919
+[1144919] bench_r2c_e2e@127.0.0.1
+  kernel_dq_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------- ----------- -------------
+    Metric Name                      Metric Unit  Metric Value
+    -------------------------------- ----------- -------------
+    launch__block_size                                     128
+    launch__grid_size                                   16,384
+    launch__waves_per_multiprocessor                     14.52
+    sm__cycles_active.avg                  cycle 14,132,664.72
+    sm__cycles_active.max                  cycle    14,273,234
+    sm__cycles_active.min                  cycle    13,933,838
+    sm__cycles_active.sum                  cycle 2,656,940,968
+    -------------------------------- ----------- -------------
+
+=========================================
+===== MODE=CAUSAL (CAUSAL=1) =====
+=========================================
+----- kernel_merged_v1 -----
+  Sequential vs 16N^2d: 622.54 T (vs sealed 285.44 T)
+  Sequential vs 10N^2d: 389.09 T (R2C honest, first == fused-min)
+==PROF== Disconnected from process 1145166
+[1145166] bench_r2c_e2e@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------- ----------- -------------
+    Metric Name                      Metric Unit  Metric Value
+    -------------------------------- ----------- -------------
+    launch__block_size                                     128
+    launch__grid_size                                   16,384
+    launch__waves_per_multiprocessor                     43.57
+    sm__cycles_active.avg                  cycle 27,707,452.46
+    sm__cycles_active.max                  cycle    28,280,954
+    sm__cycles_active.min                  cycle    27,118,030
+    sm__cycles_active.sum                  cycle 5,209,001,063
+    -------------------------------- ----------- -------------
+
+----- kernel_dk_new -----
+  Sequential vs 16N^2d: 622.96 T (vs sealed 285.44 T)
+  Sequential vs 10N^2d: 389.35 T (R2C honest, first == fused-min)
+==PROF== Disconnected from process 1145398
+[1145398] bench_r2c_e2e@127.0.0.1
+  kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------- ----------- -------------
+    Metric Name                      Metric Unit  Metric Value
+    -------------------------------- ----------- -------------
+    launch__block_size                                     128
+    launch__grid_size                                   16,384
+    launch__waves_per_multiprocessor                     21.79
+    sm__cycles_active.avg                  cycle  8,025,072.71
+    sm__cycles_active.max                  cycle     8,273,491
+    sm__cycles_active.min                  cycle     7,743,515
+    sm__cycles_active.sum                  cycle 1,508,713,670
+    -------------------------------- ----------- -------------
+
+----- kernel_dq_new -----
+  Sequential vs 16N^2d: 622.68 T (vs sealed 285.44 T)
+  Sequential vs 10N^2d: 389.17 T (R2C honest, first == fused-min)
+==PROF== Disconnected from process 1145626
+[1145626] bench_r2c_e2e@127.0.0.1
+  kernel_dq_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------- ----------- -------------
+    Metric Name                      Metric Unit  Metric Value
+    -------------------------------- ----------- -------------
+    launch__block_size                                     128
+    launch__grid_size                                   16,384
+    launch__waves_per_multiprocessor                     14.52
+    sm__cycles_active.avg                  cycle  7,342,073.86
+    sm__cycles_active.max                  cycle     7,672,139
+    sm__cycles_active.min                  cycle     6,932,697
+    sm__cycles_active.sum                  cycle 1,380,309,886
+    -------------------------------- ----------- -------------
+

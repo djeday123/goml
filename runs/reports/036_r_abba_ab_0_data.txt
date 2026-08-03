@@ -1,0 +1,16 @@
+run=1 tag=AB temp=47C   D=0.341  merged=28.558  dk_new=10.414  dq_new=8.752  total=48.066  overhead=0.000
+run=2 tag=0 temp=45C   D=0.342  merged=28.564  dk_new=10.752  dq_new=8.756  total=48.413  overhead=0.000
+run=3 tag=0 temp=49C   D=0.342  merged=28.582  dk_new=10.757  dq_new=8.762  total=48.442  overhead=0.000
+run=4 tag=AB temp=47C   D=0.342  merged=28.593  dk_new=10.430  dq_new=8.763  total=48.129  overhead=-0.000
+run=5 tag=AB temp=46C   D=0.342  merged=28.581  dk_new=10.425  dq_new=8.762  total=48.110  overhead=-0.000
+run=6 tag=0 temp=46C   D=0.343  merged=28.576  dk_new=10.757  dq_new=8.760  total=48.436  overhead=0.000
+run=7 tag=0 temp=45C   D=0.342  merged=28.581  dk_new=10.760  dq_new=8.760  total=48.442  overhead=-0.000
+run=8 tag=AB temp=48C   D=0.342  merged=28.581  dk_new=10.424  dq_new=8.760  total=48.107  overhead=0.000
+run=9 tag=AB temp=46C   D=0.342  merged=28.578  dk_new=10.423  dq_new=8.757  total=48.100  overhead=0.000
+run=10 tag=0 temp=54C   D=0.342  merged=28.585  dk_new=10.758  dq_new=8.759  total=48.444  overhead=-0.000
+run=11 tag=0 temp=48C   D=0.342  merged=28.595  dk_new=10.764  dq_new=8.762  total=48.463  overhead=-0.000
+run=12 tag=AB temp=47C   D=0.342  merged=28.612  dk_new=10.437  dq_new=8.766  total=48.157  overhead=0.000
+run=13 tag=AB temp=54C   D=0.342  merged=28.608  dk_new=10.432  dq_new=8.768  total=48.151  overhead=-0.000
+run=14 tag=0 temp=48C   D=0.342  merged=28.618  dk_new=10.773  dq_new=8.774  total=48.506  overhead=0.000
+run=15 tag=0 temp=47C   D=0.342  merged=28.594  dk_new=10.763  dq_new=8.765  total=48.463  overhead=-0.000
+run=16 tag=AB temp=45C   D=0.342  merged=28.585  dk_new=10.426  dq_new=8.761  total=48.114  overhead=0.000

@@ -1,0 +1,42 @@
+=== 046 I: NCu kernel_merged_v1 [bh=1 b2b + persist, NCu-mode] ===
+==PROF== Disconnected from process 807607
+[807607] bench_bh1_b2b@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (128, 1, 1)x(128, 1, 1), Context 1, Stream 13, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    ------------------------------------------------- ----------- ------------
+    Metric Name                                       Metric Unit Metric Value
+    ------------------------------------------------- ----------- ------------
+    dram__bytes.sum                                         Mbyte         9.55
+    lts__t_sector_hit_rate.pct                                  %        91.86
+    sm__warps_active.avg.pct_of_peak_sustained_active           %         8.33
+    ------------------------------------------------- ----------- ------------
+
+
+=== 046 I: NCu kernel_dk_new [bh=1 b2b + persist, NCu-mode] ===
+==PROF== Disconnected from process 807679
+[807679] bench_bh1_b2b@127.0.0.1
+  kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float) (128, 1, 1)x(128, 1, 1), Context 1, Stream 13, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    ------------------------------------------------- ----------- ------------
+    Metric Name                                       Metric Unit Metric Value
+    ------------------------------------------------- ----------- ------------
+    dram__bytes.sum                                         Mbyte        68.17
+    lts__t_sector_hit_rate.pct                                  %        67.10
+    sm__warps_active.avg.pct_of_peak_sustained_active           %         8.33
+    ------------------------------------------------- ----------- ------------
+
+
+=== 046 I: NCu kernel_dq_new [bh=1 b2b + persist, NCu-mode] ===
+==PROF== Disconnected from process 807749
+[807749] bench_bh1_b2b@127.0.0.1
+  kernel_dq_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float) (128, 1, 1)x(128, 1, 1), Context 1, Stream 13, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    ------------------------------------------------- ----------- ------------
+    Metric Name                                       Metric Unit Metric Value
+    ------------------------------------------------- ----------- ------------
+    dram__bytes.sum                                         Mbyte        68.17
+    lts__t_sector_hit_rate.pct                                  %        71.65
+    sm__warps_active.avg.pct_of_peak_sustained_active           %         8.33
+    ------------------------------------------------- ----------- ------------
+
+

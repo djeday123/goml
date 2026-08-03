@@ -1,0 +1,63 @@
+======================================
+FA-Blackwell-fp8 v0.2.0 — verify
+======================================
+
+NVCC = nvcc (from PATH)
+NVCC autodetected: /usr/local/cuda-13.1/bin/nvcc
+nvcc: NVIDIA (R) Cuda compiler driver
+Cuda compilation tools, release 13.1, V13.1.115
+
+[1/5] Build all binaries...
+src/fa_bwd_ds_gen.cu(575): warning #177-D: variable "Bc" was declared but never referenced
+      const int Bc = 64;
+                ^
+
+src/fa_bwd_common.cuh(202): warning #550-D: variable "token" was set but never used
+      uint64_t token;
+               ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+[1/5] OK — all 3 binaries built.
+
+[2/5] Fingerprint gate (EXPECT 252/124/69/38)...
+FINGERPRINT kernel_d_precompute    numRegs= 38 (expected  38) OK
+FINGERPRINT kernel_merged_v1       numRegs=252 (expected 252) OK
+FINGERPRINT kernel_dk_new          numRegs=124 (expected 124) OK
+FINGERPRINT kernel_dq_new          numRegs= 69 (expected  69) OK
+[2/5] OK — fingerprint 252/124/69/38 matched.
+
+[3/5] Bit-exact chain (merged: dV+dS_nat, 11 forms × 3 gradients)...
+
+=== SUMMARY ===
+  forms triple-bit-exact: 11 / 11
+[3/5] OK — 11/11 gradient chains BIT-EXACT.
+
+[4/5] Bit-exact chain (dK, 11 forms)...
+
+=== SUMMARY ===
+    forms bit-exact: 11 / 11
+[4/5] OK — 11/11 dK BIT-EXACT.
+
+[5/5] Wall 5-run (nc + causal, canonical bh=128 sl=8192 hd=128)...
+  -- Non-causal (CAUSAL=0) --
+    run=1   D=0.342  merged=24.907  dk_new=8.336  dq_new=8.384  total=41.969  overhead=-0.000  TFLOPS proj_16N2d=418.17 T  fused_10N2d=261.15 T
+    run=2   D=0.342  merged=24.996  dk_new=8.374  dq_new=8.414  total=42.126  overhead=0.000  TFLOPS proj_16N2d=417.45 T  fused_10N2d=260.64 T
+    run=3   D=0.342  merged=25.029  dk_new=8.388  dq_new=8.426  total=42.184  overhead=-0.000  TFLOPS proj_16N2d=416.80 T  fused_10N2d=260.52 T
+    run=4   D=0.342  merged=25.078  dk_new=8.403  dq_new=8.446  total=42.269  overhead=0.000  TFLOPS proj_16N2d=416.60 T  fused_10N2d=260.16 T
+    run=5   D=0.342  merged=25.056  dk_new=8.396  dq_new=8.439  total=42.234  overhead=-0.000  TFLOPS proj_16N2d=416.12 T  fused_10N2d=260.11 T
+  -- Causal (CAUSAL=1) --
+    run=1   D=0.340  merged=12.720  dk_new=4.570  dq_new=4.585  total=22.216  overhead=-0.000  TFLOPS proj_16N2d=791.75 T
+    run=2   D=0.339  merged=12.719  dk_new=4.573  dq_new=4.584  total=22.215  overhead=-0.000  TFLOPS proj_16N2d=790.72 T
+    run=3   D=0.340  merged=12.714  dk_new=4.570  dq_new=4.588  total=22.212  overhead=0.000  TFLOPS proj_16N2d=791.00 T
+    run=4   D=0.340  merged=12.735  dk_new=4.572  dq_new=4.587  total=22.234  overhead=-0.000  TFLOPS proj_16N2d=792.04 T
+    run=5   D=0.340  merged=12.718  dk_new=4.572  dq_new=4.593  total=22.222  overhead=0.000  TFLOPS proj_16N2d=792.13 T
+[5/5] OK — wall printed both conventions.
+
+======================================
+VERIFY PASSED — v0.2.0 ready.
+  Kernel md5 (should match docs/cert/):
+25e5e1077cc3bec2c49bf9288fe60c54  fa_bwd_dk_new.cu
+2bf32ab7d4c5ecabb4ee2dbf1b5d4b33  fa_bwd_merged_v1.cu
+d7a11a3d788eb4c396d892bc9c8ab754  fa_bwd_dq_new.cu
+======================================

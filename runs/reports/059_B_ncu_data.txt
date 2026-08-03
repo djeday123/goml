@@ -1,0 +1,54 @@
+===== BASE =====
+[959448] r2c_merged_wall_base@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    --------------------------------------------------------------- ----------- ------------
+    Metric Name                                                     Metric Unit Metric Value
+    --------------------------------------------------------------- ----------- ------------
+    smsp__warp_issue_stalled_barrier_per_warp_active.pct                      %         2.57
+    smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct              %         6.72
+    smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct           %        13.67
+    smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct                 %         8.86
+    smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct             %         9.71
+    smsp__warp_issue_stalled_wait_per_warp_active.pct                         %        33.01
+    --------------------------------------------------------------- ----------- ------------
+
+    Section: Command line profiler metrics
+    -------------------------------------------------------- --------------- -------------
+    Metric Name                                                  Metric Unit  Metric Value
+    -------------------------------------------------------- --------------- -------------
+    dram__bytes.sum                                                    Gbyte          9.81
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                   132,104,095
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                    17,232,975
+    l1tex__data_pipe_lsu_wavefronts_mem_shared.sum                           4,063,349,735
+    launch__registers_per_thread                             register/thread           252
+    sm__warps_active.avg.pct_of_peak_sustained_active                      %         16.59
+    -------------------------------------------------------- --------------- -------------
+
+===== CAND =====
+[959916] r2c_merged_wall_cand_B@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    --------------------------------------------------------------- ----------- ------------
+    Metric Name                                                     Metric Unit Metric Value
+    --------------------------------------------------------------- ----------- ------------
+    smsp__warp_issue_stalled_barrier_per_warp_active.pct                      %         2.65
+    smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct              %         4.51
+    smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct           %        13.74
+    smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct                 %         9.06
+    smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct             %         9.52
+    smsp__warp_issue_stalled_wait_per_warp_active.pct                         %        33.97
+    --------------------------------------------------------------- ----------- ------------
+
+    Section: Command line profiler metrics
+    -------------------------------------------------------- --------------- -------------
+    Metric Name                                                  Metric Unit  Metric Value
+    -------------------------------------------------------- --------------- -------------
+    dram__bytes.sum                                                    Gbyte          9.79
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                   130,262,254
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                    23,343,443
+    l1tex__data_pipe_lsu_wavefronts_mem_shared.sum                           4,134,250,390
+    launch__registers_per_thread                             register/thread           251
+    sm__warps_active.avg.pct_of_peak_sustained_active                      %         16.59
+    -------------------------------------------------------- --------------- -------------
+

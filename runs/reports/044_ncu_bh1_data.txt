@@ -1,0 +1,42 @@
+=== 044 I.3.b: NCu kernel_merged_v1 [bh=1, режим NCu-mode] ===
+==PROF== Disconnected from process 800389
+[800389] bench_bh1_sl8192@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (128, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    ------------------------------------------------- ----------- ------------
+    Metric Name                                       Metric Unit Metric Value
+    ------------------------------------------------- ----------- ------------
+    dram__bytes.sum                                         Mbyte        31.23
+    lts__t_sector_hit_rate.pct                                  %        91.86
+    sm__warps_active.avg.pct_of_peak_sustained_active           %         8.33
+    ------------------------------------------------- ----------- ------------
+
+
+=== 044 I.3.b: NCu kernel_dk_new [bh=1, режим NCu-mode] ===
+==PROF== Disconnected from process 800459
+[800459] bench_bh1_sl8192@127.0.0.1
+  kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float) (128, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    ------------------------------------------------- ----------- ------------
+    Metric Name                                       Metric Unit Metric Value
+    ------------------------------------------------- ----------- ------------
+    dram__bytes.sum                                         Mbyte        68.17
+    lts__t_sector_hit_rate.pct                                  %        67.10
+    sm__warps_active.avg.pct_of_peak_sustained_active           %         8.33
+    ------------------------------------------------- ----------- ------------
+
+
+=== 044 I.3.b: NCu kernel_dq_new [bh=1, режим NCu-mode] ===
+==PROF== Disconnected from process 800529
+[800529] bench_bh1_sl8192@127.0.0.1
+  kernel_dq_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float) (128, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    ------------------------------------------------- ----------- ------------
+    Metric Name                                       Metric Unit Metric Value
+    ------------------------------------------------- ----------- ------------
+    dram__bytes.sum                                         Mbyte        68.17
+    lts__t_sector_hit_rate.pct                                  %        71.65
+    sm__warps_active.avg.pct_of_peak_sustained_active           %         8.33
+    ------------------------------------------------- ----------- ------------
+
+

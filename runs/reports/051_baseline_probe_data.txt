@@ -1,0 +1,6 @@
+=== baseline dk (production 033 sealed) 5 consecutive runs ===
+run=1 temp=43C   D=0.363  merged=48.782  dk_new=18.882  dq_new=18.129  total=86.156  overhead=0.000
+run=2 temp=46C   D=0.361  merged=48.782  dk_new=18.883  dq_new=18.141  total=86.166  overhead=-0.000
+run=3 temp=47C   D=0.355  merged=48.803  dk_new=18.888  dq_new=18.137  total=86.184  overhead=0.000
+run=4 temp=47C   D=0.364  merged=48.799  dk_new=18.888  dq_new=18.131  total=86.182  overhead=0.000
+run=5 temp=47C   D=0.360  merged=48.813  dk_new=18.895  dq_new=18.141  total=86.209  overhead=0.000

@@ -1,0 +1,23 @@
+=== 053 ABBA merged isolated (base=040 252r, cand=053 254r dO half-prefetch) ===
+-- warmup 4 runs --
+warmup=1 temp=43C BASE: bench_merged: avg_ms=48.446  tflops_3mma=136.17
+warmup=2 temp=46C CAND: bench_merged: avg_ms=49.382  tflops_3mma=133.59
+warmup=3 temp=46C BASE: bench_merged: avg_ms=48.452  tflops_3mma=136.16
+warmup=4 temp=46C CAND: bench_merged: avg_ms=49.364  tflops_3mma=133.64
+-- 16 timed (8 pairs) --
+timed=1 temp=46C BASE: bench_merged: avg_ms=48.445  tflops_3mma=136.18
+timed=2 temp=45C CAND: bench_merged: avg_ms=49.366  tflops_3mma=133.64
+timed=3 temp=46C CAND: bench_merged: avg_ms=49.367  tflops_3mma=133.63
+timed=4 temp=46C BASE: bench_merged: avg_ms=48.455  tflops_3mma=136.15
+timed=5 temp=46C BASE: bench_merged: avg_ms=48.462  tflops_3mma=136.13
+timed=6 temp=46C CAND: bench_merged: avg_ms=49.372  tflops_3mma=133.62
+timed=7 temp=46C CAND: bench_merged: avg_ms=49.518  tflops_3mma=133.23
+timed=8 temp=46C BASE: bench_merged: avg_ms=48.464  tflops_3mma=136.12
+timed=9 temp=46C BASE: bench_merged: avg_ms=48.472  tflops_3mma=136.10
+timed=10 temp=46C CAND: bench_merged: avg_ms=49.522  tflops_3mma=133.22
+timed=11 temp=46C CAND: bench_merged: avg_ms=49.512  tflops_3mma=133.24
+timed=12 temp=46C BASE: bench_merged: avg_ms=48.478  tflops_3mma=136.08
+timed=13 temp=46C BASE: bench_merged: avg_ms=48.461  tflops_3mma=136.13
+timed=14 temp=47C CAND: bench_merged: avg_ms=49.372  tflops_3mma=133.62
+timed=15 temp=47C CAND: bench_merged: avg_ms=49.387  tflops_3mma=133.58
+timed=16 temp=46C BASE: bench_merged: avg_ms=48.458  tflops_3mma=136.14

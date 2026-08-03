@@ -1,0 +1,43 @@
+=== 071 x1-probe ===
+target: ldmatrix.sync.aligned.m16n16.x1.trans.shared.b8 {%0,%1}
+layout: swz_byte(row, col_byte) writer + row-marker (byte=row)
+
+wid=0 np=0 kb=0: lane -> R0 R1 addr (row-marker inside byte fragments)
+  lane 0: R0=03020100 R1=03020100 addr=0
+  lane 1: R0=07060504 R1=07060504 addr=144
+  lane 2: R0=0b0a0908 R1=0b0a0908 addr=288
+  lane 3: R0=0f0e0d0c R1=0f0e0d0c addr=432
+  lane 4: R0=03020100 R1=03020100 addr=576
+  lane 5: R0=07060504 R1=07060504 addr=720
+  lane 6: R0=0b0a0908 R1=0b0a0908 addr=864
+  lane 7: R0=0f0e0d0c R1=0f0e0d0c addr=1008
+  lane 8: R0=03020100 R1=03020100 addr=1024
+  lane 9: R0=07060504 R1=07060504 addr=1168
+  lane10: R0=0b0a0908 R1=0b0a0908 addr=1312
+  lane11: R0=0f0e0d0c R1=0f0e0d0c addr=1456
+  lane12: R0=03020100 R1=03020100 addr=1600
+  lane13: R0=07060504 R1=07060504 addr=1744
+  lane14: R0=0b0a0908 R1=0b0a0908 addr=1888
+  lane15: R0=0f0e0d0c R1=0f0e0d0c addr=2032
+  lane16: R0=03020100 R1=03020100 addr=2048
+  lane17: R0=07060504 R1=07060504 addr=2192
+  lane18: R0=0b0a0908 R1=0b0a0908 addr=2336
+  lane19: R0=0f0e0d0c R1=0f0e0d0c addr=2480
+  lane20: R0=03020100 R1=03020100 addr=2624
+  lane21: R0=07060504 R1=07060504 addr=2768
+  lane22: R0=0b0a0908 R1=0b0a0908 addr=2912
+  lane23: R0=0f0e0d0c R1=0f0e0d0c addr=3056
+  lane24: R0=03020100 R1=03020100 addr=3072
+  lane25: R0=07060504 R1=07060504 addr=3216
+  lane26: R0=0b0a0908 R1=0b0a0908 addr=3360
+  lane27: R0=0f0e0d0c R1=0f0e0d0c addr=3504
+  lane28: R0=03020100 R1=03020100 addr=3648
+  lane29: R0=07060504 R1=07060504 addr=3792
+  lane30: R0=0b0a0908 R1=0b0a0908 addr=3936
+  lane31: R0=0f0e0d0c R1=0f0e0d0c addr=4080
+
+=== Injectivity: unique row-markers in wid=0 warp ===
+unique row-marker bytes seen in warp0 R0+R1: 16 (expected 16 for m16n16.x1 one matrix)
+verdict: MATCHES m16n16 ONE MATRIX
+lanes with R0==R1 in warp0: 32/32
+done

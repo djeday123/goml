@@ -1,0 +1,62 @@
+=== 061 C0 col-проход (col-marker) ===
+Injectivity: 128 unique col-values <= 256 byte states, no collisions by construction ✓
+Coverage: 2 kb × 8 np × 32 lanes × 2 lo/hi × 4 regs × 4 bytes = 16384 samples
+
+--- Sample dump: kb=0, np=0, LDSM lo, all lanes (bytes = col positions) ---
+lane= 0: cols={   0   0   0   0   8   8   8   8   0   0   0   0   8   8   8   8 }
+lane= 1: cols={   0   0   0   0   8   8   8   8   0   0   0   0   8   8   8   8 }
+lane= 2: cols={   0   0   0   0   8   8   8   8   0   0   0   0   8   8   8   8 }
+lane= 3: cols={   0   0   0   0   8   8   8   8   0   0   0   0   8   8   8   8 }
+lane= 4: cols={   1   1   1   1   9   9   9   9   1   1   1   1   9   9   9   9 }
+lane= 5: cols={   1   1   1   1   9   9   9   9   1   1   1   1   9   9   9   9 }
+lane= 6: cols={   1   1   1   1   9   9   9   9   1   1   1   1   9   9   9   9 }
+lane= 7: cols={   1   1   1   1   9   9   9   9   1   1   1   1   9   9   9   9 }
+lane= 8: cols={   2   2   2   2  10  10  10  10   2   2   2   2  10  10  10  10 }
+lane= 9: cols={   2   2   2   2  10  10  10  10   2   2   2   2  10  10  10  10 }
+lane=10: cols={   2   2   2   2  10  10  10  10   2   2   2   2  10  10  10  10 }
+lane=11: cols={   2   2   2   2  10  10  10  10   2   2   2   2  10  10  10  10 }
+lane=12: cols={   3   3   3   3  11  11  11  11   3   3   3   3  11  11  11  11 }
+lane=13: cols={   3   3   3   3  11  11  11  11   3   3   3   3  11  11  11  11 }
+lane=14: cols={   3   3   3   3  11  11  11  11   3   3   3   3  11  11  11  11 }
+lane=15: cols={   3   3   3   3  11  11  11  11   3   3   3   3  11  11  11  11 }
+lane=16: cols={   4   4   4   4  12  12  12  12   4   4   4   4  12  12  12  12 }
+lane=17: cols={   4   4   4   4  12  12  12  12   4   4   4   4  12  12  12  12 }
+lane=18: cols={   4   4   4   4  12  12  12  12   4   4   4   4  12  12  12  12 }
+lane=19: cols={   4   4   4   4  12  12  12  12   4   4   4   4  12  12  12  12 }
+lane=20: cols={   5   5   5   5  13  13  13  13   5   5   5   5  13  13  13  13 }
+lane=21: cols={   5   5   5   5  13  13  13  13   5   5   5   5  13  13  13  13 }
+lane=22: cols={   5   5   5   5  13  13  13  13   5   5   5   5  13  13  13  13 }
+lane=23: cols={   5   5   5   5  13  13  13  13   5   5   5   5  13  13  13  13 }
+lane=24: cols={   6   6   6   6  14  14  14  14   6   6   6   6  14  14  14  14 }
+lane=25: cols={   6   6   6   6  14  14  14  14   6   6   6   6  14  14  14  14 }
+lane=26: cols={   6   6   6   6  14  14  14  14   6   6   6   6  14  14  14  14 }
+lane=27: cols={   6   6   6   6  14  14  14  14   6   6   6   6  14  14  14  14 }
+lane=28: cols={   7   7   7   7  15  15  15  15   7   7   7   7  15  15  15  15 }
+lane=29: cols={   7   7   7   7  15  15  15  15   7   7   7   7  15  15  15  15 }
+lane=30: cols={   7   7   7   7  15  15  15  15   7   7   7   7  15  15  15  15 }
+lane=31: cols={   7   7   7   7  15  15  15  15   7   7   7   7  15  15  15  15 }
+
+--- Coverage report ---
+Total samples: 16384
+Valid col-values (0..127): 16384
+Percentage valid: 100.00%
+Unique cols seen: 128 / 128
+
+--- Byte ORDER check within R0/R1 (kb=0, np=0, LDSM lo) ---
+MMA-B expectation: R0 [4 bytes] all at SAME col-pos (n-value), R2=R0 dup
+lane=0 R0={0,0,0,0} R1={8,8,8,8} R2==R0:YES R3==R1:YES
+lane=1 R0={0,0,0,0} R1={8,8,8,8} R2==R0:YES R3==R1:YES
+lane=2 R0={0,0,0,0} R1={8,8,8,8} R2==R0:YES R3==R1:YES
+lane=3 R0={0,0,0,0} R1={8,8,8,8} R2==R0:YES R3==R1:YES
+lane=4 R0={1,1,1,1} R1={9,9,9,9} R2==R0:YES R3==R1:YES
+lane=5 R0={1,1,1,1} R1={9,9,9,9} R2==R0:YES R3==R1:YES
+lane=6 R0={1,1,1,1} R1={9,9,9,9} R2==R0:YES R3==R1:YES
+lane=7 R0={1,1,1,1} R1={9,9,9,9} R2==R0:YES R3==R1:YES
+
+R0 uniform (all 4 bytes same col) : 32 / 32 = 100.0%
+R1 uniform + different from R0    : 32 / 32 = 100.0%
+R2 duplicates R0 (ISA-квирк 045)  : 32 / 32 = 100.0%
+R3 duplicates R1 (ISA-квирк 045)  : 32 / 32 = 100.0%
+
+=== C0 BRIDGE VERDICT ===
+Col-проход 100% (byte ORDER соответствует MMA-B фрагменту)

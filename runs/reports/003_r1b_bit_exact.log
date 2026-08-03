@@ -1,0 +1,14 @@
+[F1     bh=1 sl= 128 caus=0 wnd=0] G1 nat vs ref: cmp=16384 mism=0 sr=0 sg=0 | G2 T vs nat: cmp=16384 mism=0 sn=0 sT=0  PASS
+[F2     bh=1 sl= 128 caus=1 wnd=0] G1 nat vs ref: cmp=12288 mism=0 sr=0 sg=0 | G2 T vs nat: cmp=12288 mism=0 sn=0 sT=0  PASS
+[F3     bh=2 sl= 256 caus=0 wnd=0] G1 nat vs ref: cmp=131072 mism=0 sr=0 sg=0 | G2 T vs nat: cmp=131072 mism=0 sn=0 sT=0  PASS
+[F4     bh=2 sl= 256 caus=1 wnd=0] G1 nat vs ref: cmp=81920 mism=0 sr=0 sg=0 | G2 T vs nat: cmp=81920 mism=0 sn=0 sT=0  PASS
+[F5     bh=4 sl= 384 caus=0 wnd=0] G1 nat vs ref: cmp=589824 mism=0 sr=0 sg=0 | G2 T vs nat: cmp=589824 mism=0 sn=0 sT=0  PASS
+[F6     bh=4 sl= 384 caus=1 wnd=0] G1 nat vs ref: cmp=344064 mism=0 sr=0 sg=0 | G2 T vs nat: cmp=344064 mism=0 sn=0 sT=0  PASS
+[F7     bh=1 sl= 512 caus=0 wnd=128] G1 nat vs ref: cmp=262144 mism=0 sr=0 sg=0 | G2 T vs nat: cmp=262144 mism=0 sn=0 sT=0  PASS
+[F8     bh=1 sl= 512 caus=1 wnd=128] G1 nat vs ref: cmp=147456 mism=0 sr=0 sg=0 | G2 T vs nat: cmp=147456 mism=0 sn=0 sT=0  PASS
+[F9     bh=1 sl=2048 caus=0 wnd=0] G1 nat vs ref: cmp=4194304 mism=0 sr=0 sg=0 | G2 T vs nat: cmp=4194304 mism=0 sn=0 sT=0  PASS
+[F10    bh=1 sl=2048 caus=1 wnd=0] G1 nat vs ref: cmp=2162688 mism=0 sr=0 sg=0 | G2 T vs nat: cmp=2162688 mism=0 sn=0 sT=0  PASS
+[CANARY bh=1 sl= 300 caus=0 wnd=96] G1 nat vs ref: cmp=90000 mism=0 sr=0 sg=0 | G2 T vs nat: cmp=90000 mism=0 sn=0 sT=0  PASS
+
+=== SUMMARY ===
+    forms bit-exact: 11 / 11

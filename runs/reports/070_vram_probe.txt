@@ -1,0 +1,24 @@
+pre-bench baseline: 10 MB
+--- CURRENT (070 applied, dS_T = nullptr) ---
+peak during bench: 568 MB (delta = 558 MB above baseline)
+
+--- Rebuilding with pre-070 source for BASE comparison ---
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 130 registers, used 1 barriers
+ptxas info    : Compile time = 51.388 ms
+--- BASE (pre-070, dS_T allocated 8.59 GB) ---
+peak during bench: 568 MB (delta = 558 MB above baseline)
+
+--- Reapplying 070 patch (final state = CURRENT) ---
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 130 registers, used 1 barriers
+ptxas info    : Compile time = 51.243 ms
+126:        CKR(cudaMalloc(&dS_nat,dsz)); dS_T = nullptr;   // 070: dS_T dead-alloc removed
+208:    CKR(cudaMalloc(&dS_nat,dsz)); dS_T = nullptr;   // 070: dS_T dead-alloc removed
+
+===== VRAM DELTA =====
+BASE peak: 568 MB
+070  peak: 568 MB
+delta: -0 MB = ~0 GB
+expected: -8590 MB (~8.59 GB)
+done

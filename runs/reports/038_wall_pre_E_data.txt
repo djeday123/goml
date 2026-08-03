@@ -1,0 +1,8 @@
+bench_merged: FINGERPRINT kernel_merged_v1: numRegs=254, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256
+GATE OK: numRegs=254 matches EXPECT=254
+=== PRE-E MEASURED (5 runs, isolated, no NCu) ===
+run=1 temp=40C mode=isolated bench_merged: avg_ms=28.281  tflops_3mma=233.27
+run=2 temp=43C mode=isolated bench_merged: avg_ms=28.296  tflops_3mma=233.14
+run=3 temp=48C mode=isolated bench_merged: avg_ms=28.299  tflops_3mma=233.12
+run=4 temp=42C mode=isolated bench_merged: avg_ms=28.329  tflops_3mma=232.87
+run=5 temp=42C mode=isolated bench_merged: avg_ms=28.352  tflops_3mma=232.69

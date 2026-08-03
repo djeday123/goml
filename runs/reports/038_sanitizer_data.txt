@@ -1,0 +1,5 @@
+========= COMPUTE-SANITIZER
+bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256
+bench_merged: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_merged: avg_ms=2743.690  tflops_3mma=2.40
+========= ERROR SUMMARY: 0 errors

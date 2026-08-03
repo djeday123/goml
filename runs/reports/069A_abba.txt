@@ -1,0 +1,51 @@
+=== STEP 1: build CAND binaries (069A applied) ===
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 130 registers, used 1 barriers
+ptxas info    : Compile time = 52.239 ms
+    80 bytes stack frame, 144 bytes spill stores, 144 bytes spill loads
+ptxas info    : Used 96 registers, used 1 barriers, 80 bytes cumulative stack size
+ptxas info    : Compile time = 22.395 ms
+=== STEP 2: rolling back source + build BASE binaries (pre-069A) ===
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 130 registers, used 1 barriers
+ptxas info    : Compile time = 51.887 ms
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 124 registers, used 1 barriers
+ptxas info    : Compile time = 20.359 ms
+
+=== STEP 3: ABBA dk_new isolated wall (8 pairs = 16 shots) ===
+Order: B A B A B A B A A B A B A B A B (BAB × 4, then ABA × 4 — reverses to average thermal drift)
+shot=1 arm=BASE  
+shot=2 arm=CAND  /data/lib/podman-data/projects/goml/runs/reports/069A_abba.sh: line 46: ./r1b_dk_wall_CAND: No such file or directory
+shot=3 arm=BASE  
+shot=4 arm=CAND  /data/lib/podman-data/projects/goml/runs/reports/069A_abba.sh: line 46: ./r1b_dk_wall_CAND: No such file or directory
+shot=5 arm=BASE  
+shot=6 arm=CAND  /data/lib/podman-data/projects/goml/runs/reports/069A_abba.sh: line 46: ./r1b_dk_wall_CAND: No such file or directory
+shot=7 arm=BASE  
+shot=8 arm=CAND  /data/lib/podman-data/projects/goml/runs/reports/069A_abba.sh: line 46: ./r1b_dk_wall_CAND: No such file or directory
+shot=9 arm=CAND  /data/lib/podman-data/projects/goml/runs/reports/069A_abba.sh: line 46: ./r1b_dk_wall_CAND: No such file or directory
+shot=10 arm=BASE  
+shot=11 arm=CAND  /data/lib/podman-data/projects/goml/runs/reports/069A_abba.sh: line 46: ./r1b_dk_wall_CAND: No such file or directory
+shot=12 arm=BASE  
+shot=13 arm=CAND  /data/lib/podman-data/projects/goml/runs/reports/069A_abba.sh: line 46: ./r1b_dk_wall_CAND: No such file or directory
+shot=14 arm=BASE  
+shot=15 arm=CAND  /data/lib/podman-data/projects/goml/runs/reports/069A_abba.sh: line 46: ./r1b_dk_wall_CAND: No such file or directory
+shot=16 arm=BASE  
+
+=== STEP 4: E2E nc (5 shots per arm) ===
+arm=BASE    D=0.342  merged=24.984  dk_new=8.369  dq_new=8.412  total=42.108  overhead=-0.000
+arm=CAND  
+arm=BASE    D=0.342  merged=24.963  dk_new=8.362  dq_new=8.406  total=42.073  overhead=-0.000
+arm=CAND  
+arm=BASE    D=0.342  merged=24.989  dk_new=8.369  dq_new=8.415  total=42.115  overhead=0.000
+
+=== STEP 5: E2E causal control (5 shots per arm) ===
+arm=BASE    D=0.339  merged=12.705  dk_new=4.568  dq_new=4.581  total=22.193  overhead=0.000
+arm=CAND  
+arm=BASE    D=0.340  merged=12.718  dk_new=4.572  dq_new=4.580  total=22.210  overhead=-0.000
+arm=CAND  
+arm=BASE    D=0.339  merged=12.700  dk_new=4.570  dq_new=4.582  total=22.191  overhead=0.000
+
+=== STEP 6: restore CAND source state (069A applied) for verdict step ===
+Source currently rolled back to sealed (pre-069A). Verdict will decide re-apply or keep-rolled.
+done

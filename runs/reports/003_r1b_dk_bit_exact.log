@@ -1,0 +1,12 @@
+CUDA r1b_dk_bit_exact.cu:124: misaligned address
+r1b_dk_bit_exact: FINGERPRINT kernel_dk_new: numRegs=93, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=640
+[F1     bh=1 sl= 128 caus=0 wnd=0] total=16384 mism=16384 max_abs_diff=3.514e+01  MISMATCH
+[F2     bh=1 sl= 128 caus=1 wnd=0] total=16384 mism=16380 max_abs_diff=3.326e+01  MISMATCH
+[F3     bh=2 sl= 256 caus=0 wnd=0] total=65536 mism=65536 max_abs_diff=6.432e+01  MISMATCH
+[F4     bh=2 sl= 256 caus=1 wnd=0] total=65536 mism=65530 max_abs_diff=5.311e+01  MISMATCH
+[F5     bh=4 sl= 384 caus=0 wnd=0] total=196608 mism=196608 max_abs_diff=7.649e+01  MISMATCH
+[F6     bh=4 sl= 384 caus=1 wnd=0] total=196608 mism=196599 max_abs_diff=8.539e+01  MISMATCH
+[F7     bh=1 sl= 512 caus=0 wnd=128] total=65536 mism=65536 max_abs_diff=6.490e+01  MISMATCH
+[F8     bh=1 sl= 512 caus=1 wnd=128] total=65536 mism=65535 max_abs_diff=4.743e+01  MISMATCH
+[F9     bh=1 sl=2048 caus=0 wnd=0] total=262144 mism=262144 max_abs_diff=1.693e+02  MISMATCH
+[F10    bh=1 sl=2048 caus=1 wnd=0] total=262144 mism=262142 max_abs_diff=1.289e+02  MISMATCH

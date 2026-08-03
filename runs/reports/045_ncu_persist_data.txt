@@ -1,0 +1,51 @@
+=== 045 I: NCu kernel_merged_v1 [bh=1 persist window, NCu-mode] ===
+  D=0.0321  merged=0.3651  dk_new=0.1799  dq_new=0.0986  total=0.6757
+==PROF== Disconnected from process 803538
+[803538] bench_bh1_persist@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (128, 1, 1)x(128, 1, 1), Context 1, Stream 13, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    ------------------------------------------------- ----------- ------------
+    Metric Name                                       Metric Unit Metric Value
+    ------------------------------------------------- ----------- ------------
+    dram__bytes.sum                                         Mbyte         9.58
+    dram__bytes_read.sum                                               (!) n/a
+    dram__bytes_write.sum                                              (!) n/a
+    lts__t_sector_hit_rate.pct                                  %        91.87
+    sm__warps_active.avg.pct_of_peak_sustained_active           %         8.33
+    ------------------------------------------------- ----------- ------------
+
+
+=== 045 I: NCu kernel_dk_new [bh=1 persist window, NCu-mode] ===
+  D=0.0333  merged=0.3650  dk_new=0.1803  dq_new=0.0987  total=0.6774
+==PROF== Disconnected from process 803608
+[803608] bench_bh1_persist@127.0.0.1
+  kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float) (128, 1, 1)x(128, 1, 1), Context 1, Stream 13, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    ------------------------------------------------- ----------- ------------
+    Metric Name                                       Metric Unit Metric Value
+    ------------------------------------------------- ----------- ------------
+    dram__bytes.sum                                         Mbyte        68.17
+    dram__bytes_read.sum                                               (!) n/a
+    dram__bytes_write.sum                                              (!) n/a
+    lts__t_sector_hit_rate.pct                                  %        67.10
+    sm__warps_active.avg.pct_of_peak_sustained_active           %         8.33
+    ------------------------------------------------- ----------- ------------
+
+
+=== 045 I: NCu kernel_dq_new [bh=1 persist window, NCu-mode] ===
+  D=0.0328  merged=0.3635  dk_new=0.1811  dq_new=0.0984  total=0.6758
+==PROF== Disconnected from process 803678
+[803678] bench_bh1_persist@127.0.0.1
+  kernel_dq_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float) (128, 1, 1)x(128, 1, 1), Context 1, Stream 13, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    ------------------------------------------------- ----------- ------------
+    Metric Name                                       Metric Unit Metric Value
+    ------------------------------------------------- ----------- ------------
+    dram__bytes.sum                                         Mbyte        68.17
+    dram__bytes_read.sum                                               (!) n/a
+    dram__bytes_write.sum                                              (!) n/a
+    lts__t_sector_hit_rate.pct                                  %        71.65
+    sm__warps_active.avg.pct_of_peak_sustained_active           %         8.33
+    ------------------------------------------------- ----------- ------------
+
+

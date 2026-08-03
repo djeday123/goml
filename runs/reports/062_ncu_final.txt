@@ -1,0 +1,104 @@
+===== kernel_merged_v1 =====
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    --------------------------------------------------------------- ----------- ------------
+    Metric Name                                                     Metric Unit Metric Value
+    --------------------------------------------------------------- ----------- ------------
+    smsp__warp_issue_stalled_barrier_per_warp_active.pct                      %         2.57
+    smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct              %         6.73
+    smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct           %        13.67
+    smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct                 %         8.86
+    smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct             %         9.71
+    smsp__warp_issue_stalled_wait_per_warp_active.pct                         %        33.00
+    --------------------------------------------------------------- ----------- ------------
+
+    -------------------------------------------------------- --------------- -------------
+    Metric Name                                                  Metric Unit  Metric Value
+    -------------------------------------------------------- --------------- -------------
+    dram__bytes.sum                                                    Gbyte          9.81
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                   132,107,121
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                    17,195,654
+    l1tex__data_pipe_lsu_wavefronts_mem_shared.sum                           4,063,393,860
+    launch__registers_per_thread                             register/thread           252
+    sm__warps_active.avg.pct_of_peak_sustained_active                      %         16.59
+    -------------------------------------------------------- --------------- -------------
+
+
+===== kernel_dk_new =====
+  kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    --------------------------------------------------------------- ----------- ------------
+    Metric Name                                                     Metric Unit Metric Value
+    --------------------------------------------------------------- ----------- ------------
+    smsp__warp_issue_stalled_barrier_per_warp_active.pct                      %         6.57
+    smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct              %        16.59
+    smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct           %         4.21
+    smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct                 %        26.59
+    smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct             %        15.49
+    smsp__warp_issue_stalled_wait_per_warp_active.pct                         %        13.80
+    --------------------------------------------------------------- ----------- ------------
+
+    -------------------------------------------------------- --------------- -------------
+    Metric Name                                                  Metric Unit  Metric Value
+    -------------------------------------------------------- --------------- -------------
+    dram__bytes.sum                                                    Gbyte          9.25
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                   682,932,657
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                   216,808,093
+    l1tex__data_pipe_lsu_wavefronts_mem_shared.sum                           2,435,024,540
+    launch__registers_per_thread                             register/thread           124
+    sm__warps_active.avg.pct_of_peak_sustained_active                      %         32.92
+    -------------------------------------------------------- --------------- -------------
+
+
+===== kernel_dq_new =====
+  kernel_dq_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    --------------------------------------------------------------- ----------- ------------
+    Metric Name                                                     Metric Unit Metric Value
+    --------------------------------------------------------------- ----------- ------------
+    smsp__warp_issue_stalled_barrier_per_warp_active.pct                      %        11.90
+    smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct              %         2.42
+    smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct           %         4.62
+    smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct                 %        41.40
+    smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct             %         4.69
+    smsp__warp_issue_stalled_wait_per_warp_active.pct                         %        11.32
+    --------------------------------------------------------------- ----------- ------------
+
+    -------------------------------------------------------- --------------- -------------
+    Metric Name                                                  Metric Unit  Metric Value
+    -------------------------------------------------------- --------------- -------------
+    dram__bytes.sum                                                    Gbyte          9.25
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                     2,192,929
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                    36,674,375
+    l1tex__data_pipe_lsu_wavefronts_mem_shared.sum                           1,188,383,921
+    launch__registers_per_thread                             register/thread            69
+    sm__warps_active.avg.pct_of_peak_sustained_active                      %         48.88
+    -------------------------------------------------------- --------------- -------------
+
+
+===== kernel_d_precompute =====
+  kernel_d_precompute(const __half *, const __half *, float *, int, int, int) (2048, 128, 1)x(32, 4, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    --------------------------------------------------------------- ----------- ------------
+    Metric Name                                                     Metric Unit Metric Value
+    --------------------------------------------------------------- ----------- ------------
+    smsp__warp_issue_stalled_barrier_per_warp_active.pct                      %            0
+    smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct              %        79.33
+    smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct           %         0.09
+    smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct                 %         1.91
+    smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct             %         7.01
+    smsp__warp_issue_stalled_wait_per_warp_active.pct                         %         6.13
+    --------------------------------------------------------------- ----------- ------------
+
+    -------------------------------------------------------- --------------- ------------
+    Metric Name                                                  Metric Unit Metric Value
+    -------------------------------------------------------- --------------- ------------
+    dram__bytes.sum                                                    Mbyte       545.15
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                            0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                            0
+    l1tex__data_pipe_lsu_wavefronts_mem_shared.sum                              7,354,089
+    launch__registers_per_thread                             register/thread           38
+    sm__warps_active.avg.pct_of_peak_sustained_active                      %        87.27
+    -------------------------------------------------------- --------------- ------------
+
+

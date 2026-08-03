@@ -1,0 +1,67 @@
+=== 062 E2E R2C non-causal 30-run (bh=128 sl=8192 hd=128, fingerprint per run) ===
+-- warmup 4 --
+warmup=1 temp=35C   D=0.342  merged=24.987  dk_new=8.373  dq_new=8.416  total=42.118  overhead=-0.000
+warmup=2 temp=43C   D=0.342  merged=25.013  dk_new=8.382  dq_new=8.423  total=42.159  overhead=-0.000
+warmup=3 temp=45C   D=0.342  merged=25.016  dk_new=8.379  dq_new=8.426  total=42.164  overhead=0.000
+warmup=4 temp=45C   D=0.342  merged=25.039  dk_new=8.393  dq_new=8.439  total=42.214  overhead=0.000
+-- 30 timed --
+run=1 temp=44C   D=0.342  merged=25.049  dk_new=8.393  dq_new=8.438  total=42.223  overhead=-0.000  tflops16=416.65 T
+285.44 T  tflops10=260.41 T
+run=2 temp=46C   D=0.342  merged=25.056  dk_new=8.398  dq_new=8.440  total=42.236  overhead=-0.000  tflops16=416.53 T
+285.44 T  tflops10=260.33 T
+run=3 temp=45C   D=0.343  merged=25.090  dk_new=8.409  dq_new=8.451  total=42.294  overhead=0.000  tflops16=415.95 T
+285.44 T  tflops10=259.97 T
+run=4 temp=48C   D=0.342  merged=25.100  dk_new=8.415  dq_new=8.458  total=42.316  overhead=0.000  tflops16=415.73 T
+285.44 T  tflops10=259.83 T
+run=5 temp=45C   D=0.342  merged=25.102  dk_new=8.411  dq_new=8.454  total=42.310  overhead=-0.000  tflops16=415.79 T
+285.44 T  tflops10=259.87 T
+run=6 temp=48C   D=0.342  merged=25.093  dk_new=8.407  dq_new=8.455  total=42.298  overhead=-0.000  tflops16=415.91 T
+285.44 T  tflops10=259.95 T
+run=7 temp=46C   D=0.342  merged=25.086  dk_new=8.409  dq_new=8.452  total=42.290  overhead=-0.000  tflops16=415.99 T
+285.44 T  tflops10=260.00 T
+run=8 temp=48C   D=0.342  merged=25.104  dk_new=8.418  dq_new=8.461  total=42.325  overhead=0.000  tflops16=415.65 T
+285.44 T  tflops10=259.78 T
+run=9 temp=46C   D=0.342  merged=25.118  dk_new=8.420  dq_new=8.463  total=42.343  overhead=-0.000  tflops16=415.46 T
+285.44 T  tflops10=259.67 T
+run=10 temp=48C   D=0.342  merged=25.098  dk_new=8.412  dq_new=8.455  total=42.307  overhead=-0.000  tflops16=415.82 T
+285.44 T  tflops10=259.89 T
+run=11 temp=47C   D=0.342  merged=25.127  dk_new=8.425  dq_new=8.465  total=42.359  overhead=-0.000  tflops16=415.31 T
+285.44 T  tflops10=259.57 T
+run=12 temp=46C   D=0.342  merged=25.135  dk_new=8.427  dq_new=8.470  total=42.374  overhead=-0.000  tflops16=415.16 T
+285.44 T  tflops10=259.48 T
+run=13 temp=48C   D=0.342  merged=25.137  dk_new=8.427  dq_new=8.468  total=42.374  overhead=-0.000  tflops16=415.17 T
+285.44 T  tflops10=259.48 T
+run=14 temp=47C   D=0.342  merged=25.118  dk_new=8.423  dq_new=8.462  total=42.345  overhead=-0.000  tflops16=415.45 T
+285.44 T  tflops10=259.66 T
+run=15 temp=48C   D=0.342  merged=25.120  dk_new=8.420  dq_new=8.464  total=42.347  overhead=-0.000  tflops16=415.43 T
+285.44 T  tflops10=259.64 T
+run=16 temp=47C   D=0.342  merged=25.136  dk_new=8.430  dq_new=8.468  total=42.377  overhead=0.000  tflops16=415.14 T
+285.44 T  tflops10=259.46 T
+run=17 temp=46C   D=0.342  merged=25.113  dk_new=8.421  dq_new=8.458  total=42.334  overhead=0.000  tflops16=415.56 T
+285.44 T  tflops10=259.72 T
+run=18 temp=48C   D=0.342  merged=25.126  dk_new=8.426  dq_new=8.472  total=42.366  overhead=-0.000  tflops16=415.25 T
+285.44 T  tflops10=259.53 T
+run=19 temp=47C   D=0.342  merged=25.120  dk_new=8.420  dq_new=8.463  total=42.346  overhead=-0.000  tflops16=415.44 T
+285.44 T  tflops10=259.65 T
+run=20 temp=49C   D=0.342  merged=25.117  dk_new=8.423  dq_new=8.464  total=42.345  overhead=-0.000  tflops16=415.45 T
+285.44 T  tflops10=259.66 T
+run=21 temp=48C   D=0.342  merged=25.142  dk_new=8.431  dq_new=8.474  total=42.388  overhead=0.000  tflops16=415.03 T
+285.44 T  tflops10=259.39 T
+run=22 temp=46C   D=0.342  merged=25.147  dk_new=8.435  dq_new=8.476  total=42.400  overhead=0.000  tflops16=414.91 T
+285.44 T  tflops10=259.32 T
+run=23 temp=49C   D=0.342  merged=25.133  dk_new=8.428  dq_new=8.474  total=42.378  overhead=0.000  tflops16=415.13 T
+285.44 T  tflops10=259.45 T
+run=24 temp=47C   D=0.342  merged=25.129  dk_new=8.428  dq_new=8.469  total=42.369  overhead=-0.000  tflops16=415.21 T
+285.44 T  tflops10=259.51 T
+run=25 temp=48C   D=0.342  merged=25.132  dk_new=8.427  dq_new=8.468  total=42.368  overhead=-0.000  tflops16=415.22 T
+285.44 T  tflops10=259.51 T
+run=26 temp=47C   D=0.342  merged=25.109  dk_new=8.418  dq_new=8.462  total=42.331  overhead=-0.000  tflops16=415.59 T
+285.44 T  tflops10=259.74 T
+run=27 temp=49C   D=0.342  merged=25.129  dk_new=8.426  dq_new=8.469  total=42.365  overhead=0.000  tflops16=415.25 T
+285.44 T  tflops10=259.53 T
+run=28 temp=48C   D=0.342  merged=25.133  dk_new=8.429  dq_new=8.468  total=42.371  overhead=-0.000  tflops16=415.19 T
+285.44 T  tflops10=259.49 T
+run=29 temp=47C   D=0.342  merged=25.110  dk_new=8.418  dq_new=8.465  total=42.335  overhead=-0.000  tflops16=415.55 T
+285.44 T  tflops10=259.72 T
+run=30 temp=48C   D=0.342  merged=25.144  dk_new=8.431  dq_new=8.475  total=42.392  overhead=0.000  tflops16=414.99 T
+285.44 T  tflops10=259.37 T

@@ -1,0 +1,12 @@
+run=1 t=1783514487.304 temp=28C clk=180, 405   D=0.342  merged=28.268  dk_new=10.293  dq_new=8.659  total=47.562  overhead=0.000
+run=2 t=1783514502.927 temp=39C clk=2362, 13365   D=0.342  merged=28.325  dk_new=10.317  dq_new=8.683  total=47.667  overhead=0.000
+run=3 t=1783514518.534 temp=41C clk=2295, 13365   D=0.342  merged=28.369  dk_new=10.335  dq_new=8.698  total=47.744  overhead=0.000
+run=4 t=1783514534.151 temp=43C clk=2437, 13365   D=0.342  merged=28.393  dk_new=10.346  dq_new=8.708  total=47.789  overhead=0.000
+run=5 t=1783514549.774 temp=49C clk=2287, 13365   D=0.342  merged=28.454  dk_new=10.373  dq_new=8.725  total=47.895  overhead=0.000
+run=6 t=1783514565.338 temp=44C clk=2565, 13365   D=0.342  merged=28.457  dk_new=10.373  dq_new=8.723  total=47.894  overhead=0.000
+run=7 t=1783514580.983 temp=42C clk=2280, 13365   D=0.342  merged=28.479  dk_new=10.379  dq_new=8.729  total=47.930  overhead=-0.000
+run=8 t=1783514596.542 temp=45C clk=2670, 13365   D=0.342  merged=28.502  dk_new=10.390  dq_new=8.741  total=47.975  overhead=-0.000
+run=9 t=1783514612.130 temp=45C clk=2452, 13365   D=0.342  merged=28.488  dk_new=10.384  dq_new=8.736  total=47.950  overhead=-0.000
+run=10 t=1783514627.710 temp=44C clk=2272, 13365   D=0.342  merged=28.521  dk_new=10.397  dq_new=8.743  total=48.004  overhead=0.000
+run=11 t=1783514643.316 temp=45C clk=2617, 13365   D=0.342  merged=28.511  dk_new=10.395  dq_new=8.740  total=47.987  overhead=-0.000
+run=12 t=1783514658.922 temp=45C clk=2347, 13365   D=0.342  merged=28.542  dk_new=10.406  dq_new=8.753  total=48.044  overhead=0.000

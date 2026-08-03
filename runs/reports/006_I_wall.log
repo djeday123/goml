@@ -1,0 +1,13 @@
+# 006-I wall ds_gen after dS_nat SMEM staging + coalesced STG.128 drain
+# (bh=128 sl=8192 hd=128 causal=0, warmup=5 iters=20)
+
+run 1: 21.598 ms  tflops_2mma=203.63
+run 2: 21.645
+run 3: 21.663
+run 4: 21.648
+run 5: 21.713
+median: 21.648 ms  CV: 0.19%
+
+vs 006-0 baseline 36.760 ms: Δ = -15.11 ms (-41.1%)  ← сильно ниже Vugar ожидания 30-33
+Причина: STG.128 drain сокращает LSU-транзакции ×16 + L2 evictions падают
+        → snowball L2-hit gain на K/V reads следующих kt.

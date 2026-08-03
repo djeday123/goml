@@ -1,0 +1,28 @@
+=== fingerprint gate verification ===
+=== bench_r2c_e2e: fingerprint x4 ===
+FINGERPRINT kernel_d_precompute    numRegs= 38 (expected  38) OK
+FINGERPRINT kernel_merged_v1       numRegs=252 (expected 252) OK
+FINGERPRINT kernel_dk_new          numRegs=128 (expected 128) OK
+FINGERPRINT kernel_dq_new          numRegs= 56 (expected  56) OK
+=== bench_r2c_e2e: fingerprint x4 ===
+FINGERPRINT kernel_d_precompute    numRegs= 38 (expected  38) OK
+FINGERPRINT kernel_merged_v1       numRegs=252 (expected 252) OK
+FINGERPRINT kernel_dk_new          numRegs=128 (expected 128) OK
+FINGERPRINT kernel_dq_new          numRegs= 69 (expected  69) OK
+=== 041 II.8 ABBA 8 pairs (mode: in-chain, isolated timing) ===
+run=1 tag=BASE_prod temp=42C   D=0.342  merged=25.019  dk_new=10.390  dq_new=8.737  total=44.488  overhead=0.000
+run=2 tag=CAND_frozen temp=46C   D=0.342  merged=25.002  dk_new=10.384  dq_new=8.426  total=44.154  overhead=0.000
+run=3 tag=CAND_frozen temp=44C   D=0.342  merged=25.006  dk_new=10.384  dq_new=8.426  total=44.157  overhead=-0.000
+run=4 tag=BASE_prod temp=44C   D=0.342  merged=25.015  dk_new=10.388  dq_new=8.731  total=44.477  overhead=0.000
+run=5 tag=BASE_prod temp=44C   D=0.342  merged=25.009  dk_new=10.380  dq_new=8.731  total=44.462  overhead=0.000
+run=6 tag=CAND_frozen temp=44C   D=0.342  merged=25.020  dk_new=10.392  dq_new=8.430  total=44.184  overhead=0.000
+run=7 tag=CAND_frozen temp=50C   D=0.342  merged=25.021  dk_new=10.394  dq_new=8.433  total=44.190  overhead=-0.000
+run=8 tag=BASE_prod temp=47C   D=0.342  merged=25.028  dk_new=10.398  dq_new=8.740  total=44.508  overhead=-0.000
+run=9 tag=BASE_prod temp=45C   D=0.342  merged=25.028  dk_new=10.395  dq_new=8.738  total=44.503  overhead=-0.000
+run=10 tag=CAND_frozen temp=45C   D=0.342  merged=25.040  dk_new=10.405  dq_new=8.440  total=44.226  overhead=-0.000
+run=11 tag=CAND_frozen temp=43C   D=0.342  merged=25.043  dk_new=10.405  dq_new=8.445  total=44.235  overhead=-0.000
+run=12 tag=BASE_prod temp=43C   D=0.343  merged=25.030  dk_new=10.400  dq_new=8.740  total=44.513  overhead=-0.000
+run=13 tag=BASE_prod temp=48C   D=0.343  merged=25.033  dk_new=10.401  dq_new=8.740  total=44.516  overhead=0.000
+run=14 tag=CAND_frozen temp=46C   D=0.342  merged=25.027  dk_new=10.396  dq_new=8.436  total=44.201  overhead=-0.000
+run=15 tag=CAND_frozen temp=45C   D=0.342  merged=25.054  dk_new=10.411  dq_new=8.444  total=44.252  overhead=0.000
+run=16 tag=BASE_prod temp=47C   D=0.343  merged=25.044  dk_new=10.409  dq_new=8.747  total=44.542  overhead=-0.000

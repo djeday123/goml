@@ -1,0 +1,19 @@
+# 008 R2C bit-exact — двойной уровень покрытия
+# (1) merged direct triple: dV vs sealed dV_p1 + dS_nat/dS_T vs R1a ds_gen
+# (2) chain via merged: dQ+dK+dV vs sealed dQ/dK/dV_p1
+
+## (1) r2c_merged_bit_exact: kernel_merged_v1 outputs vs sealed refs
+FINGERPRINT kernel_merged_v1: numRegs=253, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256
+
+[F1..F10, CANARY]
+  dV mism=0 max_abs_diff=0.000e+00 BIT-EXACT
+  dS_nat (in-bounds only) mism=0 BIT-EXACT
+  dS_T   (in-bounds only) mism=0 BIT-EXACT
+
+=== SUMMARY ===  forms triple-bit-exact: 11 / 11
+compute-sanitizer: ERROR SUMMARY: 0 errors
+
+## (2) bench_r2c_e2e bitexact: chain merged → dk_new + dq_new vs sealed dQ/dK/dV_p1
+Fingerprint × 4 OK.
+[F1..F10, CANARY] dQ + dK + dV mism=0 max_abs_diff=0.000e+00 BIT-EXACT × 3
+=== CHAIN BIT-EXACT SUMMARY ===  forms all-3 bit-exact: 11 / 11

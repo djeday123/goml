@@ -1,0 +1,5 @@
+run=1 temp=36C   D=0.343  merged=24.981  dk_new=8.368  dq_new=8.412  total=42.104  overhead=0.000
+run=2 temp=45C   D=0.342  merged=25.007  dk_new=8.376  dq_new=8.420  total=42.144  overhead=0.000
+run=3 temp=44C   D=0.342  merged=25.027  dk_new=8.388  dq_new=8.431  total=42.188  overhead=0.000
+run=4 temp=45C   D=0.343  merged=25.040  dk_new=8.391  dq_new=8.438  total=42.212  overhead=-0.000
+run=5 temp=44C   D=0.342  merged=25.055  dk_new=8.400  dq_new=8.441  total=42.237  overhead=0.000

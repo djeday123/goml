@@ -1,0 +1,14 @@
+# 006-II wall ds_gen after dS_T staging (option B)
+# (bh=128 sl=8192 hd=128 causal=0, warmup=5 iters=20)
+
+run 1: 20.549 ms  tflops_2mma=214.03
+run 2: 20.560
+run 3: 20.571
+run 4: 20.582
+run 5: 20.594
+median: 20.571 ms  CV: 0.09%
+
+vs 006-I 21.648 ms:   Δ = -1.08 ms (-5.0%)
+vs 006-0 baseline 36.760 ms: Δ = -16.19 ms (-44.0%)
+
+Ожидание Vugar: 20-24 ms — попадание в цель.

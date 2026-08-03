@@ -1,0 +1,66 @@
+Using: /usr/local/cuda-13.1/compute-sanitizer/compute-sanitizer
+NVIDIA (R) Compute Sanitizer
+Copyright (c) 2020-2025 NVIDIA Corporation
+Version 2025.4.1.0 (build 37093031) (public-release)
+---
+========= COMPUTE-SANITIZER
+========= Invalid __global__ read of size 16 bytes
+=========     at fa_bwd_dk_new::kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float)+0x910
+=========     by thread (100,0,0) in block (0,0,0)
+=========     Access to 0x7f525caa534c is misaligned
+=========     and is inside the nearest allocation at 0x7f525caa3600 of size 90,000 bytes
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0xaaef] in r1b_dk_bit_exact
+========= 
+========= Invalid __global__ read of size 16 bytes
+=========     at fa_bwd_dk_new::kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float)+0x910
+=========     by thread (101,0,0) in block (0,0,0)
+=========     Access to 0x7f525caa535c is misaligned
+=========     and is inside the nearest allocation at 0x7f525caa3600 of size 90,000 bytes
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0xaaef] in r1b_dk_bit_exact
+========= 
+========= Invalid __global__ read of size 16 bytes
+=========     at fa_bwd_dk_new::kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float)+0x910
+=========     by thread (102,0,0) in block (0,0,0)
+=========     Access to 0x7f525caa536c is misaligned
+=========     and is inside the nearest allocation at 0x7f525caa3600 of size 90,000 bytes
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0xaaef] in r1b_dk_bit_exact
+========= 
+========= Invalid __global__ read of size 16 bytes
+=========     at fa_bwd_dk_new::kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float)+0x910
+=========     by thread (103,0,0) in block (0,0,0)
+=========     Access to 0x7f525caa537c is misaligned
+=========     and is inside the nearest allocation at 0x7f525caa3600 of size 90,000 bytes
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0xaaef] in r1b_dk_bit_exact
+========= 
+========= Invalid __global__ read of size 16 bytes
+=========     at fa_bwd_dk_new::kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float)+0x910
+=========     by thread (104,0,0) in block (0,0,0)
+=========     Access to 0x7f525caa5478 is misaligned
+=========     and is inside the nearest allocation at 0x7f525caa3600 of size 90,000 bytes
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0xaaef] in r1b_dk_bit_exact
+========= 
+========= Invalid __global__ read of size 16 bytes
+=========     at fa_bwd_dk_new::kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float)+0x910
+=========     by thread (105,0,0) in block (0,0,0)
+=========     Access to 0x7f525caa5488 is misaligned
+=========     and is inside the nearest allocation at 0x7f525caa3600 of size 90,000 bytes
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0xaaef] in r1b_dk_bit_exact
+========= 
+========= Invalid __global__ read of size 16 bytes
+=========     at fa_bwd_dk_new::kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float)+0x910
+=========     by thread (106,0,0) in block (0,0,0)
+=========     Access to 0x7f525caa5498 is misaligned
+=========     and is inside the nearest allocation at 0x7f525caa3600 of size 90,000 bytes
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0xaaef] in r1b_dk_bit_exact
+========= 
+========= Invalid __global__ read of size 16 bytes
+=========     at fa_bwd_dk_new::kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float)+0x910
+=========     by thread (107,0,0) in block (0,0,0)
+=========     Access to 0x7f525caa54a8 i

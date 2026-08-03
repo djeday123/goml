@@ -1,0 +1,9 @@
+run=1 temp=43C   D=0.343  merged=25.130  dk_new=10.455  dq_new=8.479  total=44.407  overhead=-0.000
+run=2 temp=48C   D=0.342  merged=25.102  dk_new=10.441  dq_new=8.472  total=44.357  overhead=0.000
+run=3 temp=47C   D=0.341  merged=25.121  dk_new=10.452  dq_new=8.479  total=44.393  overhead=-0.000
+run=4 temp=48C   D=0.342  merged=25.099  dk_new=10.440  dq_new=8.464  total=44.346  overhead=-0.000
+run=5 temp=46C   D=0.342  merged=25.089  dk_new=10.426  dq_new=8.451  total=44.308  overhead=0.000
+run=6 temp=48C   D=0.342  merged=25.102  dk_new=10.425  dq_new=8.458  total=44.326  overhead=-0.000
+run=7 temp=48C   D=0.342  merged=25.083  dk_new=10.416  dq_new=8.444  total=44.285  overhead=0.000
+run=8 temp=45C   D=0.341  merged=25.068  dk_new=10.412  dq_new=8.441  total=44.262  overhead=0.000
+run=9 temp=45C   D=0.342  merged=25.083  dk_new=10.419  dq_new=8.449  total=44.292  overhead=-0.000

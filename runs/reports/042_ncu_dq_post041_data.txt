@@ -1,0 +1,13 @@
+=== 042 хвост 041-0.d: NCu dq_new post-041 (dq_new=d7a11a3d 69r) [NCu-mode] ===
+    Section: Command line profiler metrics
+    --------------------------------------------------------------- ----------- ------------
+    Metric Name                                                     Metric Unit Metric Value
+    --------------------------------------------------------------- ----------- ------------
+    smsp__warp_issue_stalled_barrier_per_warp_active.pct                      %        11.90
+    smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct              %         2.35
+    smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct           %         4.63
+    smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct                 %        41.45
+    smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct             %         4.69
+    smsp__warp_issue_stalled_wait_per_warp_active.pct                         %        11.33
+    --------------------------------------------------------------- ----------- ------------
+

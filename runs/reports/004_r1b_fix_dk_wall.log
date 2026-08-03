@@ -1,0 +1,15 @@
+bench_dk_new: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_dk_new: FINGERPRINT kernel_dk_new: numRegs=96, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=640
+bench_dk_new: avg_ms=9.206  tflops_1mma=238.87
+bench_dk_new: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_dk_new: FINGERPRINT kernel_dk_new: numRegs=96, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=640
+bench_dk_new: avg_ms=9.188  tflops_1mma=239.34
+bench_dk_new: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_dk_new: FINGERPRINT kernel_dk_new: numRegs=96, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=640
+bench_dk_new: avg_ms=9.177  tflops_1mma=239.61
+bench_dk_new: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_dk_new: FINGERPRINT kernel_dk_new: numRegs=96, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=640
+bench_dk_new: avg_ms=9.176  tflops_1mma=239.65
+bench_dk_new: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_dk_new: FINGERPRINT kernel_dk_new: numRegs=96, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=640
+bench_dk_new: avg_ms=9.172  tflops_1mma=239.76

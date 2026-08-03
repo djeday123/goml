@@ -1,0 +1,44 @@
+kernel_dq_new NCu profile (canonical bh=128 sl=8192 hd=128 causal=0)
+
+Section: Launch Statistics
+  Registers Per Thread             56
+  Dynamic Shared Memory Per Block  13.82 KB
+  Grid Size                        16384
+  Block Size                       128
+  Waves Per SM                     14.52
+  # SMs                            188
+
+Section: Memory Workload Analysis
+  Memory Throughput                846.07 GB/s
+  Mem Busy                         64.63 %
+  Max Bandwidth                    92.52 %   ← memory-bandwidth bound
+  L1/TEX Hit Rate                  3.18 %    (streaming)
+  L2 Hit Rate                      71.27 %   ← K cross-kt reuse
+  Mem Pipes Busy                   92.52 %
+
+Section: Occupancy
+  Block Limit SM                   24
+  Block Limit Registers            9
+  Block Limit Shared Mem           6    ← SMEM-limited
+  Block Limit Warps                12
+  Theoretical Active Warps per SM  24
+  Theoretical Occupancy            50.00 %
+  Achieved Occupancy               48.86 %  ← 23.45 warps/SM active
+  Achieved Active Warps Per SM     23.45
+
+Section: Scheduler Statistics
+  One or More Eligible             29.37 %
+  Issued Warp Per Scheduler        0.29
+  No Eligible                      70.63 %  (memory-latency)
+  Active Warps Per Scheduler       5.86
+  Eligible Warps Per Scheduler     0.82
+
+Section: Warp State Statistics
+  Warp Cycles Per Issued Inst      19.96 cycle
+  Avg Active Threads Per Warp      32.00
+  Avg Not Predicated Off           30.23
+
+Section: Source Counters
+  Branch Instructions Ratio        0.04 %
+  Branch Efficiency                100.00 %
+  Avg Divergent Branches           0.00

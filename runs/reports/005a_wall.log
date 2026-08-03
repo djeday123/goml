@@ -1,0 +1,10 @@
+# 005a wall dk_new canonical (bh=128 sl=8192 hd=128 causal=0, warmup=5 iters=20)
+# stride_ds == sl at canonical → zero-impact expectation
+
+run 1: bench_dk_new: avg_ms=9.422  tflops_1mma=233.40
+run 2: bench_dk_new: avg_ms=9.423  tflops_1mma=233.36
+run 3: bench_dk_new: avg_ms=9.415  tflops_1mma=233.56
+run 4: bench_dk_new: avg_ms=9.421  tflops_1mma=233.42
+
+median: 9.421 ms
+vs 004 median (9.177 ms): +0.244 ms (+2.66%)  — noise/thermal (CV within-run <0.1%)

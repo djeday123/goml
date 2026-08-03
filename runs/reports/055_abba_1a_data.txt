@@ -1,0 +1,23 @@
+=== 055 §1.a ABBA: base(040 252r) vs cand(L2-hint 252r) ===
+-- warmup 4 runs --
+warmup=1 temp=44C BASE: bench_merged: avg_ms=48.455  tflops_3mma=136.15
+warmup=2 temp=46C CAND: bench_merged: avg_ms=49.495  tflops_3mma=133.29
+warmup=3 temp=46C BASE: bench_merged: avg_ms=48.456  tflops_3mma=136.15
+warmup=4 temp=46C CAND: bench_merged: avg_ms=49.527  tflops_3mma=133.20
+-- 16 timed (8 pairs) --
+timed=1 temp=47C BASE: bench_merged: avg_ms=48.464  tflops_3mma=136.12
+timed=2 temp=48C CAND: bench_merged: avg_ms=49.518  tflops_3mma=133.22
+timed=3 temp=47C CAND: bench_merged: avg_ms=49.510  tflops_3mma=133.25
+timed=4 temp=47C BASE: bench_merged: avg_ms=48.464  tflops_3mma=136.12
+timed=5 temp=48C BASE: bench_merged: avg_ms=48.463  tflops_3mma=136.13
+timed=6 temp=49C CAND: bench_merged: avg_ms=49.515  tflops_3mma=133.23
+timed=7 temp=47C CAND: bench_merged: avg_ms=49.503  tflops_3mma=133.27
+timed=8 temp=48C BASE: bench_merged: avg_ms=48.465  tflops_3mma=136.12
+timed=9 temp=47C BASE: bench_merged: avg_ms=48.596  tflops_3mma=135.75
+timed=10 temp=47C CAND: bench_merged: avg_ms=49.523  tflops_3mma=133.21
+timed=11 temp=48C CAND: bench_merged: avg_ms=49.530  tflops_3mma=133.19
+timed=12 temp=47C BASE: bench_merged: avg_ms=48.474  tflops_3mma=136.10
+timed=13 temp=47C BASE: bench_merged: avg_ms=48.602  tflops_3mma=135.74
+timed=14 temp=47C CAND: bench_merged: avg_ms=49.525  tflops_3mma=133.21
+timed=15 temp=47C CAND: bench_merged: avg_ms=49.509  tflops_3mma=133.25
+timed=16 temp=48C BASE: bench_merged: avg_ms=48.469  tflops_3mma=136.11

@@ -1,0 +1,5 @@
+# Тяжёлые/воспроизводимые артефакты — не в git.
+# Веса скачиваются заново (md5 зафиксирован в отчёте), venv пересоздаётся.
+venv/
+tinyllama/model.safetensors
+tinyllama/tokenizer.model

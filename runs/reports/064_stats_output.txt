@@ -1,0 +1,22 @@
+=== nc (from clean clone) ===
+N=30
+median_total=42.3515
+mean=42.3474 sd=0.0361 CV=0.085%
+min=42.288 max=42.419
+median_tflops16=415.3850
+median_D=0.3420
+median_merged=25.1245
+median_dk_new=8.4225
+median_dq_new=8.4620
+
+=== causal (from clean clone) ===
+N=30
+median_total=22.2310
+mean=22.2311 sd=0.0139 CV=0.063%
+min=22.208 max=22.258
+median_tflops16=791.3350
+median_D=0.3400
+median_merged=12.7330
+median_dk_new=4.5720
+median_dq_new=4.5860
+

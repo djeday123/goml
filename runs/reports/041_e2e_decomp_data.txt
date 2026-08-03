@@ -1,0 +1,8 @@
+bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256
+GATE OK: numRegs=252 matches EXPECT=252
+=== 041 I.3 5-run E2E in-chain (per-kernel: D/merged/dk/dq/total) ===
+run=1 temp=49C mode=in-chain   D=0.342  merged=25.008  dk_new=10.388  dq_new=8.431  total=44.169  overhead=0.000
+run=2 temp=46C mode=in-chain   D=0.342  merged=25.036  dk_new=10.398  dq_new=8.441  total=44.217  overhead=-0.000
+run=3 temp=45C mode=in-chain   D=0.343  merged=25.024  dk_new=10.397  dq_new=8.435  total=44.199  overhead=0.000
+run=4 temp=44C mode=in-chain   D=0.342  merged=25.029  dk_new=10.398  dq_new=8.436  total=44.206  overhead=-0.000
+run=5 temp=43C mode=in-chain   D=0.342  merged=25.032  dk_new=10.397  dq_new=8.438  total=44.209  overhead=0.000

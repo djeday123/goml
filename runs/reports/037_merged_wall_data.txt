@@ -1,0 +1,5 @@
+run=1 temp=42C bench_merged: avg_ms=31.305  tflops_3mma=210.74
+run=2 temp=46C bench_merged: avg_ms=31.328  tflops_3mma=210.58
+run=3 temp=45C bench_merged: avg_ms=31.359  tflops_3mma=210.37
+run=4 temp=46C bench_merged: avg_ms=31.361  tflops_3mma=210.36
+run=5 temp=41C bench_merged: avg_ms=31.385  tflops_3mma=210.20

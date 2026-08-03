@@ -1,0 +1,10 @@
+# 005b wall dq_new canonical (bh=128 sl=8192 hd=128 causal=0, warmup=5 iters=20)
+
+run 1: bench_dq_new: avg_ms=8.570  tflops_1mma=256.61
+run 2: bench_dq_new: avg_ms=8.569  tflops_1mma=256.64
+run 3: bench_dq_new: avg_ms=8.581  tflops_1mma=256.26
+run 4: bench_dq_new: avg_ms=8.588  tflops_1mma=256.07
+run 5: bench_dq_new: avg_ms=8.596  tflops_1mma=255.82
+
+median: 8.581 ms  (256.26 TF_1mma)
+CV: 0.13% — стабильно

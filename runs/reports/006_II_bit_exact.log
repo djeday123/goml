@@ -1,0 +1,13 @@
+# 006-II bit-exact re-gate: both consumers after ds_gen dS_T staging
+
+## r1b_dk_bit_exact (dk_new vs sealed dK)
+[F1..F10, CANARY] mism=0 max_abs_diff=0.000e+00  BIT-EXACT (11/11)
+========= ERROR SUMMARY: 0 errors
+
+## r1c_dq_bit_exact (dq_new vs sealed AA1 dQ)
+[F1..F10, CANARY] mism=0 max_abs_diff=0.000e+00  BIT-EXACT (11/11)
+========= ERROR SUMMARY: 0 errors
+
+Layout-only change (STS.b8 to smdS_T_stage + coalesced STG.128 drain, same bytes) — арифметика тронута НЕ БЫЛА.
+ptxas ds_gen: 157r → 130r (-27, drain-only guards, unconditional scatter), 0 spill, 0 stack, 1 barrier.
+SMEM: 33792 → 38912 B (+5120 smdS_T_stage). Block Limit SMEM = 2 (unchanged).

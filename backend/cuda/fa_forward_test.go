@@ -1,6 +1,7 @@
 package cuda
 
 // A-LLM-1 G1 (2026-07-25): L (LSE) correctness test для fa_forward_train.
+// ВАЛИДЕН ВНУТРИ КОНТРАКТА decoded O(1) (A-LLM-5 П.3в); полный диапазон — см. fa_contract_test.go.
 //
 // Тесты:
 //   TestFAForwardTrain_Version — probe: library loads, version string OK.

@@ -1,0 +1,19 @@
+=== bench_r2c_e2e: fingerprint x4 ===
+FINGERPRINT kernel_d_precompute    numRegs= 38 (expected  38) OK
+FINGERPRINT kernel_merged_v1       numRegs=252 (expected 252) OK
+FINGERPRINT kernel_dk_new          numRegs=128 (expected 128) OK
+FINGERPRINT kernel_dq_new          numRegs= 69 (expected  69) OK
+
+bench_r2c_e2e: bh=128 sl=8192 hd=128 causal=0 window=0 warmup=5 iters=20
+
+=== SEQUENTIAL R2C E2E ===
+  D=0.368  merged=48.754  dk_new=18.861  dq_new=18.128  total=86.111  overhead=-0.000
+
+=== FLOPS conventions ===
+  base=1.0995e+12
+  16N^2d (Tri Dao V3 ref, executed sealed=8 MMA=16N^2d): 1.7592e+13
+  10N^2d (R2C actual = 5 MMA = fused-min):               1.0995e+13
+
+=== TFLOPS ===
+  Sequential vs 16N^2d: 204.30 T (vs sealed 285.44 T)
+  Sequential vs 10N^2d: 127.69 T (R2C honest, first == fused-min)

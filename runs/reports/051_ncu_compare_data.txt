@@ -1,0 +1,52 @@
+===== BASELINE (/data/lib/podman-data/projects/goml/runs/archive/050_pre/bench_r2c_e2e) =====
+-- Stalls kernel_dk_new --
+    Section: Command line profiler metrics
+    --------------------------------------------------------------- ----------- ------------
+    Metric Name                                                     Metric Unit Metric Value
+    --------------------------------------------------------------- ----------- ------------
+    smsp__warp_issue_stalled_barrier_per_warp_active.pct                      %         7.95
+    smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct              %        10.50
+    smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct           %         2.57
+    smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct                 %        42.15
+    smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct             %        10.07
+    smsp__warp_issue_stalled_wait_per_warp_active.pct                         %        10.74
+    --------------------------------------------------------------- ----------- ------------
+
+-- LSU/DRAM/Occupancy --
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- -------------
+    Metric Name                                              Metric Unit  Metric Value
+    -------------------------------------------------------- ----------- -------------
+    dram__bytes.sum                                                Gbyte          9.31
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum             1,616,895,020
+    l1tex__data_pipe_lsu_wavefronts_mem_shared.sum                       3,213,160,578
+    sm__warps_active.avg.pct_of_peak_sustained_active                  %         32.89
+    -------------------------------------------------------- ----------- -------------
+
+
+===== S2v3 (/data/lib/podman-data/projects/goml/libs/bench_r2c_e2e_s2v3) =====
+-- Stalls kernel_dk_new --
+    Section: Command line profiler metrics
+    --------------------------------------------------------------- ----------- ------------
+    Metric Name                                                     Metric Unit Metric Value
+    --------------------------------------------------------------- ----------- ------------
+    smsp__warp_issue_stalled_barrier_per_warp_active.pct                      %         8.19
+    smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct              %         8.41
+    smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct           %         0.39
+    smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct                 %        48.59
+    smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct             %        26.73
+    smsp__warp_issue_stalled_wait_per_warp_active.pct                         %         3.81
+    --------------------------------------------------------------- ----------- ------------
+
+-- LSU/DRAM/Occupancy --
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- -------------
+    Metric Name                                              Metric Unit  Metric Value
+    -------------------------------------------------------- ----------- -------------
+    dram__bytes.sum                                                Gbyte          9.32
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum             8,188,627,694
+    l1tex__data_pipe_lsu_wavefronts_mem_shared.sum                       9,915,067,390
+    sm__warps_active.avg.pct_of_peak_sustained_active                  %         32.99
+    -------------------------------------------------------- ----------- -------------
+
+

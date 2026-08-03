@@ -190,6 +190,8 @@ Wall canary re-anchor 654±2T; CE 88.4% wall.
 
 **Вердикт эпохи:** трансформер дышит, F32 attention-recon как эталон для BWD, FA-bwd путь **отложен пока FA-fwd не вернёт non-zero** для training.
 
+**Сноска (2026-08-03, П.3а A-LLM-5):** на боевых квантах attention-выход был мёртв (Н4, `c319212`); loss~ln(V) не различает живой/мёртвый attention на свежих весах; «дышит» относится к residual/FFN-тракту.
+
 ---
 
 ## Эпоха IX — A-LLM-2 охота за эталоном (2026-07-26 → 2026-08-02)
@@ -290,6 +292,7 @@ Race #1-3 диагностированы. Sync-fix accepted as workaround, но 
 | One-change-at-a-time | 2026-07 | wall-clock only converts на WORK-REDUCTION | v96b/v118/v121 |
 | PTX-ASCII catch | 2026-07-24 (A-1) | non-ASCII in PTX comments | fused CE probe |
 | Race-семейство (4 случая) | 2026-07-29..07-30 | ptx→cublas, sync, streams, «измерительный прибор» | Ход-P (последний) |
+| [[feedback-lnv-smoke-weak-gate]] | 2026-08-03 (Н4) | ln(V)-smoke слабый гейт; smoke attention-пути обязан включать чувствительностную пробу (возмущение строки V -> O меняется) | fa_contract_test.go 2в |
 | Мусор=мусор (3 случая) | 2026-07-30 | Wq dead → 50% W1 masked; F-PROBE mismatch; standalone ≠ contextual | Ход A.1, F, B |
 
 **Правило-мета (living-doc — устанавливается ЭТОЙ хроникой):**
@@ -329,7 +332,9 @@ Race #1-3 диагностированы. Sync-fix accepted as workaround, но 
 | **GPU-bwd нон-детерминизм (экс "wrapper-следствие")** | `2d576c1` A/B N=5, raw_allm3 | ПЕРЕКЛАССИФИЦИРОВАН (П-6б, 2026-08-03): свойство пути, задокументирован числом (DWq 3.5e-3, DW2 5.8e-2, DEmbed 2.2e-2, DWo процессо-зависимо 0..1.2e-1). НЕ блокирует FA-встройку — эталон = CPU-F64 |
 | **cublasSgemm determinism** | `2d576c1`: fwd bit-det 5/5, bwd плавает | ПЕРЕКЛАССИФИЦИРОВАН (П-6б, 2026-08-03): часть свойства пути; standalone probe снят с CRITICAL |
 | **Causal=1 не сертифицирован** (ядра реализуют: fa_bwd_merged_v1.cu:146,242; все cert causal=0) | `2d576c1` П-5 raw, A_LLM3_f64ref.md | HIGH — сертификация causal=1 + causal-ветка F64-эталона перед автогрессивным LM |
-| **Квант-контракт v121r: decoded O(1)** — FP16-S-accum ядер не переживает decoded +-448; боевой квантизатор (amax/448, B-impl-3) нарушает контракт с рождения. Ретро-корень FA-out-zero/Stage3-loss~ln(V). Лечение: scale=amax (decoded O(1)) + пересертификация | `c319212` Н4, A_LLM4_fa_integration.md, raw_allm4/fa_iso_{realish,smallmag} | **CRITICAL** — блокирует FA-встройку (A-LLM-5 п.1) |
+| **Квант-контракт v121r: decoded O(1)** — ЗАКРЫТ A-LLM-5 (`c4a8c2e`/gotorch `927c795`): Unit-квантизатор внедрён сквозь стек, контракт в док-строках + контракт-тест навсегда, механизм подтверждён чтением (QK/O MMA f16-акк :87/:634, scale-узел F16 :452) | A_LLM5_quant_contract.md | CLOSED |
+| **Хвост-а A-LLM-5: amax-гонка standalone-вызова fa-блока** (chain-вызов жив; Sync не покрывает один из путей) | A_LLM5 raw fa_stage1_final.log | HIGH |
+| **Хвост-б A-LLM-5: plain-канал на батч-слайсах тихо нулевой** (gpuToHost/MatMul от sliceStore) — П.5-гейт не пройден, SECONDARY-арбитр хром на attn-цепи | A_LLM5_quant_contract.md | HIGH — до Этапа 2 |
 | **Адаптер-аллокации невалидны для FA-.so** (Н1; primary ctx общий, механика не доказана — кандидат stream-ordered pool). Лечение host-staging подтверждено (cert-only) | `c319212` Н1, raw_allm4 | MID — для скоростного пути (связан с FA-F16-вход) |
 | **amax-гонка в боевом fwdBattleA шаг 6** (zero-upload vs quantize без Sync; в cert-блоке уже исправлена) | `c319212` Н3 | HIGH |
 | **fa_forward_train hardwired v121r-train** (без диспетчера; V122/V118/V96B train-вариантов нет; на bh=4/sl=2048 при O(1)-входах работает) | `c319212` Н6, fa_ctx.cu:191 | MID |
@@ -369,3 +374,7 @@ Full de-wrapper 10 MatMulF32Ex → plain b.MatMul в bwdBattleAF32 + attention_r
 ## 2026-08-03 (`c319212`) — A-LLM-4: FA-встройка Этап 1, шесть корневых локализаций, стоп-линия
 
 Этап 1 НЕ сертифицирован — блокирован **Н4: контракт магнитуды v121r** (FP16-S-accum требует decoded O(1); боевой квант amax/448 даёт ±448 → NaN; решающие репро: full-range NaN 3/3 vs small-mag живой 3/3, raw_allm4). Н4 ретро-объясняет FA-out-zero A-LLM-1 и Stage-3 loss≈ln(V). Сопутствующие: Н1 адаптерные аллокации невалидны для FA-.so (лечение native+host-staging подтверждено — цепочка живая на боевой форме bh=4/sl=2048); Н2 SNaN-порча float32-роундтрипа сырых байт (класс «прибор», faRawBytes + staging-verify); Н3 amax-гонка (та же в боевом fwd — долг); Н5 реестровый долг wrapper-BH>1 выстрелил точно по прогнозу (recon dQ/dK exact-zero на BH=4); Н6 fa_forward_train hardwired v121r-train. Ложный PASS v1 пойман (NaN-небезопасный компаратор — «прибор»). P1 fwd-sanity формы V=1024: GPU==F64 δ=2.4e-7. Канарейка 653.83→653.97 WITHIN. Этап 2 не начинался (стоп-линия усиленной формы). Отчёт: `A_LLM4_fa_integration.md`, raw: `raw_allm4/` (12). Следующая сессия A-LLM-5: квант O(1) + де-wrapper BH>1 + пересертификация.
+
+## 2026-08-03 (`c4a8c2e` + gotorch `927c795` + fa-blackwell `7d2e9a0`) — A-LLM-5: квант-контракт O(1) в камне
+
+П.0: механизм Н4 подтверждён чтением (QK/O MMA f16.e4m3.e4m3.f16 :87/:634; scale-узел F16 :452; merged/dk F32-акки, dq F16 — запас ≥12×, вердикт-стоп не сработал). Конвенция scale=amax внедрена сквозь стек (Unit-квантизатор; PTX-ASCII catch поймал автора). Контракт в камне: док-строки ×3 репо + КОНТРАКТ-ТЕСТ обеих форм PASS (негатив 100% NaN документирован исполняемо; чувствительностная проба жива — durable [[feedback-lnv-smoke-weak-gate]]). Н3-Sync в боевом fwd. G1/G2 рекерт зелёный (+LockOSThread-фикс харнеса). **6г: первая числовая сертификация цепочки vs CPU-F64 — 6/6 floor 5e-3 (dV 7.8e-7, dK 2.1e-4, dQ 2.4e-4)**. 6д Stage1 A/B PASS по букве (PRIMARY 10/10; dQ/dK-нули = зона B cold-start по контракту). Два хвоста в долги (amax-гонка standalone; slice-канал — П.5-гейт не пройден). Канарейка 654.02T WITHIN ТЗ-коридора (вилка со скриптовым — на перецентровку). Этап 2 не начат. Отчёт: A_LLM5_quant_contract.md, raw_allm5/.

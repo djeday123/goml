@@ -1,0 +1,11 @@
+=== 062 Isolated merged x10-run (r2c_merged_wall) ===
+run=1 temp=33C bench_merged: avg_ms=24.861  tflops_3mma=265.35 (fp: bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256)
+run=2 temp=40C bench_merged: avg_ms=24.890  tflops_3mma=265.05 (fp: bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256)
+run=3 temp=44C bench_merged: avg_ms=24.916  tflops_3mma=264.77 (fp: bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256)
+run=4 temp=42C bench_merged: avg_ms=24.952  tflops_3mma=264.39 (fp: bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256)
+run=5 temp=44C bench_merged: avg_ms=24.955  tflops_3mma=264.36 (fp: bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256)
+run=6 temp=43C bench_merged: avg_ms=24.948  tflops_3mma=264.44 (fp: bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256)
+run=7 temp=44C bench_merged: avg_ms=24.991  tflops_3mma=263.98 (fp: bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256)
+run=8 temp=46C bench_merged: avg_ms=25.001  tflops_3mma=263.87 (fp: bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256)
+run=9 temp=45C bench_merged: avg_ms=25.002  tflops_3mma=263.86 (fp: bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256)
+run=10 temp=44C bench_merged: avg_ms=24.995  tflops_3mma=263.93 (fp: bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256)

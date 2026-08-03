@@ -1,0 +1,54 @@
+===== BASE kernel_dk_new =====
+[991710] bench_r2c_e2e_base@127.0.0.1
+  kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    --------------------------------------------------------------- ----------- ------------
+    Metric Name                                                     Metric Unit Metric Value
+    --------------------------------------------------------------- ----------- ------------
+    smsp__warp_issue_stalled_barrier_per_warp_active.pct                      %         7.94
+    smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct              %        10.50
+    smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct           %         2.57
+    smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct                 %        42.15
+    smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct             %        10.07
+    smsp__warp_issue_stalled_wait_per_warp_active.pct                         %        10.74
+    --------------------------------------------------------------- ----------- ------------
+
+    Section: Command line profiler metrics
+    -------------------------------------------------------- --------------- -------------
+    Metric Name                                                  Metric Unit  Metric Value
+    -------------------------------------------------------- --------------- -------------
+    dram__bytes.sum                                                    Gbyte          9.26
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                 1,616,878,528
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                   226,289,854
+    l1tex__data_pipe_lsu_wavefronts_mem_shared.sum                           3,213,131,737
+    launch__registers_per_thread                             register/thread           128
+    sm__warps_active.avg.pct_of_peak_sustained_active                      %         32.89
+    -------------------------------------------------------- --------------- -------------
+
+===== CAND kernel_dk_new =====
+[992176] bench_r2c_e2e_cand@127.0.0.1
+  kernel_dk_new(const unsigned char *, const unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    --------------------------------------------------------------- ----------- ------------
+    Metric Name                                                     Metric Unit Metric Value
+    --------------------------------------------------------------- ----------- ------------
+    smsp__warp_issue_stalled_barrier_per_warp_active.pct                      %         6.59
+    smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct              %        16.43
+    smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct           %         4.22
+    smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct                 %        26.66
+    smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct             %        15.50
+    smsp__warp_issue_stalled_wait_per_warp_active.pct                         %        13.81
+    --------------------------------------------------------------- ----------- ------------
+
+    Section: Command line profiler metrics
+    -------------------------------------------------------- --------------- -------------
+    Metric Name                                                  Metric Unit  Metric Value
+    -------------------------------------------------------- --------------- -------------
+    dram__bytes.sum                                                    Gbyte          9.26
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                   682,934,064
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                   216,837,457
+    l1tex__data_pipe_lsu_wavefronts_mem_shared.sum                           2,435,092,836
+    launch__registers_per_thread                             register/thread           124
+    sm__warps_active.avg.pct_of_peak_sustained_active                      %         32.92
+    -------------------------------------------------------- --------------- -------------
+

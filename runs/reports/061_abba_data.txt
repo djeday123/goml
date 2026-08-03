@@ -1,0 +1,24 @@
+=== 061 S2v4 ABBA: base(033 sealed 128r) vs cand(S2v4 124r LDSM+свизл) ===
+gate-тишина OK: чужих GPU-tenants нет
+-- warmup 4 --
+warmup=1 temp=32C BASE:   D=0.341  merged=24.911  dk_new=10.318  dq_new=8.384  total=43.955  overhead=-0.000
+warmup=2 temp=41C CAND:   D=0.342  merged=24.923  dk_new=8.346  dq_new=8.395  total=42.005  overhead=-0.000
+warmup=3 temp=46C BASE:   D=0.342  merged=24.937  dk_new=10.335  dq_new=8.395  total=44.009  overhead=0.000
+warmup=4 temp=44C CAND:   D=0.342  merged=24.981  dk_new=8.369  dq_new=8.410  total=42.102  overhead=-0.000
+-- 16 timed (8 pairs) --
+timed=1 temp=46C BASE:   D=0.342  merged=24.982  dk_new=10.361  dq_new=8.410  total=44.095  overhead=-0.000
+timed=2 temp=44C CAND:   D=0.342  merged=25.012  dk_new=8.382  dq_new=8.423  total=42.159  overhead=-0.000
+timed=3 temp=46C CAND:   D=0.342  merged=25.032  dk_new=8.386  dq_new=8.427  total=42.187  overhead=-0.000
+timed=4 temp=44C BASE:   D=0.342  merged=25.043  dk_new=10.396  dq_new=8.430  total=44.211  overhead=-0.000
+timed=5 temp=45C BASE:   D=0.342  merged=25.029  dk_new=10.391  dq_new=8.423  total=44.184  overhead=-0.000
+timed=6 temp=45C CAND:   D=0.342  merged=25.054  dk_new=8.398  dq_new=8.444  total=42.238  overhead=-0.000
+timed=7 temp=46C CAND:   D=0.342  merged=25.055  dk_new=8.395  dq_new=8.441  total=42.232  overhead=0.000
+timed=8 temp=45C BASE:   D=0.342  merged=25.048  dk_new=10.401  dq_new=8.437  total=44.227  overhead=0.000
+timed=9 temp=45C BASE:   D=0.342  merged=25.063  dk_new=10.409  dq_new=8.444  total=44.259  overhead=0.000
+timed=10 temp=46C CAND:   D=0.342  merged=25.072  dk_new=8.404  dq_new=8.448  total=42.266  overhead=-0.000
+timed=11 temp=48C CAND:   D=0.342  merged=25.094  dk_new=8.410  dq_new=8.457  total=42.304  overhead=-0.000
+timed=12 temp=46C BASE:   D=0.342  merged=25.055  dk_new=10.402  dq_new=8.441  total=44.240  overhead=-0.000
+timed=13 temp=49C BASE:   D=0.342  merged=25.075  dk_new=10.416  dq_new=8.448  total=44.281  overhead=0.000
+timed=14 temp=48C CAND:   D=0.342  merged=25.089  dk_new=8.409  dq_new=8.456  total=42.295  overhead=0.000
+timed=15 temp=46C CAND:   D=0.342  merged=25.089  dk_new=8.413  dq_new=8.456  total=42.301  overhead=-0.000
+timed=16 temp=47C BASE:   D=0.342  merged=25.112  dk_new=10.431  dq_new=8.457  total=44.343  overhead=-0.000

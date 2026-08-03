@@ -1,0 +1,76 @@
+bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256
+GATE OK: numRegs=252 matches EXPECT=252
+
+=== 041 I.1a: Полная stall-таблица (Σ ~100%) [режим: NCu-mode, wall+3-6% typical] ===
+==PROF== Connected to process 627117 (/data/lib/podman-data/projects/goml/libs/r2c_merged_wall)
+==PROF== Profiling "kernel_merged_v1": 0%....50%....100% - 7 passes
+bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256
+bench_merged: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_merged: avg_ms=24.724  tflops_3mma=266.83
+==PROF== Disconnected from process 627117
+[627117] r2c_merged_wall@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    --------------------------------------------------------------- ----------- ------------
+    Metric Name                                                     Metric Unit Metric Value
+    --------------------------------------------------------------- ----------- ------------
+    smsp__warp_issue_stalled_barrier_per_warp_active.pct                      %         2.57
+    smsp__warp_issue_stalled_dispatch_stall_per_warp_active.pct               %         0.82
+    smsp__warp_issue_stalled_drain_per_warp_active.pct                        %         0.02
+    smsp__warp_issue_stalled_imc_miss_per_warp_active.pct                            (!) n/a
+    smsp__warp_issue_stalled_lg_throttle_per_warp_active.pct                  %         0.14
+    smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct              %         6.73
+    smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct           %        13.66
+    smsp__warp_issue_stalled_membar_per_warp_active.pct                       %            0
+    smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct                 %         8.86
+    smsp__warp_issue_stalled_misc_per_warp_active.pct                         %            0
+    smsp__warp_issue_stalled_no_instruction_per_warp_active.pct               %         0.61
+    smsp__warp_issue_stalled_not_selected_per_warp_active.pct                 %         4.79
+    smsp__warp_issue_stalled_selected_per_warp_active.pct                     %        18.21
+    smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct             %         9.71
+    smsp__warp_issue_stalled_tex_throttle_per_warp_active.pct                 %            0
+    smsp__warp_issue_stalled_wait_per_warp_active.pct                         %        33.00
+    --------------------------------------------------------------- ----------- ------------
+
+
+=== 041 I.1b: LSU/conflicts (для распутывания 4-way ярлыка) ===
+==PROF== Profiling "kernel_merged_v1": 0%....50%....100% - 3 passes
+bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256
+bench_merged: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_merged: avg_ms=24.754  tflops_3mma=266.50
+==PROF== Disconnected from process 627447
+[627447] r2c_merged_wall@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- -------------
+    Metric Name                                              Metric Unit  Metric Value
+    -------------------------------------------------------- ----------- -------------
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum               132,104,324
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                17,181,201
+    l1tex__data_pipe_lsu_wavefronts_mem_shared.sum                       4,063,396,472
+    l1tex__data_pipe_lsu_wavefronts_mem_shared_op_ld.sum                 3,453,993,092
+    l1tex__data_pipe_lsu_wavefronts_mem_shared_op_st.sum                   428,222,993
+    smsp__inst_executed_shared_loads.sum                                       (!) n/a
+    smsp__inst_executed_shared_stores.sum                                      (!) n/a
+    -------------------------------------------------------- ----------- -------------
+
+
+=== 041 I.1c: SOL L1/L2/DRAM + occupancy [режим: NCu-mode] ===
+bench_merged: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_merged: avg_ms=24.827  tflops_3mma=265.72
+==PROF== Disconnected from process 627730
+[627730] r2c_merged_wall@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------- ----------- -------------
+    Metric Name                                        Metric Unit  Metric Value
+    -------------------------------------------------- ----------- -------------
+    dram__bytes.sum                                          Gbyte          9.80
+    dram__throughput.avg.pct_of_peak_sustained_elapsed           %         16.48
+    gpc__cycles_elapsed.avg.per_second                         Ghz          1.59
+    l1tex__t_sector_hit_rate.pct                                 %          1.49
+    lts__t_sector_hit_rate.pct                                   %         91.74
+    sm__cycles_active.avg                                    cycle 54,763,154.16
+    sm__warps_active.avg.pct_of_peak_sustained_active            %         16.59
+    -------------------------------------------------- ----------- -------------
+

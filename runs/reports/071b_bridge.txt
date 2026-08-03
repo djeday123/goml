@@ -1,0 +1,27 @@
+=== 071b bridge probe: x2 reference vs x1 candidates for b0_b ===
+swizzle: swz_byte(row, col) = row*128 + ((col>>4 XOR row&7)<<4) + col&15
+candidate #1: swz_byte(row_lo, np*16 + 16)  (col shift +16, 16-aligned)
+candidate #2: swz_byte(row_lo + 16, np*16)  (row shift +16, NVIDIA x2 convention)
+
+=== MARKER MODE 0 (row-marker) ===
+  slots covered: 128/128
+  x1_a  == x2.R0 (B0a): 128/128  (100.0%)
+  x1_c1 == x2.R1 (B0b) [col+8]:   128/128  (100.0%)
+  x1_c2 == x2.R1 (B0b) [row+16]:  0/128  (0.0%)
+  wid=0 lanes 0..3 (row-marker mode):
+    l0: x2.R0=03020100 x2.R1=03020100 x2.R2=13121110 x2.R3=13121110  x1_a=03020100 x1_c1=03020100 x1_c2=13121110
+    l1: x2.R0=07060504 x2.R1=07060504 x2.R2=17161514 x2.R3=17161514  x1_a=07060504 x1_c1=07060504 x1_c2=17161514
+    l2: x2.R0=0b0a0908 x2.R1=0b0a0908 x2.R2=1b1a1918 x2.R3=1b1a1918  x1_a=0b0a0908 x1_c1=0b0a0908 x1_c2=1b1a1918
+    l3: x2.R0=0f0e0d0c x2.R1=0f0e0d0c x2.R2=1f1e1d1c x2.R3=1f1e1d1c  x1_a=0f0e0d0c x1_c1=0f0e0d0c x1_c2=1f1e1d1c
+
+=== MARKER MODE 1 (col-marker) ===
+  slots covered: 128/128
+  x1_a  == x2.R0 (B0a): 128/128  (100.0%)
+  x1_c1 == x2.R1 (B0b) [col+8]:   0/128  (0.0%)
+  x1_c2 == x2.R1 (B0b) [row+16]:  0/128  (0.0%)
+  wid=0 lanes 0..3 (row-marker mode):
+    l0: x2.R0=00000000 x2.R1=08080808 x2.R2=00000000 x2.R3=08080808  x1_a=00000000 x1_c1=10101010 x1_c2=00000000
+    l1: x2.R0=00000000 x2.R1=08080808 x2.R2=00000000 x2.R3=08080808  x1_a=00000000 x1_c1=10101010 x1_c2=00000000
+    l2: x2.R0=00000000 x2.R1=08080808 x2.R2=00000000 x2.R3=08080808  x1_a=00000000 x1_c1=10101010 x1_c2=00000000
+    l3: x2.R0=00000000 x2.R1=08080808 x2.R2=00000000 x2.R3=08080808  x1_a=00000000 x1_c1=10101010 x1_c2=00000000
+

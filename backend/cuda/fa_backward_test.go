@@ -7,6 +7,7 @@ package cuda
 //   2) fingerprints kernel'ов совпадают с v0.2.0 cert reference
 //   3) contracts работают: D-precompute даёт правильный D на малой форме
 //   4) canonical chain (bh=128, sl=8192, hd=128) запускается без ошибок с L от fa_forward_train
+// ВАЛИДЕН ВНУТРИ КОНТРАКТА decoded O(1) (A-LLM-5 П.3в); полный диапазон — см. fa_contract_test.go.
 
 import (
 	"math"

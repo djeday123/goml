@@ -1,0 +1,18 @@
+bench_merged: FINGERPRINT kernel_merged_v1: numRegs=252, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256
+GATE OK: numRegs=252 matches EXPECT=252
+run=1 tag=BASE temp=47C mode=isolated bench_merged: avg_ms=28.518  tflops_3mma=231.33
+run=2 tag=CAND temp=53C mode=isolated bench_merged: avg_ms=25.006  tflops_3mma=263.82
+run=3 tag=CAND temp=44C mode=isolated bench_merged: avg_ms=24.989  tflops_3mma=264.00
+run=4 tag=BASE temp=47C mode=isolated bench_merged: avg_ms=28.467  tflops_3mma=231.74
+run=5 tag=BASE temp=54C mode=isolated bench_merged: avg_ms=28.485  tflops_3mma=231.60
+run=6 tag=CAND temp=43C mode=isolated bench_merged: avg_ms=24.979  tflops_3mma=264.11
+run=7 tag=CAND temp=45C mode=isolated bench_merged: avg_ms=24.974  tflops_3mma=264.15
+run=8 tag=BASE temp=43C mode=isolated bench_merged: avg_ms=28.463  tflops_3mma=231.78
+run=9 tag=BASE temp=48C mode=isolated bench_merged: avg_ms=28.432  tflops_3mma=232.03
+run=10 tag=CAND temp=45C mode=isolated bench_merged: avg_ms=24.951  tflops_3mma=264.40
+run=11 tag=CAND temp=45C mode=isolated bench_merged: avg_ms=24.948  tflops_3mma=264.43
+run=12 tag=BASE temp=47C mode=isolated bench_merged: avg_ms=28.448  tflops_3mma=231.90
+run=13 tag=BASE temp=54C mode=isolated bench_merged: avg_ms=28.463  tflops_3mma=231.78
+run=14 tag=CAND temp=45C mode=isolated bench_merged: avg_ms=24.966  tflops_3mma=264.24
+run=15 tag=CAND temp=49C mode=isolated bench_merged: avg_ms=24.972  tflops_3mma=264.18
+run=16 tag=BASE temp=44C mode=isolated bench_merged: avg_ms=28.460  tflops_3mma=231.80

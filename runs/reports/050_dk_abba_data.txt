@@ -1,0 +1,30 @@
+=== fingerprints ===
+=== bench_r2c_e2e: fingerprint x4 ===
+FINGERPRINT kernel_d_precompute    numRegs= 38 (expected  38) OK
+FINGERPRINT kernel_merged_v1       numRegs=252 (expected 252) OK
+FINGERPRINT kernel_dk_new          numRegs=128 (expected 128) OK
+FINGERPRINT kernel_dq_new          numRegs= 69 (expected  69) OK
+
+=== bench_r2c_e2e: fingerprint x4 ===
+FINGERPRINT kernel_d_precompute    numRegs= 38 (expected  38) OK
+FINGERPRINT kernel_merged_v1       numRegs=252 (expected 252) OK
+FINGERPRINT kernel_dk_new          numRegs=101 (expected 101) OK
+FINGERPRINT kernel_dq_new          numRegs= 69 (expected  69) OK
+
+=== ABBA 8 пар (B=baseline_pre, C=candidate_050) ===
+run=1 tag=BASE temp=50C   D=0.359  merged=48.786  dk_new=18.881  dq_new=18.134  total=86.159  overhead=0.000
+run=2 tag=CAND temp=48C   D=0.361  merged=48.779  dk_new=41.164  dq_new=18.119  total=108.423  overhead=0.000
+run=3 tag=CAND temp=47C   D=0.361  merged=48.798  dk_new=41.223  dq_new=18.147  total=108.530  overhead=-0.000
+run=4 tag=BASE temp=47C   D=0.358  merged=48.823  dk_new=18.902  dq_new=18.140  total=86.223  overhead=0.000
+run=5 tag=BASE temp=48C   D=0.363  merged=48.805  dk_new=18.892  dq_new=18.135  total=86.196  overhead=0.000
+run=6 tag=CAND temp=48C   D=0.358  merged=48.805  dk_new=41.182  dq_new=18.134  total=108.479  overhead=0.000
+run=7 tag=CAND temp=48C   D=0.362  merged=48.870  dk_new=41.268  dq_new=18.117  total=108.616  overhead=-0.000
+run=8 tag=BASE temp=48C   D=0.361  merged=48.831  dk_new=18.903  dq_new=18.132  total=86.227  overhead=0.000
+run=9 tag=BASE temp=48C   D=0.361  merged=48.837  dk_new=18.901  dq_new=18.140  total=86.239  overhead=-0.000
+run=10 tag=CAND temp=49C   D=0.367  merged=48.803  dk_new=41.205  dq_new=18.126  total=108.501  overhead=-0.000
+run=11 tag=CAND temp=48C   D=0.359  merged=48.824  dk_new=41.199  dq_new=18.131  total=108.514  overhead=-0.000
+run=12 tag=BASE temp=48C   D=0.359  merged=48.823  dk_new=18.903  dq_new=18.138  total=86.223  overhead=0.000
+run=13 tag=BASE temp=48C   D=0.364  merged=48.831  dk_new=18.902  dq_new=18.136  total=86.233  overhead=0.000
+run=14 tag=CAND temp=48C   D=0.358  merged=48.819  dk_new=41.223  dq_new=18.129  total=108.529  overhead=-0.000
+run=15 tag=CAND temp=48C   D=0.359  merged=48.816  dk_new=41.217  dq_new=18.131  total=108.523  overhead=0.000
+run=16 tag=BASE temp=49C   D=0.362  merged=48.827  dk_new=18.897  dq_new=18.137  total=86.223  overhead=-0.000

@@ -1,0 +1,43 @@
+bench_merged: FINGERPRINT kernel_merged_v1: numRegs=254, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=256
+GATE OK: numRegs=254 matches EXPECT=254
+=== NCu post-E: conflicts/DRAM/occupancy сверка ===
+-- LSU / conflicts --
+==PROF== Disconnected from process 550750
+[550750] r2c_merged_wall@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- -------------
+    Metric Name                                              Metric Unit  Metric Value
+    -------------------------------------------------------- ----------- -------------
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum               126,662,412
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                18,442,099
+    l1tex__data_pipe_lsu_wavefronts_mem_shared.sum                       5,116,129,847
+    -------------------------------------------------------- ----------- -------------
+
+-- DRAM / occupancy --
+bench_merged: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_merged: avg_ms=28.461  tflops_3mma=231.79
+==PROF== Disconnected from process 551034
+[551034] r2c_merged_wall@127.0.0.1
+  kernel_merged_v1(const unsigned char *, const unsigned char *, const unsigned char *, const __half *, const float *, const float *, unsigned char *, unsigned char *, float *, int, int, int, int, int, float) (16384, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------- ----------- ------------
+    Metric Name                                        Metric Unit Metric Value
+    -------------------------------------------------- ----------- ------------
+    dram__bytes.sum                                          Gbyte         9.79
+    dram__throughput.avg.pct_of_peak_sustained_elapsed           %        13.54
+    lts__t_sector_hit_rate.pct                                   %        91.74
+    sm__warps_active.avg.pct_of_peak_sustained_active            %        16.58
+    -------------------------------------------------- ----------- ------------
+
+-- Stalls (barrier/mio/short_sb для дрейф-контроля) --
+    Section: Command line profiler metrics
+    ------------------------------------------------------------- ----------- ------------
+    Metric Name                                                   Metric Unit Metric Value
+    ------------------------------------------------------------- ----------- ------------
+    smsp__warp_issue_stalled_barrier_per_warp_active.pct                    %         2.76
+    smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct               %        25.10
+    smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct           %         8.63
+    smsp__warp_issue_stalled_wait_per_warp_active.pct                       %        27.85
+    ------------------------------------------------------------- ----------- ------------
+

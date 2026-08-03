@@ -1,0 +1,13 @@
+# 006-I bit-exact re-gate: dK + dQ consumers after ds_gen staging change
+
+## r1b_dk_bit_exact (consumer dk_new vs sealed dK)
+[F1..F10, CANARY] mism=0 max_abs_diff=0.000e+00  BIT-EXACT (11/11)
+========= ERROR SUMMARY: 0 errors  (compute-sanitizer)
+
+## r1c_dq_bit_exact (consumer dq_new vs sealed AA1 dQ)
+[F1..F10, CANARY] mism=0 max_abs_diff=0.000e+00  BIT-EXACT (11/11)
+========= ERROR SUMMARY: 0 errors  (compute-sanitizer)
+
+Layout-only change (STS.b16 pack of same fp8x2 bytes, coalesced STG.128 drain) — арифметика тронута НЕ БЫЛА.
+ptxas: 154r → 157r (+3, drain-loop ILP), 0 spill, 0 stack, 1 barrier.
+SMEM: 33792 B → 33792 B (smdS_stage aliased over unused smV — ZERO extra).

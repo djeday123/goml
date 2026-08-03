@@ -1,0 +1,20 @@
+# 007 R1 E2E chain BIT-EXACT 11 forms × 3 gradients (dQ + dK + dV)
+# Reference: sealed AA1 dQ + sealed dK + sealed dV_mma_p1
+# R1 chain:  ds_gen → dV_p1 + dk_new + dq_new
+
+Fingerprint gate (all 5 kernels expected regs, abort on mismatch): PASSED.
+
+[F1     bh=1 sl= 128 caus=0 wnd=0]     dQ / dK / dV  mism=0 max_abs_diff=0.000e+00  BIT-EXACT × 3
+[F2     bh=1 sl= 128 caus=1 wnd=0]     dQ / dK / dV  BIT-EXACT × 3
+[F3     bh=2 sl= 256 caus=0 wnd=0]     dQ / dK / dV  BIT-EXACT × 3
+[F4     bh=2 sl= 256 caus=1 wnd=0]     dQ / dK / dV  BIT-EXACT × 3
+[F5     bh=4 sl= 384 caus=0 wnd=0]     dQ / dK / dV  BIT-EXACT × 3
+[F6     bh=4 sl= 384 caus=1 wnd=0]     dQ / dK / dV  BIT-EXACT × 3
+[F7     bh=1 sl= 512 caus=0 wnd=128]   dQ / dK / dV  BIT-EXACT × 3
+[F8     bh=1 sl= 512 caus=1 wnd=128]   dQ / dK / dV  BIT-EXACT × 3
+[F9     bh=1 sl=2048 caus=0 wnd=0]     dQ / dK / dV  BIT-EXACT × 3
+[F10    bh=1 sl=2048 caus=1 wnd=0]     dQ / dK / dV  BIT-EXACT × 3
+[CANARY bh=1 sl= 300 caus=0 wnd=96]    dQ / dK / dV  BIT-EXACT × 3
+
+=== CHAIN BIT-EXACT SUMMARY ===
+    forms all-3 bit-exact: 11 / 11

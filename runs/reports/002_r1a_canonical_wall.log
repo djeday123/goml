@@ -1,0 +1,15 @@
+bench_ds_gen: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_ds_gen: FINGERPRINT kernel_ds_gen: numRegs=159, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=384
+bench_ds_gen: avg_ms=25.861  tflops_2mma=170.06  (causal_factor=1.00)
+bench_ds_gen: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_ds_gen: FINGERPRINT kernel_ds_gen: numRegs=159, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=384
+bench_ds_gen: avg_ms=25.875  tflops_2mma=169.97  (causal_factor=1.00)
+bench_ds_gen: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_ds_gen: FINGERPRINT kernel_ds_gen: numRegs=159, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=384
+bench_ds_gen: avg_ms=25.877  tflops_2mma=169.96  (causal_factor=1.00)
+bench_ds_gen: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_ds_gen: FINGERPRINT kernel_ds_gen: numRegs=159, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=384
+bench_ds_gen: avg_ms=25.893  tflops_2mma=169.85  (causal_factor=1.00)
+bench_ds_gen: bh=128 sl=8192 hd=128 causal=0 warmup=5 iters=20
+bench_ds_gen: FINGERPRINT kernel_ds_gen: numRegs=159, sharedSizeBytes=0, localSizeBytes=0, maxThreadsPerBlock=384
+bench_ds_gen: avg_ms=25.901  tflops_2mma=169.80  (causal_factor=1.00)

@@ -1,0 +1,28 @@
+# 006-II NCu final metrics (kernel_ds_gen, bh=128 sl=8192 hd=128 causal=0)
+# vs 006-0 baseline (36.76 ms wall)
+
+## Stall breakdown
+l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                 231,904,164   (was 110.8M, +121M drain LDS.128)
+l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                  25,234,012   (was 4K, +25M STS scatter)
+l1tex__data_pipe_lsu_wavefronts.sum                                    3,081,077,789   (was 5.79B, -47%)
+smsp__inst_executed.sum                                        inst   13,133,676,544   (was 15.79B, -16.9%)
+smsp__inst_executed_op_shared_ld.sum                           inst    2,015,100,928   (was 1.98B, ≈)
+smsp__inst_executed_op_shared_st.sum                           inst      402,718,720   (was 65K, +402M STS staging)
+smsp__warp_issue_stalled_barrier_per_warp_active.pct           %                 2.00  (was 2.54%,  -0.54 pp)
+smsp__warp_issue_stalled_lg_throttle_per_warp_active.pct       %                 0.00  (was 0.13%,  -0.13 pp)
+smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct   %                 9.92  (was 30.02%, -20.10 pp) ← ГЛАВНАЯ ПОБЕДА
+smsp__warp_issue_stalled_membar_per_warp_active.pct            %                 0
+smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct      %                 3.46  (was 11.71%, -8.25 pp)
+smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct  %                25.57  (was 7.35%,  +18.22 pp) ← новый bottleneck (LDS-latency, staging)
+
+## Атрибуция
+- long_scoreboard 30 → 9.92% : LSU pipe разгружена (16× меньше STG.b8 транзакций)
+- mio_throttle 11.7 → 3.5%   : MIO cap снят
+- inst_executed -2.66B       : меньше guarded-branch overhead + меньше LSU insts
+- short_scoreboard +18 pp    : staging LDS.128 drain перенёс bottleneck в LDS
+- Bank conflicts выросли (LD +121M, ST +25M) но stall упал больше — net win
+- LSU wavefronts -47% : coalesced 16-byte transactions вместо разрозненных b8
+
+## Не измерено в этом run (лежит на диске)
+runs/reports/006_ds_gen_ncu.log — full section baseline (Max BW 93.96%, L1TEX 82.62%, L2 95.69%)
+runs/reports/006_dq_sealed_ncu.log — sealed dQ compare
